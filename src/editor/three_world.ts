@@ -188,7 +188,8 @@ export const slabAO = new WeakMap<THREE.Material, FloorAO>();
 /**
  * A floor slab's top: the baked floor occlusion (floor_ao.ts) on its sky light, so under and around furniture is
  * darker even inside the sun's shadow, and optionally sealed concrete in world meters (lines up across slabs): broad
- * mottling, a fine aggregate speckle, saw-cut control joints every 3.6 m, a little sheen. Only faces that look up.
+ * cloudy patches, mid-size blotches, fine aggregate, faint trowel arcs, a few stains, saw-cut control joints every
+ * 3.6 m, a little sheen. Only faces that look up.
  * The occlusion uniforms are `slabAO.get(material)`, shared per floor and filled in by the world layer (not userData:
  * material clones JSON-copy that).
  */
@@ -224,11 +225,21 @@ function slabLook(
         concrete
           ? `#include <color_fragment>
         vec2 xy = vWorldPos.xy;
-        float mottle = texture2D(uDetail, xy / 5.3).r - 0.5;
-        float speckle = texture2D(uDetail, xy / 0.41 + 0.37).r - 0.5;
+        // each scale turned and offset from the last, so the tile repeats never line up
+        mat2 turn = mat2(0.8, -0.6, 0.6, 0.8);
+        float clouds = (texture2D(uDetail, xy / 11.0).r - 0.5) + 0.6 * (texture2D(uDetail, turn * xy / 4.3 + 0.21).r - 0.5);
+        float blotch = smoothstep(0.42, 0.62, texture2D(uDetail, turn * turn * xy / 1.3 + 0.53).r) - 0.5;
+        float aggregate = (texture2D(uDetail, xy / 0.23 + 0.37).r - 0.5) + 0.7 * (texture2D(uDetail, turn * xy / 0.07).r - 0.5);
+        // trowel arcs: faint rings around a jittered center per 1.1 m patch, only where the clouds allow
+        vec2 cell = fract(xy / 1.1) - 0.5 + 0.3 * (texture2D(uDetail, floor(xy / 1.1) * 0.37).rg - 0.5);
+        float trowel = sin(length(cell) * 38.0 + clouds * 9.0) * smoothstep(0.0, 0.25, clouds + 0.1);
+        float stain = smoothstep(0.7, 0.82, texture2D(uDetail, turn * xy / 2.7 + 0.71).r);
         vec2 toJoint = abs(fract(xy / 3.6 + 0.5) - 0.5) * 3.6;
         float joint = 1.0 - smoothstep(0.006, 0.016, min(toJoint.x, toJoint.y));
-        diffuseColor.rgb *= 1.0 + slabUp() * (mottle * 0.22 + speckle * 0.1 - joint * 0.28);`
+        float shade = clouds * 0.3 + blotch * 0.1 + aggregate * 0.12 + trowel * 0.035 - stain * 0.14 - joint * 0.3;
+        diffuseColor.rgb *= 1.0 + slabUp() * shade;
+        // a slight warm/cool drift with the clouds, as concrete has
+        diffuseColor.rgb *= 1.0 + slabUp() * clouds * vec3(0.04, 0.0, -0.04);`
           : "#include <color_fragment>",
       )
       .replace(
