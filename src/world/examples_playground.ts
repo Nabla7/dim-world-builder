@@ -3,6 +3,7 @@
 // riding through it, a spiral stair tower, a bumpy hill, pits, clutter fields, and a nav test around it all.
 
 import {
+  defaultGrate,
   defaultHill,
   defaultRoom,
   defaultStairs,
@@ -229,6 +230,26 @@ export function playground(library: MeshAsset[], seed = 7): Project {
       name: "Shaft",
       floor: ground,
       position: [4, -12, 0],
+    }),
+  );
+  // storm drains on the way out of the start: slats a foot can slip between, and a grid the lidar half sees through
+  add(
+    makeItem("hole", { sizeX: 0.6, sizeY: 1.2, depth: 0.5, grate: { ...defaultGrate(), direction: "y" } }, {
+      name: "Slatted drain",
+      floor: ground,
+      position: [-9, -4, 0],
+    }),
+  );
+  add(
+    makeItem("hole", {
+      sizeX: 1.0,
+      sizeY: 1.0,
+      depth: 0.5,
+      grate: { ...defaultGrate(), pattern: "grid", barWidth: 0.025, gap: 0.06, barDepth: 0.04 },
+    }, {
+      name: "Grid drain",
+      floor: ground,
+      position: [-5, -6, 0],
     }),
   );
   add(...scatterClutter(ground, [-6, -14, 0], seed + 1, 18, 3.5));

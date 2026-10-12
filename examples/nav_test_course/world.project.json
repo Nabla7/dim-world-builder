@@ -24,7 +24,7 @@
   ],
   "items": [
     {
-      "id": "b9c298cac9b0",
+      "id": "a33c104506a6",
       "kind": "room",
       "params": {
         "width": 6,
@@ -68,7 +68,7 @@
       "key": "lab_room_1"
     },
     {
-      "id": "afc40c3b06ac",
+      "id": "f195af331af3",
       "kind": "room",
       "params": {
         "width": 6,
@@ -112,7 +112,7 @@
       "key": "upper_room_1"
     },
     {
-      "id": "9b43b5ded3d6",
+      "id": "7b258d45b015",
       "kind": "primitive",
       "params": {
         "shape": "box",
@@ -143,7 +143,7 @@
       "key": "box_1"
     },
     {
-      "id": "e2b36153a85a",
+      "id": "d3e959f71bd9",
       "kind": "primitive",
       "params": {
         "shape": "box",
@@ -191,7 +191,7 @@
       "key": "box_2"
     },
     {
-      "id": "638a8c1de38c",
+      "id": "0aadcc28080f",
       "kind": "stairs",
       "params": {
         "steps": 6,
@@ -230,7 +230,7 @@
       "key": "stairs_1"
     },
     {
-      "id": "65dfd77a8afe",
+      "id": "c9c2f908d46c",
       "kind": "hill",
       "params": {
         "sizeX": 10,
@@ -240,8 +240,10 @@
         "frequency": 2,
         "octaves": 4,
         "seed": 7,
-        "resolution": 64,
+        "resolution": 128,
         "edgeFade": true,
+        "bumps": 0.1,
+        "bumpSize": 0.6,
         "color": [
           0.38,
           0.52,
@@ -269,7 +271,7 @@
       "key": "hill_1"
     },
     {
-      "id": "66a5394d7f4e",
+      "id": "7e362547bcbe",
       "kind": "primitive",
       "params": {
         "shape": "cone",
@@ -300,7 +302,7 @@
       "key": "cone_1"
     },
     {
-      "id": "b0c519c9de10",
+      "id": "aca4674b396b",
       "kind": "primitive",
       "params": {
         "shape": "cone",
@@ -331,7 +333,7 @@
       "key": "cone_2"
     },
     {
-      "id": "c166d6d3947d",
+      "id": "c4fe2856f186",
       "kind": "primitive",
       "params": {
         "shape": "beanbag",
@@ -362,7 +364,7 @@
       "key": "beanbag_1"
     },
     {
-      "id": "11d2cabd7f08",
+      "id": "4ab9d2105f55",
       "kind": "primitive",
       "params": {
         "shape": "ramp",
@@ -393,7 +395,7 @@
       "key": "ramp_1"
     },
     {
-      "id": "877c1a4788c8",
+      "id": "892688ea3690",
       "kind": "primitive",
       "params": {
         "shape": "cylinder",
@@ -477,6 +479,23 @@
     }
   ],
   "activeFloor": "ground",
+  "views": [
+    {
+      "key": "overview",
+      "name": "Overview",
+      "eye": [
+        -12,
+        -14,
+        12
+      ],
+      "target": [
+        2,
+        0,
+        0
+      ],
+      "fov": 50
+    }
+  ],
   "nav": {
     "startSpawn": "wall_lane",
     "floor": "ground",

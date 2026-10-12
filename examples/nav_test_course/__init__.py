@@ -1,7 +1,8 @@
 """nav_test_course: a dim-world-builder world for dimos sim2 (MuJoCo).
 
 Files beside this one: scene.xml (MJCF), scene.json (dimos.scene.v1: entities, spawns), movers.json
-(dimos.movers.v1: scripted obstacles), meshes/, world.project.json (the editor's project) and scene_data.py (the
+(dimos.movers.v1: scripted obstacles), views.json (remembered camera views; render_view() looks from one), meshes/,
+world.project.json (the editor's project) and scene_data.py (the
 SceneData module: publish on scene_data_request, get the world's bodies, meshes and lights on scene_data).
 11 items, 2 floor(s).
 """
@@ -24,6 +25,9 @@ _scene = json.loads(SCENE_JSON.read_text())
 SPAWNS: dict[str, dict[str, Any]] = _scene.get("spawns", {})
 ENTITIES: dict[str, dict[str, Any]] = _scene.get("entities", {})
 MOVERS: list[dict[str, Any]] = json.loads(MOVERS_JSON.read_text()).get("movers", [])
+VIEWS_JSON = SCENE_DIR / "views.json"
+# remembered camera views: each is a fixed <camera> in scene.xml named by its "camera" id
+VIEWS: list[dict[str, Any]] = json.loads(VIEWS_JSON.read_text()).get("views", []) if VIEWS_JSON.exists() else []
 
 
 def check() -> Any:
@@ -58,6 +62,40 @@ def blueprint(robot: str = "unitree-go2-freewalk", scene_data: bool = True) -> A
     return autoconnect(robot_blueprint, SceneData.blueprint())
 
 
+def render_view(name: str, width: int = 640, height: int = 480, model: Any = None, data: Any = None) -> Any:
+    """An RGB image (height x width x 3 uint8) from the remembered view `name` (see VIEWS).
+
+    Without `model`/`data` it renders this world as exported; pass a running simulation's MjModel and MjData (whose
+    scene includes this world's cameras) to see the live state, e.g. to check whether a task was done.
+    """
+    import mujoco
+
+    if model is None:
+        model = check()
+    if data is None:
+        data = mujoco.MjData(model)
+        mujoco.mj_forward(model, data)
+    camera = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_CAMERA, name)
+    if camera < 0:
+        known = [view["camera"] for view in VIEWS]
+        raise KeyError(f"no camera {name!r} in the model (this world's views: {known})")
+    width = min(width, int(model.vis.global_.offwidth))
+    height = min(height, int(model.vis.global_.offheight))
+    with mujoco.Renderer(model, height, width) as renderer:
+        renderer.update_scene(data, camera=camera)
+        return renderer.render()
+
+
+def __getattr__(attribute: str) -> Any:
+    # the go2 entry point (dimos run <world>.go2) is built on first use, not on import
+    if attribute == "go2":
+        return blueprint("unitree-go2-freewalk")
+    raise AttributeError(attribute)
+
+
 def main() -> None:
     model = check()
-    print(f"{SCENE_XML}: {model.nbody} bodies, {model.ngeom} geoms, {len(MOVERS)} movers, spawns {sorted(SPAWNS)}")
+    print(
+        f"{SCENE_XML}: {model.nbody} bodies, {model.ngeom} geoms, {len(MOVERS)} movers, spawns {sorted(SPAWNS)}, "
+        f"views {[view['camera'] for view in VIEWS]}"
+    )

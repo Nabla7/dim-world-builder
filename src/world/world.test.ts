@@ -13,6 +13,8 @@ import { toScene } from "./mjcf.ts";
 import { defaultHill, defaultLight, defaultRoom, defaultStairs, emptyProject, makeItem } from "./defaults.ts";
 import { testCourse } from "./examples.ts";
 import { keyedProject } from "./keys.ts";
+import { barCenters, grateShapes } from "./geometry.ts";
+import { defaultGrate } from "./defaults.ts";
 import { cameraLookAt } from "./geometry.ts";
 
 describe("rooms", () => {
@@ -208,5 +210,39 @@ describe("remembered views", () => {
       { key: "", name: "2nd floor", eye: [0, 0, 1], target: [1, 0, 1], fov: 50 },
     ];
     expect(keyedProject(project).views!.map((v) => v.key)).toEqual(["kitchen_view", "kitchen_view_2", "view_2nd_floor"]);
+  });
+});
+
+describe("drain grates", () => {
+  const openings = (centers: number[], span: number, width: number) => {
+    const edges = [-span / 2, ...centers.flatMap((c) => [c - width / 2, c + width / 2]), span / 2];
+    return Array.from({ length: edges.length / 2 }, (_, i) => edges[2 * i + 1] - edges[2 * i]);
+  };
+  it("spaces bars evenly, every opening (edges too) at least the gap", () => {
+    const centers = barCenters(1.0, 0.03, 0.04);
+    expect(centers.length).toBe(13); // floor((1.0 - 0.04) / (0.03 + 0.04))
+    const gaps = openings(centers, 1.0, 0.03);
+    gaps.forEach((g) => expect(g).toBeGreaterThanOrEqual(0.04 - 1e-9));
+    gaps.forEach((g) => expect(g).toBeCloseTo(gaps[0], 9));
+    expect(centers[0]).toBeCloseTo(-centers[centers.length - 1], 9);
+  });
+  it("has no bars when none fit", () => {
+    expect(barCenters(0.05, 0.03, 0.04)).toEqual([]);
+  });
+  it("makes slats one way and a grid both ways, tops flush with the floor, as collision boxes", () => {
+    const hole = { sizeX: 0.6, sizeY: 1.2, depth: 0.5, grate: { ...defaultGrate(), direction: "y" as const } };
+    const slats = grateShapes(hole);
+    expect(slats.length).toBe(barCenters(0.6, 0.03, 0.04).length);
+    slats.forEach((bar) => {
+      expect(bar.role).toBe("both");
+      expect(bar.size[1] * 2).toBeCloseTo(1.2); // running along y, the hole's full length
+      expect(bar.pos[2] + bar.size[2]).toBeCloseTo(0); // top at the floor
+    });
+    const grid = grateShapes({ ...hole, grate: { ...hole.grate, pattern: "grid" } });
+    expect(grid.length).toBe(barCenters(0.6, 0.03, 0.04).length + barCenters(1.2, 0.03, 0.04).length);
+  });
+  it("never goes deeper than the hole", () => {
+    const [bar] = grateShapes({ sizeX: 1, sizeY: 1, depth: 0.02, grate: { ...defaultGrate(), barDepth: 0.1 } });
+    expect(bar.size[2] * 2).toBeCloseTo(0.02);
   });
 });

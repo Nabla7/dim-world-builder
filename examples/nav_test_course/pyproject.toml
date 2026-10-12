@@ -1,0 +1,23 @@
+# pip install -e this folder (into dimos's venv) and dimos finds its blueprints:
+#   dimos run nav-test-course.go2          a Go2 in this world, plus the SceneData module
+#   dimos run <blueprint> nav-test-course.scene-data --scene-package <this folder>   SceneData beside any sim2 blueprint
+[project]
+name = "nav_test_course"
+version = "0.1.0"
+description = "A dim-world-builder world for dimos sim2"
+requires-python = ">=3.10"
+
+[project.entry-points."dimos.blueprints"]
+go2 = "nav_test_course:go2"
+scene-data = "nav_test_course.scene_data:SceneData"
+
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["nav_test_course"]
+package-dir = { "nav_test_course" = "." }
+
+[tool.setuptools.package-data]
+"*" = ["*", "**/*"]

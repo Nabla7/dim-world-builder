@@ -1,6 +1,6 @@
 // What the Add panel offers, and how each choice becomes an item placed where the camera looks.
 
-import { defaultHill, defaultLight, defaultRoom, defaultStairs, makeItem, PAINT } from "../world/defaults.ts";
+import { defaultGrate, defaultHill, defaultLight, defaultRoom, defaultStairs, makeItem, PAINT } from "../world/defaults.ts";
 import type { Object3D } from "three";
 import { scatterClutter } from "../world/scatter.ts";
 import type { Item, MeshAsset, PrimitiveParams, Vec3 } from "../world/types.ts";
@@ -110,6 +110,18 @@ export const BUILT_IN: PaletteEntry[] = [
     make: (floor, at) =>
       makeItem("hole", { sizeX: 1.5, sizeY: 1.5, depth: 0.5 }, {
         name: "Hole",
+        floor,
+        position: snap(at),
+      }),
+  },
+  {
+    key: "build:grate",
+    title: "Drain grate",
+    group: "Builders",
+    icon: "grid",
+    make: (floor, at) =>
+      makeItem("hole", { sizeX: 0.6, sizeY: 1.0, depth: 0.4, grate: defaultGrate() }, {
+        name: "Drain grate",
         floor,
         position: snap(at),
       }),

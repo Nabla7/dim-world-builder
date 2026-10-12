@@ -10,6 +10,7 @@ import type {
   RoomParams,
   StairsParams,
   Vec3,
+  GrateParams,
   LightParams,
 } from "./types.ts";
 
@@ -82,6 +83,15 @@ export const defaultLight = (): LightParams => ({
   range: 8,
   angle: 40,
   shadows: false,
+});
+
+/** a street storm drain: 3 cm slats with 4 cm openings, 5 cm deep */
+export const defaultGrate = (): GrateParams => ({
+  pattern: "slats",
+  direction: "y",
+  barWidth: 0.03,
+  gap: 0.04,
+  barDepth: 0.05,
 });
 
 export const defaultHill = (): HillParams => ({

@@ -22,12 +22,13 @@ import {
   TileGrid,
   Toggle,
 } from "../ui.ts";
-import { PAINT } from "../world/defaults.ts";
+import { defaultGrate, PAINT } from "../world/defaults.ts";
 import { openingPreset } from "../world/geometry.ts";
 import { slug } from "../world/keys.ts";
 import type {
   AprilTagParams,
   CameraView,
+  GrateParams,
   DoorOpening,
   HillParams,
   HoleParams,
@@ -752,6 +753,77 @@ function HoleEditor({ item }: { item: Extract<Item, { kind: "hole" }> }) {
             ? "Cuts all the way through the floor."
             : "A pit: it keeps a bottom."
           : "This floor has no slab to cut: turn one on in Floors."}
+      </Text>
+      <Toggle
+        value={Boolean(p.grate)}
+        onChange={(on: boolean) => set({ grate: on ? defaultGrate() : undefined })}
+        label="Drain grate"
+        data-testid="hole-grate"
+      />
+      {p.grate && <GrateEditor grate={p.grate} onChange={(grate) => set({ grate })} />}
+    </>
+  );
+}
+
+function GrateEditor({ grate, onChange }: { grate: GrateParams; onChange: (grate: GrateParams) => void }) {
+  const set = (change: Partial<GrateParams>) => onChange({ ...grate, ...change });
+  return (
+    <>
+      <Field label="Pattern">
+        <Segmented
+          size="sm"
+          value={grate.pattern}
+          items={[
+            { value: "slats", label: "Slats" },
+            { value: "grid", label: "Grid" },
+          ]}
+          onChange={(pattern: string) => set({ pattern: pattern as GrateParams["pattern"] })}
+          data-testid="grate-pattern"
+        />
+      </Field>
+      {grate.pattern === "slats" && (
+        <Field label="Slats run along">
+          <Segmented
+            size="sm"
+            value={grate.direction}
+            items={[
+              { value: "x", label: "X" },
+              { value: "y", label: "Y" },
+            ]}
+            onChange={(direction: string) => set({ direction: direction as GrateParams["direction"] })}
+          />
+        </Field>
+      )}
+      <Range
+        label="Bar width"
+        value={grate.barWidth}
+        min={0.005}
+        max={0.2}
+        step={0.005}
+        unit="m"
+        onChange={(barWidth) => set({ barWidth })}
+      />
+      <Range
+        label="Gap between bars"
+        value={grate.gap}
+        min={0.01}
+        max={0.3}
+        step={0.005}
+        unit="m"
+        onChange={(gap) => set({ gap })}
+      />
+      <Range
+        label="Bar depth"
+        value={grate.barDepth}
+        min={0.01}
+        max={0.3}
+        step={0.01}
+        unit="m"
+        onChange={(barDepth) => set({ barDepth })}
+      />
+      <Text small muted>
+        Every bar is a collision box flush with the floor: lidar sees down through the gaps, and feet can catch in
+        them.
       </Text>
     </>
   );

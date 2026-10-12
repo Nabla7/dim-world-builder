@@ -1,0 +1,23 @@
+# pip install -e this folder (into dimos's venv) and dimos finds its blueprints:
+#   dimos run clutter-yard.go2          a Go2 in this world, plus the SceneData module
+#   dimos run <blueprint> clutter-yard.scene-data --scene-package <this folder>   SceneData beside any sim2 blueprint
+[project]
+name = "clutter_yard"
+version = "0.1.0"
+description = "A dim-world-builder world for dimos sim2"
+requires-python = ">=3.10"
+
+[project.entry-points."dimos.blueprints"]
+go2 = "clutter_yard:go2"
+scene-data = "clutter_yard.scene_data:SceneData"
+
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["clutter_yard"]
+package-dir = { "clutter_yard" = "." }
+
+[tool.setuptools.package-data]
+"*" = ["*", "**/*"]

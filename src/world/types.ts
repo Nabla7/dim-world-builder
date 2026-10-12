@@ -67,6 +67,21 @@ export interface HoleParams {
   sizeY: number;
   /** how far down it goes; at least the slab's thickness cuts all the way through */
   depth: number;
+  /** a drain grate over the hole: bars flush with the floor's top */
+  grate?: GrateParams;
+}
+
+/** a storm-drain grate: parallel slats, or a grid of bars both ways; every bar is a collision box */
+export interface GrateParams {
+  pattern: "slats" | "grid";
+  /** slats run along x or along y (a grid has both) */
+  direction: "x" | "y";
+  /** each bar's width across, meters */
+  barWidth: number;
+  /** the opening between bars, meters */
+  gap: number;
+  /** how deep each bar goes below the floor's top, meters */
+  barDepth: number;
 }
 
 /** a light for the simulation's cameras (and the editor's view): lidar doesn't see light */

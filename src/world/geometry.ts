@@ -7,6 +7,7 @@ import type {
   DoorOpening,
   Floor,
   HillParams,
+  HoleParams,
   Item,
   MeshAsset,
   PrimitiveParams,
@@ -806,8 +807,8 @@ export function itemShapes(item: Item, assets: Record<string, MeshAsset>): Shape
     case "mesh":
       return meshShapes(assets[item.params.asset], item.scale);
     case "hole":
-      // the hole is cut out of its floor's slab (floorSlab); this is only a handle to pick it by in the editor
-      return [box(
+      // the hole is cut out of its floor's slab (floorSlab); the box is only a handle to pick it by in the editor
+      return [...grateShapes(item.params), box(
         [0, 0, -item.params.depth / 2],
         [item.params.sizeX, item.params.sizeY, item.params.depth],
         [0.9, 0.3, 0.2, 0.18],
@@ -889,6 +890,38 @@ export function aprilTagShapes(p: AprilTagParams): Shape[] {
 }
 
 /** a floor's slab with its holes cut out: boxes over the cells a grid of the hole edges makes; pits keep a bottom */
+/** bar centers across a span: as many bars as fit with at least `gap` between them, spaced evenly, edge gaps too */
+export function barCenters(span: number, barWidth: number, gap: number): number[] {
+  const count = Math.floor((span - gap) / (barWidth + gap));
+  if (count < 1) return [];
+  const spacing = (span - count * barWidth) / (count + 1);
+  return Array.from({ length: count }, (_, i) => -span / 2 + spacing * (i + 1) + barWidth * (i + 0.5));
+}
+
+/** a hole's grate: bars whose tops are flush with the floor (z = 0 in the hole's frame), running the hole's length */
+export function grateShapes(p: HoleParams): Shape[] {
+  const g = p.grate;
+  if (!g || g.barWidth <= 0 || g.gap <= 0) return [];
+  const depth = Math.max(0.005, Math.min(g.barDepth, p.depth));
+  const metal: Rgba = [0.2, 0.21, 0.23, 1];
+  const shapes: Shape[] = [];
+  const along = (direction: "x" | "y") => {
+    // bars running along `direction`, spaced across the other side
+    const across = direction === "x" ? p.sizeY : p.sizeX;
+    const length = direction === "x" ? p.sizeX : p.sizeY;
+    for (const c of barCenters(across, g.barWidth, g.gap)) {
+      shapes.push(box(
+        direction === "x" ? [0, c, -depth / 2] : [c, 0, -depth / 2],
+        direction === "x" ? [length, g.barWidth, depth] : [g.barWidth, length, depth],
+        metal,
+      ));
+    }
+  };
+  along(g.direction);
+  if (g.pattern === "grid") along(g.direction === "x" ? "y" : "x");
+  return shapes;
+}
+
 export function floorSlab(floor: Floor, holes: Item[], elevation: number): Body | null {
   const slab = floor.slab;
   if (!slab || slab.thickness <= 0) return null;
