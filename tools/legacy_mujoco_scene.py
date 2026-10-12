@@ -1,8 +1,8 @@
 """An exported world as a scene for dimos's older MuJoCo sim (dimos/simulation/mujoco, `dimos --simulation`).
 
 That sim inserts the robot into a scene XML and loads every file from one flat {basename: bytes} map, and it spawns
-the robot at the origin. So this writes <out>/scene_<name>.xml plus <out>/meshes and <out>/textures with unique
-basenames, drops moving (mocap) bodies, shifts the world so its default spawn is at the origin, and tones the
+the robot at mujoco_start_pos (-1, 1). So this writes <out>/scene_<name>.xml plus <out>/meshes and <out>/textures with unique
+basenames, drops moving (mocap) bodies, shifts the world so its default spawn is where the robot starts, and tones the
 lighting down for that sim's renderer.
 
     python tools/legacy_mujoco_scene.py ~/dimos_worlds/office_555 <dimos>/data/mujoco_office_555 office_555
@@ -15,6 +15,10 @@ import json
 from pathlib import Path
 import shutil
 import xml.etree.ElementTree as ET
+
+
+# dimos's GlobalConfig.mujoco_start_pos default
+ROBOT_START = (-1.0, 1.0)
 
 
 def convert(world: Path, out: Path, name: str) -> Path:
@@ -54,8 +58,10 @@ def convert(world: Path, out: Path, name: str) -> Path:
     children = [child for child in list(worldbody) if child.get("mocap") != "true"]
     for child in list(worldbody):
         worldbody.remove(child)
-    # the robot starts at the origin: move the world so the scene's default spawn lands there
-    frame = ET.SubElement(worldbody, "frame", pos=f"{-sx:g} {-sy:g} 0")
+    # the robot starts at mujoco_start_pos (default -1, 1) and a demo person stands at the origin: move the world so the
+    # scene's default spawn lands under the robot
+    rx, ry = ROBOT_START
+    frame = ET.SubElement(worldbody, "frame", pos=f"{rx - sx:g} {ry - sy:g} 0")
     frame.extend(children)
 
     xml = out / f"scene_{name}.xml"
