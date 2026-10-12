@@ -185,8 +185,8 @@ export function office555(): Project {
   // ── floor 1: the shell (west block walls reach floor 2's slab; the east hall is double height) ──
   const shell = 6;
   const west = UPPER_Z - UPPER_SLAB;
-  // the west entrance at y 14.6..16.4, a side door (y 5.35..6.25) between the lab's couch and the corner stairs
-  wall(-0.45, -12.45, -0.45, 17.55, ground, west, [[17.8, 18.7], [27.05, 28.85]], "Outer wall");
+  // the west entrance at y 14.6..16.4, side doors at the corner stairs (y 5.35..6.25) and the south stairs' foot (y -5.5..-4.6)
+  wall(-0.45, -12.45, -0.45, 17.55, ground, west, [[6.95, 7.85], [17.8, 18.7], [27.05, 28.85]], "Outer wall");
   wall(-0.45, 17.55, 9.85, 17.55, ground, west, [], "Outer wall");
   wall(9.95, 17.55, 29.7, 17.55, ground, shell, [], "Outer wall");
   // the east hall's outer wall: two big windows, their sills above the shelving
@@ -219,8 +219,7 @@ export function office555(): Project {
   wall(-0.45, -4.45, 1.8, -4.45, ground, 3, [[0.0, 0.9]], "Small room wall");
 
   // the south rooms
-  // the south stairs' east wall, with a door (y -5.65..-4.65) at their foot
-  wall(1.45, -4.45, 1.45, -11.15, ground, 3, [[0.2, 1.2]], "Stairwell wall");
+  // (no wall along the south stairs' east side: the south room opens onto them)
   wall(1.45, -11.15, 6.35, -11.15, ground, 3, [[3.6, 4.6]], "South room wall");
   wall(6.35, -11.15, 6.35, -7.35, ground, 3, [], "South room wall");
   wall(6.6, -7.3, 9.55, -7.3, ground, 3, [], "South room wall");
@@ -468,28 +467,22 @@ export function office555(): Project {
     position: [0.23, 6.45, 0],
     rotation: yaw(Math.PI / 2),
   }));
-  // the side door in the west wall, shut
-  add(box(ground, -0.45, 5.8, [0.06, 0.9, 2.1], PAINT.wood, "Side door"));
-  add(makeItem("primitive", { shape: "box", color: PAINT.steel }, {
-    name: "Door handle",
-    floor: ground,
-    position: [-0.39, 6.12, 1.0],
-    scale: [0.04, 0.03, 0.2],
-  }));
-  add(makeItem("primitive", { shape: "box", color: WALL_PAINT }, {
-    name: "Side door lintel",
-    floor: ground,
-    position: [-0.45, 5.8, 2.1],
-    scale: [0.15, 0.9, UPPER_Z - UPPER_SLAB - 2.1],
-  }));
-  // the stairwell door, swung open flat against the corridor side of the wall, hinged at its south jamb
-  add(box(ground, 1.55, -6.15, [0.04, 1.0, 2.1], PAINT.wood, "Stairwell door"));
-  add(makeItem("primitive", { shape: "box", color: PAINT.steel }, {
-    name: "Door handle",
-    floor: ground,
-    position: [1.6, -5.75, 1.0],
-    scale: [0.04, 0.03, 0.2],
-  }));
+  // the side doors in the west wall, shut; through the south one, turn right and up the south stairs
+  for (const y of [5.8, -5.05]) {
+    add(box(ground, -0.45, y, [0.06, 0.9, 2.1], PAINT.wood, "Side door"));
+    add(makeItem("primitive", { shape: "box", color: PAINT.steel }, {
+      name: "Door handle",
+      floor: ground,
+      position: [-0.39, y + 0.32, 1.0],
+      scale: [0.04, 0.03, 0.2],
+    }));
+    add(makeItem("primitive", { shape: "box", color: WALL_PAINT }, {
+      name: "Side door lintel",
+      floor: ground,
+      position: [-0.45, y, 2.1],
+      scale: [0.15, 0.9, UPPER_Z - UPPER_SLAB - 2.1],
+    }));
+  }
   // where they come up through floor 2
   add(makeItem("hole", { sizeX: 1.6, sizeY: 3.0, depth: UPPER_SLAB }, {
     name: "South stairwell",
