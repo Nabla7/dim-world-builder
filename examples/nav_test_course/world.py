@@ -1,7 +1,7 @@
 """nav_test_course: a dim-world-builder world for dimos sim2 (MuJoCo); `python -m nav_test_course.world` checks it.
 
-Files beside this one: scene.xml (MJCF), scene.json (dimos.scene.v1: entities, spawns, movers), world.json (remembered
-camera views, the nav test, the editor's project), meshes/, textures/, scene_data.py (the SceneData module) and
+Files beside this one: scene.xml (MJCF), scene.json (dimos.scene.v1: entities, spawns, movers; its extensions.dim_world_builder
+holds the remembered camera views, the nav test and the editor's project), meshes/, textures/, scene_data.py (the SceneData module) and
 blueprints.py (`go2`).
 11 items, 2 floor(s).
 """
@@ -19,10 +19,9 @@ from numpy.typing import NDArray
 SCENE_DIR = Path(__file__).resolve().parent
 SCENE_XML = SCENE_DIR / "scene.xml"
 SCENE_JSON = SCENE_DIR / "scene.json"
-WORLD_JSON = SCENE_DIR / "world.json"
 
 _scene = json.loads(SCENE_JSON.read_text())
-_world = json.loads(WORLD_JSON.read_text())
+_world = _scene.get("extensions", {}).get("dim_world_builder", {})
 SPAWNS: dict[str, dict[str, Any]] = _scene.get("spawns", {})
 ENTITIES: dict[str, dict[str, Any]] = _scene.get("entities", {})
 MOVERS: list[dict[str, Any]] = _scene.get("movers", [])

@@ -1,5 +1,5 @@
 // Writes a project as a directory dimos can load: `--scene-package <dir>` for sim2, `import <name>.world` for Python (a namespace package: no __init__.py).
-//   <dir>/scene.xml  scene.json  world.json  world.py  blueprints.py  scene_data.py  pyproject.toml  README.md  meshes/<asset>/*  textures/  [visual.glb]
+//   <dir>/scene.xml  scene.json  world.py  blueprints.py  scene_data.py  pyproject.toml  README.md  meshes/<asset>/*  textures/  [visual.glb]
 
 import { buildWorld } from "../src/world/geometry.ts";
 import { toScene } from "../src/world/mjcf.ts";
@@ -7,6 +7,9 @@ import { keyedProject } from "../src/world/keys.ts";
 import type { MeshAsset, Project } from "../src/world/types.ts";
 
 /** a Python package name: lower snake case, not starting with a digit */
+/** scene.json extensions key for this app's data (views, nav test, project) */
+export const EXTENSION = "dim_world_builder";
+
 export function packageName(name: string): string {
   const snake = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
   return /^[a-z]/.test(snake) ? snake : `world_${snake || "untitled"}`;
@@ -42,17 +45,24 @@ export async function exportProject(
     files.push(path);
   };
   await write("scene.xml", scene.xml);
-  await write("scene.json", JSON.stringify(scene.sceneJson, null, 2) + "\n");
-  // everything that isn't sim2's: the remembered camera views, the nav test, and the editor's project
-  const worldJson = {
-    format: "dim-world-builder.world.v1",
-    views: (scene.viewsJson as { views: unknown[] }).views,
-    nav: navEval(project),
-    project,
+  // one json: sim2's scene, plus (in extensions, which sim2 ignores) the views, the nav test and the editor's project
+  const sceneJson = {
+    ...(scene.sceneJson as Record<string, unknown>),
+    extensions: {
+      [EXTENSION]: { views: (scene.viewsJson as { views: unknown[] }).views, nav: navEval(project), project },
+    },
   };
-  await write("world.json", JSON.stringify(worldJson, null, 2) + "\n");
-  // earlier exports' files: folded into scene.json / world.json, and dimos allows no __init__.py
-  const stale = ["movers.json", "views.json", "world.project.json", "nav_eval.json", "__init__.py", "__main__.py"];
+  await write("scene.json", JSON.stringify(sceneJson, null, 2) + "\n");
+  // earlier exports' files, now folded into scene.json (and dimos allows no __init__.py)
+  const stale = [
+    "movers.json",
+    "views.json",
+    "world.project.json",
+    "nav_eval.json",
+    "world.json",
+    "__init__.py",
+    "__main__.py",
+  ];
   for (const file of stale) await Deno.remove(`${dir}/${file}`).catch(() => {});
   // a namespace package: the world, its blueprints, the SceneData module
   await write("world.py", worldModule(name, project));
@@ -102,26 +112,22 @@ export function navEval(project: Project) {
 }
 
 function readme(name: string, project: Project): string {
+  const world = name.replace(/_/g, "-");
   return `# ${name}
 
-A world made with [dim-world-builder](https://github.com/jeff-hykin/dim-world-builder): ${project.items.length} items on
-${project.floors.length} floor(s). Open \`world.json\` in the app to change it.
-
-Run a simulated Go2 in it (dimos sim2; the Go2 FREE policy installs with
-\`python -m dimos.control.go2_freewalk.models --install\`):
+A [dim-world-builder](https://github.com/jeff-hykin/dim-world-builder) world: ${project.items.length} items,
+${project.floors.length} floor(s). \`scene.json\` is sim2's scene; its \`extensions.${EXTENSION}\` holds the views, the nav
+test and the editor's project.
 
 \`\`\`sh
-dimos --simulation mujoco --transport zenoh --scene-package $PWD run unitree-go2-freewalk
+uv pip install -e .                                          # into dimos's venv
+dtk run ${world}.go2 --simulation mujoco --transport zenoh   # a Go2 here, plus SceneData
+python -m ${name}.world                                      # compile and summarize
 \`\`\`
 
-From Python (with this folder's parent on \`sys.path\`):
-
 \`\`\`python
-import ${name}
-${name}.SCENE_XML          # the MJCF
-${name}.SPAWNS             # named spawn poses ("default" is where robots start)
-${name}.check()            # compiles the MJCF with MuJoCo
-blueprint = ${name}.blueprint()   # unitree-go2-freewalk in this world
+from ${name} import world
+world.render_view("overview")   # RGB image from a saved view
 \`\`\`
 `;
 }
@@ -129,8 +135,8 @@ blueprint = ${name}.blueprint()   # unitree-go2-freewalk in this world
 function worldModule(name: string, project: Project): string {
   return `"""${name}: a dim-world-builder world for dimos sim2 (MuJoCo); \`python -m ${name}.world\` checks it.
 
-Files beside this one: scene.xml (MJCF), scene.json (dimos.scene.v1: entities, spawns, movers), world.json (remembered
-camera views, the nav test, the editor's project), meshes/, textures/, scene_data.py (the SceneData module) and
+Files beside this one: scene.xml (MJCF), scene.json (dimos.scene.v1: entities, spawns, movers; its extensions.${EXTENSION}
+holds the remembered camera views, the nav test and the editor's project), meshes/, textures/, scene_data.py (the SceneData module) and
 blueprints.py (\`go2\`).
 ${project.items.length} items, ${project.floors.length} floor(s).
 """
@@ -148,10 +154,9 @@ from numpy.typing import NDArray
 SCENE_DIR = Path(__file__).resolve().parent
 SCENE_XML = SCENE_DIR / "scene.xml"
 SCENE_JSON = SCENE_DIR / "scene.json"
-WORLD_JSON = SCENE_DIR / "world.json"
 
 _scene = json.loads(SCENE_JSON.read_text())
-_world = json.loads(WORLD_JSON.read_text())
+_world = _scene.get("extensions", {}).get("${EXTENSION}", {})
 SPAWNS: dict[str, dict[str, Any]] = _scene.get("spawns", {})
 ENTITIES: dict[str, dict[str, Any]] = _scene.get("entities", {})
 MOVERS: list[dict[str, Any]] = _scene.get("movers", [])

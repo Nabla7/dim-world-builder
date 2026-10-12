@@ -1,21 +1,16 @@
 # nav_test_course
 
-A world made with [dim-world-builder](https://github.com/jeff-hykin/dim-world-builder): 11 items on
-2 floor(s). Open `world.json` in the app to change it.
-
-Run a simulated Go2 in it (dimos sim2; the Go2 FREE policy installs with
-`python -m dimos.control.go2_freewalk.models --install`):
+A [dim-world-builder](https://github.com/jeff-hykin/dim-world-builder) world: 11 items,
+2 floor(s). `scene.json` is sim2's scene; its `extensions.dim_world_builder` holds the views, the nav
+test and the editor's project.
 
 ```sh
-dimos --simulation mujoco --transport zenoh --scene-package $PWD run unitree-go2-freewalk
+uv pip install -e .                                          # into dimos's venv
+dtk run nav-test-course.go2 --simulation mujoco --transport zenoh   # a Go2 here, plus SceneData
+python -m nav_test_course.world                                      # compile and summarize
 ```
 
-From Python (with this folder's parent on `sys.path`):
-
 ```python
-import nav_test_course
-nav_test_course.SCENE_XML          # the MJCF
-nav_test_course.SPAWNS             # named spawn poses ("default" is where robots start)
-nav_test_course.check()            # compiles the MJCF with MuJoCo
-blueprint = nav_test_course.blueprint()   # unitree-go2-freewalk in this world
+from nav_test_course import world
+world.render_view("overview")   # RGB image from a saved view
 ```
