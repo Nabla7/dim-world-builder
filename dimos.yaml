@@ -29,11 +29,14 @@ provides:
     endpoints:
         - method: POST
           path: api/export
-          description: Write a world project as a dimos sim2 scene folder (scene.xml, scene.json, movers.json, a Python package)
+          description: Write a world as a dimos sim2 scene folder (scene.xml, scene.json, movers.json, nav_eval.json, a Python package)
           params:
               project:
                   type: object
-                  description: the world (dim-world-builder.project.v1)
+                  description: the world (dim-world-builder.project.v1); or give name
+              name:
+                  type: string
+                  description: the name of a saved world to export instead of a project
               parentDir:
                   type: string
                   description: the folder to write <name>/ into (default ~/dimos_worlds)
@@ -45,6 +48,43 @@ provides:
           path: api/projects
           description: The names of the saved worlds
           role: context
+        - method: GET
+          path: api/project
+          description: A saved world's project (rooms, stairs, items, floors, movers, nav test) as JSON
+          params:
+              name:
+                  type: string
+                  description: the world's name
+        - method: POST
+          path: api/project
+          description: Save (create or replace) a world project
+          params:
+              project:
+                  type: object
+                  description: the world (dim-world-builder.project.v1)
+        - method: POST
+          path: api/project/items
+          description: "Add items to a saved world. Each item: kind (primitive|mesh|room|stairs|hill|hole|apriltag), params, and optionally name, floor, position [x,y,z], rotation [x,y,z,w], scale, mover"
+          params:
+              name:
+                  type: string
+                  description: the world's name
+              items:
+                  type: array
+                  description: the items to add
+        - method: POST
+          path: api/generate
+          description: Generate and save a world (playground is a big two-floor test scene; test_course, clutter_yard, empty)
+          params:
+              kind:
+                  type: string
+                  description: playground | test_course | clutter_yard | empty
+              name:
+                  type: string
+                  description: the new world's name (optional)
+              seed:
+                  type: number
+                  description: for playground (optional)
     private:
         - api/internal/*
         - files/*

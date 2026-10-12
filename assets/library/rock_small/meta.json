@@ -3,7 +3,7 @@
   "name": "Small Rock",
   "category": "nature",
   "size": [
-    0.1689,
+    0.1688,
     0.3203,
     0.1437
   ],
@@ -12,54 +12,54 @@
     {
       "file": "visual_0.obj",
       "rgba": [
-        0.245,
-        0.171,
-        0.116,
+        0.222,
+        0.154,
+        0.109,
         1.0
       ]
     },
     {
       "file": "visual_1.obj",
       "rgba": [
-        0.181,
-        0.126,
-        0.095,
+        0.274,
+        0.195,
+        0.127,
         1.0
       ]
     },
     {
       "file": "visual_2.obj",
       "rgba": [
-        0.301,
-        0.221,
-        0.147,
+        0.324,
+        0.245,
+        0.164,
         1.0
       ]
     },
     {
       "file": "visual_3.obj",
       "rgba": [
-        0.345,
-        0.272,
-        0.189,
+        0.171,
+        0.12,
+        0.093,
         1.0
       ]
     },
     {
       "file": "visual_4.obj",
       "rgba": [
-        0.378,
-        0.32,
-        0.248,
+        0.364,
+        0.3,
+        0.222,
         1.0
       ]
     },
     {
       "file": "visual_5.obj",
       "rgba": [
-        0.425,
-        0.374,
-        0.321,
+        0.411,
+        0.359,
+        0.301,
         1.0
       ]
     }
@@ -73,12 +73,7 @@
     "hull_5.obj",
     "hull_6.obj",
     "hull_7.obj",
-    "hull_8.obj",
-    "hull_9.obj",
-    "hull_10.obj",
-    "hull_11.obj",
-    "hull_12.obj",
-    "hull_13.obj"
+    "hull_8.obj"
   ],
   "license": "CC0-1.0",
   "source": "https://polyhaven.com/a/rock_07",

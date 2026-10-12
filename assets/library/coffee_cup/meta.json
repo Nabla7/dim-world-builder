@@ -1,47 +1,38 @@
 {
   "id": "coffee_cup",
-  "name": "Coffee Cup",
+  "name": "Coffee Mug",
   "category": "kitchen",
   "size": [
-    0.1854,
-    0.2457,
-    0.12
+    0.1257,
+    0.1043,
+    0.1
   ],
   "base": "",
   "visuals": [
     {
       "file": "visual_0.obj",
       "rgba": [
-        0.541,
-        0.541,
-        0.6,
+        0.412,
+        0.243,
+        0.179,
         1.0
       ]
     },
     {
       "file": "visual_1.obj",
       "rgba": [
-        0.629,
-        0.629,
-        0.655,
+        0.384,
+        0.403,
+        0.483,
         1.0
       ]
     },
     {
       "file": "visual_2.obj",
       "rgba": [
-        0.674,
-        0.674,
-        0.684,
-        1.0
-      ]
-    },
-    {
-      "file": "visual_3.obj",
-      "rgba": [
-        0.583,
-        0.583,
-        0.625,
+        0.467,
+        0.489,
+        0.586,
         1.0
       ]
     }
@@ -61,7 +52,16 @@
     "hull_11.obj",
     "hull_12.obj",
     "hull_13.obj",
-    "hull_14.obj"
+    "hull_14.obj",
+    "hull_15.obj",
+    "hull_16.obj",
+    "hull_17.obj",
+    "hull_18.obj",
+    "hull_19.obj",
+    "hull_20.obj",
+    "hull_21.obj",
+    "hull_22.obj",
+    "hull_23.obj"
   ],
   "license": "CC0-1.0",
   "source": "https://kenney.nl/assets/food-kit",

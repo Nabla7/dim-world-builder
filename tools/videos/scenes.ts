@@ -19,6 +19,8 @@ async function fresh(demo: Demo, name: string) {
   const input = demo.app.locator("[data-testid=world-name]");
   await input.fill(name);
   await demo.page.waitForTimeout(300);
+  // close enough to see what's added (things land where the camera looks: x 2, y 0)
+  await demo.lookAt([2, 0, 0.4], [-2.5, -6.5, 4.5]);
 }
 
 async function addFromPalette(demo: Demo, key: string, search?: string) {

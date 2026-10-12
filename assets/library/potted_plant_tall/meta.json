@@ -3,63 +3,54 @@
   "name": "Tall Potted Plant",
   "category": "nature",
   "size": [
-    0.5874,
-    0.6336,
-    1.3502
+    0.587,
+    0.6305,
+    1.3483
   ],
   "base": "",
   "visuals": [
     {
       "file": "visual_0.obj",
       "rgba": [
-        0.439,
-        0.265,
-        0.171,
+        0.481,
+        0.322,
+        0.222,
         1.0
       ]
     },
     {
       "file": "visual_1.obj",
       "rgba": [
-        0.254,
-        0.278,
-        0.165,
+        0.3,
+        0.302,
+        0.213,
         1.0
       ]
     },
     {
       "file": "visual_2.obj",
       "rgba": [
-        0.486,
-        0.32,
-        0.22,
+        0.219,
+        0.224,
+        0.151,
         1.0
       ]
     },
     {
       "file": "visual_3.obj",
       "rgba": [
-        0.206,
-        0.195,
-        0.143,
+        0.441,
+        0.266,
+        0.174,
         1.0
       ]
     },
     {
       "file": "visual_4.obj",
       "rgba": [
-        0.302,
-        0.285,
-        0.222,
-        1.0
-      ]
-    },
-    {
-      "file": "visual_5.obj",
-      "rgba": [
-        0.372,
-        0.36,
-        0.285,
+        0.006,
+        0.007,
+        0.009,
         1.0
       ]
     }
@@ -87,8 +78,7 @@
     "hull_19.obj",
     "hull_20.obj",
     "hull_21.obj",
-    "hull_22.obj",
-    "hull_23.obj"
+    "hull_22.obj"
   ],
   "license": "CC0-1.0",
   "source": "https://polyhaven.com/a/potted_plant_01",

@@ -3,62 +3,62 @@
   "name": "Desk Lamp",
   "category": "office",
   "size": [
-    0.2017,
-    0.6139,
-    0.8926
+    0.2018,
+    0.6143,
+    0.8927
   ],
   "base": "",
   "visuals": [
     {
       "file": "visual_0.obj",
       "rgba": [
-        0.556,
-        0.554,
-        0.546,
+        0.646,
+        0.262,
+        0.064,
         1.0
       ]
     },
     {
       "file": "visual_1.obj",
       "rgba": [
-        0.664,
-        0.268,
-        0.058,
+        0.564,
+        0.562,
+        0.555,
         1.0
       ]
     },
     {
       "file": "visual_2.obj",
       "rgba": [
-        0.555,
-        0.236,
-        0.095,
+        0.496,
+        0.221,
+        0.106,
         1.0
       ]
     },
     {
       "file": "visual_3.obj",
       "rgba": [
-        0.386,
-        0.379,
-        0.376,
+        0.437,
+        0.429,
+        0.423,
         1.0
       ]
     },
     {
       "file": "visual_4.obj",
       "rgba": [
-        0.379,
-        0.191,
-        0.122,
+        0.319,
+        0.307,
+        0.304,
         1.0
       ]
     },
     {
       "file": "visual_5.obj",
       "rgba": [
-        0.699,
-        0.699,
+        0.7,
+        0.7,
         0.699,
         1.0
       ]
@@ -81,7 +81,8 @@
     "hull_13.obj",
     "hull_14.obj",
     "hull_15.obj",
-    "hull_16.obj"
+    "hull_16.obj",
+    "hull_17.obj"
   ],
   "license": "CC0-1.0",
   "source": "https://polyhaven.com/a/desk_lamp_arm_01",

@@ -15,7 +15,11 @@
 //   GET  /files/library/<id>/<file>, /files/imports/<id>/<file>   private: mesh files
 
 import { exportProject, packageName } from "./export.ts";
-import type { MeshAsset, Project } from "../src/world/types.ts";
+import type { Item, MeshAsset, Project } from "../src/world/types.ts";
+import { emptyProject } from "../src/world/defaults.ts";
+import { testCourse } from "../src/world/examples.ts";
+import { clutterYard } from "../src/world/examples_clutter.ts";
+import { playground } from "../src/world/examples_playground.ts";
 
 const app = JSON.parse(Deno.env.get("DIMOS_APP") ?? "{}") as {
   name?: string;
@@ -161,6 +165,27 @@ async function cook(job: CookJob, input: string, targetHeight: number | null) {
 
 const safeName = (name: string) => packageName(decodeURIComponent(name));
 
+async function saveProject(project: Project) {
+  await Deno.mkdir(projectsDir, { recursive: true });
+  await Deno.writeTextFile(
+    `${projectsDir}/${packageName(project.name)}.json`,
+    JSON.stringify(project, null, 2),
+  );
+}
+
+/** fill in what a caller may leave out of an item: an id, a name, the floor, a pose */
+function completeItem(item: Partial<Item>, floor: string): Item {
+  return {
+    id: crypto.randomUUID().replace(/-/g, "").slice(0, 12),
+    name: item.name ?? item.kind ?? "item",
+    floor: item.floor ?? floor,
+    position: item.position ?? [0, 0, 0],
+    rotation: item.rotation ?? [0, 0, 0, 1],
+    scale: item.scale ?? [1, 1, 1],
+    ...item,
+  } as Item;
+}
+
 async function api(request: Request, url: URL): Promise<Response | null> {
   const path = url.pathname;
   const route = `${request.method} ${path}`;
@@ -190,8 +215,60 @@ async function api(request: Request, url: URL): Promise<Response | null> {
       return json({ saved: file });
     }
   }
+  if (route === "GET /api/project") {
+    const project = await readJson<Project | null>(
+      `${projectsDir}/${safeName(url.searchParams.get("name") ?? "")}.json`,
+      null,
+    );
+    return project ? json(project) : json({ error: "no such project" }, 404);
+  }
+  if (route === "POST /api/project") {
+    const { project } = await request.json() as { project: Project };
+    if (project?.format !== "dim-world-builder.project.v1") {
+      return json({ error: "expected { project } in dim-world-builder.project.v1 format" }, 400);
+    }
+    await saveProject(project);
+    return json({ saved: packageName(project.name), items: project.items.length });
+  }
+  if (route === "POST /api/project/items") {
+    // add items (each a partial item: kind, params, name, position, ...) to a saved project
+    const { name, items } = await request.json() as { name: string; items: Partial<Item>[] };
+    const file = `${projectsDir}/${safeName(name)}.json`;
+    const project = await readJson<Project | null>(file, null);
+    if (!project) return json({ error: `no project ${name}` }, 404);
+    const added = (items ?? []).map((item) => completeItem(item, project.activeFloor));
+    project.items.push(...added);
+    await saveProject(project);
+    return json({ added: added.map((i) => i.id), items: project.items.length });
+  }
+  if (route === "POST /api/generate") {
+    const { kind, name, seed } = await request.json() as {
+      kind: string;
+      name?: string;
+      seed?: number;
+    };
+    const library = (await assets()).list;
+    const generators: Record<string, () => Project> = {
+      playground: () => playground(library, seed ?? 7),
+      test_course: () => testCourse(),
+      clutter_yard: () => clutterYard(),
+      empty: () => emptyProject(name ?? "untitled_world"),
+    };
+    const make = generators[kind];
+    if (!make) {
+      return json({ error: `kind must be one of ${Object.keys(generators).join(", ")}` }, 400);
+    }
+    const project = make();
+    if (name) project.name = name;
+    await saveProject(project);
+    return json({ saved: packageName(project.name), items: project.items.length });
+  }
   if (route === "POST /api/export") {
-    const { project, parentDir } = await request.json() as { project: Project; parentDir?: string };
+    const body = await request.json() as { project?: Project; name?: string; parentDir?: string };
+    const project = body.project ??
+      await readJson<Project | null>(`${projectsDir}/${safeName(body.name ?? "")}.json`, null);
+    if (!project) return json({ error: "give { project } or the { name } of a saved one" }, 400);
+    const parentDir = body.parentDir;
     const parent = (parentDir || `${home}/dimos_worlds`).replace(/^~(?=$|\/)/, home);
     const { list, dirs } = await assets();
     const result = await exportProject(

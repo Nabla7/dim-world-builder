@@ -1,29 +1,29 @@
 {
   "id": "drawer_cabinet",
-  "name": "Tall Drawer Cabinet",
+  "name": "Shelf with Drawers",
   "category": "storage",
   "size": [
     1.1411,
-    0.4881,
-    1.8813
+    0.4901,
+    1.8812
   ],
   "base": "",
   "visuals": [
     {
       "file": "visual_0.obj",
       "rgba": [
-        0.489,
-        0.366,
-        0.247,
+        0.464,
+        0.342,
+        0.227,
         1.0
       ]
     },
     {
       "file": "visual_1.obj",
       "rgba": [
-        0.439,
-        0.32,
-        0.207,
+        0.502,
+        0.381,
+        0.261,
         1.0
       ]
     },
@@ -39,18 +39,18 @@
     {
       "file": "visual_3.obj",
       "rgba": [
-        0.124,
-        0.121,
-        0.144,
+        0.406,
+        0.292,
+        0.183,
         1.0
       ]
     },
     {
       "file": "visual_4.obj",
       "rgba": [
-        0.634,
-        0.634,
-        0.633,
+        0.125,
+        0.122,
+        0.144,
         1.0
       ]
     }
@@ -77,7 +77,8 @@
     "hull_18.obj",
     "hull_19.obj",
     "hull_20.obj",
-    "hull_21.obj"
+    "hull_21.obj",
+    "hull_22.obj"
   ],
   "license": "CC0-1.0",
   "source": "https://polyhaven.com/a/drawer_cabinet",

@@ -3,54 +3,63 @@
   "name": "Leafy Potted Plant",
   "category": "nature",
   "size": [
-    0.7012,
-    0.6574,
-    0.8412
+    0.7009,
+    0.6578,
+    0.8419
   ],
   "base": "",
   "visuals": [
     {
       "file": "visual_0.obj",
       "rgba": [
-        0.477,
-        0.301,
-        0.202,
+        0.471,
+        0.293,
+        0.194,
         1.0
       ]
     },
     {
       "file": "visual_1.obj",
       "rgba": [
-        0.288,
-        0.317,
-        0.215,
+        0.302,
+        0.343,
+        0.224,
         1.0
       ]
     },
     {
       "file": "visual_2.obj",
       "rgba": [
-        0.243,
-        0.23,
-        0.172,
+        0.247,
+        0.241,
+        0.174,
         1.0
       ]
     },
     {
       "file": "visual_3.obj",
       "rgba": [
-        0.171,
-        0.153,
-        0.126,
+        0.182,
+        0.164,
+        0.131,
         1.0
       ]
     },
     {
       "file": "visual_4.obj",
       "rgba": [
-        0.359,
-        0.401,
-        0.252,
+        0.493,
+        0.341,
+        0.233,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_5.obj",
+      "rgba": [
+        0.003,
+        0.008,
+        0.003,
         1.0
       ]
     }
@@ -78,8 +87,7 @@
     "hull_19.obj",
     "hull_20.obj",
     "hull_21.obj",
-    "hull_22.obj",
-    "hull_23.obj"
+    "hull_22.obj"
   ],
   "license": "CC0-1.0",
   "source": "https://polyhaven.com/a/potted_plant_02",

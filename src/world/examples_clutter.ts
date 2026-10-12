@@ -1,6 +1,6 @@
 // A cluttered yard: the kind of floor a robot actually meets. Built from the same scatter the palette uses.
 import { defaultStairs, emptyProject, makeItem, PAINT, yaw } from "./defaults.ts";
-import { scatterClutter } from "../editor/palette.ts";
+import { scatterClutter } from "./scatter.ts";
 import type { Project } from "./types.ts";
 
 export function clutterYard(): Project {
