@@ -1,0 +1,60 @@
+{
+  "id": "book_pile",
+  "name": "Pile of Books",
+  "category": "clutter",
+  "size": [
+    0.2896,
+    0.1819,
+    0.2
+  ],
+  "base": "",
+  "visuals": [
+    {
+      "file": "visual_0.obj",
+      "rgba": [
+        0.802,
+        0.582,
+        0.571,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_1.obj",
+      "rgba": [
+        0.876,
+        0.918,
+        0.926,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_2.obj",
+      "rgba": [
+        0.462,
+        0.916,
+        0.784,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_3.obj",
+      "rgba": [
+        0.988,
+        1.0,
+        1.0,
+        1.0
+      ]
+    }
+  ],
+  "hulls": [
+    "hull_0.obj",
+    "hull_1.obj",
+    "hull_2.obj",
+    "hull_3.obj",
+    "hull_4.obj",
+    "hull_5.obj"
+  ],
+  "license": "CC0-1.0",
+  "source": "https://kenney.nl/assets/furniture-kit",
+  "frame": "z-up"
+}

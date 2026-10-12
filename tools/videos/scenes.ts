@@ -147,8 +147,20 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
     await demo.page.waitForTimeout(800);
     await demo.slide("Tread thickness", 4);
     await demo.slide("Step height", 6);
+    await demo.say("Railings: posts and a rail, a solid panel, or cables", 300);
+    await demo.click('[data-testid="stairs-railing"] >> text="Both"', 900);
+    await demo.clickText("Solid panel", 1100);
+    await demo.clickText("Cables", 1100);
+    await demo.clickText("Posts + rail", 900);
+    await demo.say("Switchback: two flights back and forth with a landing", 300);
+    await demo.click('[data-testid="stairs-style"] >> text="Switchback"', 1500);
+    await demo.slide("Steps", 6);
+    await demo.say("Spiral: around a center post", 300);
+    await demo.click('[data-testid="stairs-style"] >> text="Spiral"', 1500);
+    await demo.slide("Turn", 8);
+    await demo.slide("Center post", 6);
     await demo.say(
-      "Every one exports as solid MuJoCo boxes the robot steps on (and the lidar sees)",
+      "Every one exports as MuJoCo boxes and cylinders the robot steps on (and the lidar sees)",
       2500,
     );
   },
@@ -259,10 +271,28 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
     await demo.say("Ceiling off and on", 300);
     await demo.clickText("Ceiling", 1200);
     await demo.clickText("Ceiling", 900);
-    await demo.say("Add a door and move it along the wall", 300);
-    await demo.clickText("Add a door");
-    await demo.slide("Offset", 15);
-    await demo.slide("Door width", 6);
+    await demo.say("Cut openings: a door, a double door, a window, a crawl-space hatch, an archway", 300);
+    for (const kind of ["door", "double", "window", "crawl", "arch"]) {
+      await demo.click(`[data-testid="add-opening-${kind}"]`, 700);
+    }
+    await demo.say("Then put each on a wall, slide it along, size it", 300);
+    const walls = demo.app.locator('[data-testid=inspector] [role=tablist], [data-testid=inspector] [role=radiogroup]');
+    void walls;
+    for (const [index, wall] of [[1, "S"], [2, "E"], [3, "W"], [4, "S"]] as const) {
+      const group = demo.app.locator(`[data-testid=inspector] >> text="${["Door", "Double door", "Window", "Crawl hatch", "Archway"][index]}"`).first();
+      await group.scrollIntoViewIfNeeded();
+      const row = group.locator("xpath=..");
+      const box = await row.locator(`text="${wall}"`).first().boundingBox();
+      if (box) {
+        const [ox, oy] = await demo.offset();
+        await demo.moveTo(ox + box.x + box.width / 2, oy + box.y + box.height / 2, 15);
+        await demo.page.mouse.down();
+        await demo.page.mouse.up();
+        await demo.page.waitForTimeout(600);
+      }
+    }
+    await demo.slide("Offset", 12);
+    await demo.slide("Opening width", 6);
     await demo.say("Resize with the scale gizmo too", 300);
     await demo.page.keyboard.press("r");
     await dragSelected(demo, 30, -20);
@@ -340,6 +370,32 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
       "Exported as nav_eval.json; verify/nav_eval.py runs it on any robot: Twist to walk, PoseStamped goals",
       4000,
     );
+  },
+
+  async "11_holes_and_apriltags"(demo) {
+    await fresh(demo, "holes_tags_demo");
+    await demo.say("Holes in the floor: the ground floor is a thick slab", 800);
+    await addFromPalette(demo, "build:hole");
+    await demo.slide("Size X", 15);
+    await demo.slide("Depth", 6);
+    await demo.say("A pit keeps a bottom; deeper than the slab cuts all the way through", 1500);
+    await demo.page.keyboard.press("Escape");
+    await demo.say("AprilTags: tag36h11, 10 cm, on any wall", 600);
+    await addFromPalette(demo, "build:room");
+    await dragSelected(demo, 0, -160);
+    await demo.page.keyboard.press("Escape");
+    await demo.click('[data-testid="add-tool:apriltag"]', 600);
+    await demo.say("Click a wall: each click sticks the next tag id there, facing out", 300);
+    const room = await demo.state<number[]>("s.project.items.find(i => i.kind === 'room').position");
+    for (const dx of [-1.5, 0, 1.5]) {
+      const [sx, sy] = await demo.worldToScreen(room[0] + dx, room[1] - 2.6, 1.3);
+      await demo.moveTo(sx, sy, 18);
+      await demo.page.mouse.down();
+      await demo.page.mouse.up();
+      await demo.page.waitForTimeout(700);
+    }
+    await demo.click("[data-testid=tag-tool-done]");
+    await demo.say("Exported as textured meshes: MuJoCo's camera sees them and OpenCV decodes them", 3000);
   },
 
   async "9_viewer_mode"(demo) {
