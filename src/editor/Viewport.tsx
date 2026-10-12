@@ -80,6 +80,7 @@ function exposeForAutomation(viewer: {
   camera: THREE.PerspectiveCamera;
   controls: { target: THREE.Vector3; update(): void };
   renderer: THREE.WebGLRenderer;
+  scene: THREE.Scene;
   requestRender(): void;
 }) {
   const toScreen = (point: THREE.Vector3): [number, number] => {
@@ -100,6 +101,16 @@ function exposeForAutomation(viewer: {
   };
   Object.assign(globalThis, {
     dimWorldBuilder: {
+      /** mean milliseconds to draw one frame of the current view (GPU included), for checking a look's cost */
+      frameMs(frames = 30): number {
+        const gl = viewer.renderer.getContext();
+        viewer.renderer.render(viewer.scene, viewer.camera);
+        gl.finish();
+        const start = performance.now();
+        for (let i = 0; i < frames; i++) viewer.renderer.render(viewer.scene, viewer.camera);
+        gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(4));
+        return (performance.now() - start) / frames;
+      },
       /** an item's origin (its base) on screen */
       itemOnScreen(id: string): [number, number] | null {
         const object = view.worldRoot?.children.find((o) => o.userData.itemId === id);
