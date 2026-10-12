@@ -1,6 +1,7 @@
 """SceneData: a dimos module that describes this world to frontends.
 
-Publish anything on `scene_data_request` (a std_msgs.String; its text is echoed back as `request`) and it answers on
+It publishes a small `scene_info` (std_msgs.String, JSON dimos.scene_info.v1: the scene id) every second so frontends
+can discover it. Publish anything on `scene_data_request` (a std_msgs.String; its text is echoed back as `request`) and it answers on
 `scene_data` with one std_msgs.String holding JSON (format dimos.scene_data.v1): every body's world pose, its geoms
 (primitives, meshes, height fields), lights, cameras (the world's remembered views), and the mesh / height-field /
 texture data they use, read from the compiled
@@ -197,20 +198,37 @@ def scene_data(scene_dir: Path = SCENE_DIR) -> dict[str, Any]:
 
 
 class SceneData(Module):
-    """Answers each message on scene_data_request with this world's description on scene_data."""
+    """Answers each message on scene_data_request with this world's description on scene_data, and says it's here with a
+    tiny scene_info message every second (frontends find topics by seeing them publish; scene_data only does on request)."""
 
     scene_data_request: In[String]
     scene_data: Out[String]
+    scene_info: Out[String]
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self._encoded: str | None = None
         self._lock = threading.Lock()
+        self._stop = threading.Event()
 
     @rpc
     def start(self) -> None:
         super().start()
         self.scene_data_request.subscribe(self._on_request)
+        self._stop.clear()
+        threading.Thread(target=self._announce, name="scene-info", daemon=True).start()
+
+    @rpc
+    def stop(self) -> None:
+        self._stop.set()
+        super().stop()
+
+    def _announce(self) -> None:
+        scene_json = SCENE_DIR / "scene.json"
+        scene_id = json.loads(scene_json.read_text()).get("id", SCENE_DIR.name) if scene_json.exists() else SCENE_DIR.name
+        info = json.dumps({"format": "dimos.scene_info.v1", "id": scene_id, "request": "/scene_data_request", "data": "/scene_data"})
+        while not self._stop.wait(1.0):
+            self.scene_info.publish(String(info))
 
     def _on_request(self, request: String) -> None:
         with self._lock:

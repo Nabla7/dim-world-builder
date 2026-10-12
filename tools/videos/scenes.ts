@@ -431,7 +431,10 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
     }).spawn();
     // its output goes to a log beside the video, for when the run dies early
     const log = await Deno.open(`${outDir}/playground_nav_eval.log`, { write: true, create: true, truncate: true });
-    const logged = Promise.all([sim.stdout.pipeTo(log.writable, { preventClose: true }), sim.stderr.pipeTo(log.writable, { preventClose: true })]);
+    const copy = async (stream: ReadableStream<Uint8Array>) => {
+      for await (const chunk of stream) await log.write(chunk);
+    };
+    const logged = Promise.all([copy(sim.stdout), copy(sim.stderr)]);
     try {
       await demo.say("nav_eval.py starts a simulated Go2 (dimos sim2) in the export and walks its mapping path…", 400);
       await demo.click('[data-testid=mode] >> text="Viewer"', 500);
@@ -453,6 +456,33 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
       await logged;
       log.close();
     }
+  },
+
+  async "12_grates_lights_views"(demo) {
+    await fresh(demo, "grates_lights_views_demo");
+    await demo.say("Drain grates: a hole with bars flush with the floor", 800);
+    await addFromPalette(demo, "build:grate");
+    await demo.lookAt([0, 0, 0], [-2.5, -3, 2.5]);
+    await demo.slide("Gap", 6);
+    await demo.say("Slats, or a grid; bar width, gap and depth are sliders", 600);
+    await demo.clickText("Grid", 1500);
+    await demo.slide("Bar width", 4);
+    await demo.say("Every bar collides: lidar sees through the gaps, feet can catch", 2000);
+    await demo.page.keyboard.press("Escape");
+    await demo.say("Lights: bulbs, spots and suns, exported as MuJoCo lights", 600);
+    await addFromPalette(demo, "build:light");
+    await demo.clickText("Spot", 800);
+    await demo.slide("Brightness", 8);
+    await demo.say("Color, brightness, reach, cone and shadows", 2000);
+    await demo.page.keyboard.press("Escape");
+    await demo.clickText("Views", 800);
+    await demo.lookAt([0, 0, 0], [3, -4, 3]);
+    await demo.say("Saved camera views, for agents checking a task from a fixed spot", 600);
+    await demo.click("[data-testid=save-view]", 1200);
+    await demo.lookAt([0, 0, 0], [-8, 6, 9]);
+    await demo.say("Jump back to a saved view any time", 600);
+    await demo.click('[data-testid^="view-"]', 2500);
+    await demo.say("Each view exports as a MuJoCo camera; render_view() and api/views/image give its picture", 3000);
   },
 
   async "0_playground_tour"(demo) {
