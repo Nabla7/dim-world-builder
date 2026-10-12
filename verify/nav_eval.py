@@ -1,4 +1,4 @@
-"""Score a navigation stack on a world's nav test (scene.json extensions.dim_world_builder.nav, drawn in World Builder). Any robot, any nav stack.
+"""Score a navigation stack on a world's nav test (nav_eval.json, drawn in World Builder). Any robot, any nav stack.
 
 1. drive the robot along the mapping path with plain Twist commands (so the stack builds its map),
 2. send each goal as a PoseStamped and time how long the stack takes to get within the goal's tolerance.
@@ -186,7 +186,13 @@ def main() -> int:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument(
-        "world", type=Path, help="an exported world folder (its scene.json has the nav test)"
+        "world", type=Path, help="an exported world folder (scene.xml, scene.json, nav_eval.json)"
+    )
+    parser.add_argument(
+        "--nav-eval", type=Path, help="the nav tests file (default: <world>/nav_eval.json)"
+    )
+    parser.add_argument(
+        "--eval", default=None, help="which test in it, by name (default: the first)"
     )
     parser.add_argument(
         "--cmd-vel", default="cmd_vel", help="Twist topic that drives the robot (mapping phase)"
@@ -209,11 +215,15 @@ def main() -> int:
     parser.add_argument("--report", type=Path)
     args = parser.parse_args()
 
-    scene = json.loads((args.world / "scene.json").read_text())
-    plan = scene.get("extensions", {}).get("dim_world_builder", {}).get("nav", {})
+    tests_path = args.nav_eval or args.world / "nav_eval.json"
+    tests = json.loads(tests_path.read_text()).get("evals", [])
+    plan = next((t for t in tests if args.eval in (None, t["name"])), None)
+    if plan is None:
+        print(f"{tests_path} has no test named {args.eval!r} (it has {[t['name'] for t in tests]})")
+        return 1
     if not plan["goals"] and not plan["mapping_path"]:
         print(
-            f"{args.world}/scene.json has no mapping path or goals: draw them in World Builder's Nav test tab"
+            f"{tests_path} {plan['name']!r} has no mapping path or goals: draw them in World Builder's Nav test tab"
         )
         return 1
     global_config.update(transport=args.transport)

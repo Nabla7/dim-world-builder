@@ -203,64 +203,6 @@
           "fovy": 50
         }
       ],
-      "nav": {
-        "format": "dimos.nav_eval.v1",
-        "start_spawn": "wall_lane",
-        "mapping_path": [
-          [
-            0,
-            -3.5,
-            0
-          ],
-          [
-            5.5,
-            -4,
-            0
-          ],
-          [
-            5.5,
-            -3.2,
-            0
-          ],
-          [
-            9.5,
-            -3.5,
-            0
-          ],
-          [
-            9.5,
-            3.5,
-            0
-          ],
-          [
-            5.5,
-            3.8,
-            0
-          ]
-        ],
-        "goals": [
-          {
-            "name": "Inside the room",
-            "position": [
-              5.5,
-              0.5,
-              0
-            ],
-            "tolerance": 0.6,
-            "timeout": 120
-          },
-          {
-            "name": "Behind the stairs",
-            "position": [
-              1,
-              4.5,
-              0
-            ],
-            "tolerance": 0.6,
-            "timeout": 120
-          }
-        ]
-      },
       "project": {
         "format": "dim-world-builder.project.v1",
         "name": "nav_test_course",
@@ -287,7 +229,7 @@
         ],
         "items": [
           {
-            "id": "57f4cbdf634e",
+            "id": "ddd5e108c25d",
             "kind": "room",
             "params": {
               "width": 6,
@@ -331,7 +273,7 @@
             "key": "lab_room_1"
           },
           {
-            "id": "acb893ba04c1",
+            "id": "74f7f908cf12",
             "kind": "room",
             "params": {
               "width": 6,
@@ -375,7 +317,7 @@
             "key": "upper_room_1"
           },
           {
-            "id": "becbfe20e57f",
+            "id": "495403cd771a",
             "kind": "primitive",
             "params": {
               "shape": "box",
@@ -406,7 +348,7 @@
             "key": "box_1"
           },
           {
-            "id": "1c18f46f45a8",
+            "id": "5a9125e626c8",
             "kind": "primitive",
             "params": {
               "shape": "box",
@@ -454,7 +396,7 @@
             "key": "box_2"
           },
           {
-            "id": "fe25c1de14a5",
+            "id": "0a7fe8428329",
             "kind": "stairs",
             "params": {
               "steps": 6,
@@ -493,7 +435,7 @@
             "key": "stairs_1"
           },
           {
-            "id": "81324069688e",
+            "id": "aeca4716039c",
             "kind": "hill",
             "params": {
               "sizeX": 10,
@@ -534,7 +476,7 @@
             "key": "hill_1"
           },
           {
-            "id": "6ec183394c98",
+            "id": "f0e9eec807d1",
             "kind": "primitive",
             "params": {
               "shape": "cone",
@@ -565,7 +507,7 @@
             "key": "cone_1"
           },
           {
-            "id": "7cf3f0a0fcca",
+            "id": "ae04284e70e4",
             "kind": "primitive",
             "params": {
               "shape": "cone",
@@ -596,7 +538,7 @@
             "key": "cone_2"
           },
           {
-            "id": "46db48886b92",
+            "id": "eb75e8d25e36",
             "kind": "primitive",
             "params": {
               "shape": "beanbag",
@@ -627,7 +569,7 @@
             "key": "beanbag_1"
           },
           {
-            "id": "921c9d1a8f46",
+            "id": "330edb2c2d38",
             "kind": "primitive",
             "params": {
               "shape": "ramp",
@@ -658,7 +600,7 @@
             "key": "ramp_1"
           },
           {
-            "id": "f33cdd980ca3",
+            "id": "247d8a943b8e",
             "kind": "primitive",
             "params": {
               "shape": "cylinder",

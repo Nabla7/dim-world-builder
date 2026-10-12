@@ -375,7 +375,7 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
     await demo.click("[data-testid=nav-add-goal]");
     await demo.slide("Goal tolerance", 4);
     await demo.say(
-      "Exported in scene.json; verify/nav_eval.py runs it on any robot: Twist to walk, PoseStamped goals",
+      "Exported as nav_eval.json; verify/nav_eval.py runs it on any robot: Twist to walk, PoseStamped goals",
       4000,
     );
   },

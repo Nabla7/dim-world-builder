@@ -185,12 +185,6 @@
   "extensions": {
     "dim_world_builder": {
       "views": [],
-      "nav": {
-        "format": "dimos.nav_eval.v1",
-        "start_spawn": "default",
-        "mapping_path": [],
-        "goals": []
-      },
       "project": {
         "format": "dim-world-builder.project.v1",
         "name": "clutter_yard",
@@ -212,7 +206,7 @@
         ],
         "items": [
           {
-            "id": "db5fff2beecb",
+            "id": "002d9623859a",
             "kind": "primitive",
             "params": {
               "shape": "step_stool",
@@ -243,7 +237,7 @@
             "key": "step_stool_1"
           },
           {
-            "id": "e259253d8f84",
+            "id": "274b620fdfb7",
             "kind": "primitive",
             "params": {
               "shape": "pipe",
@@ -274,7 +268,7 @@
             "key": "pipe_1"
           },
           {
-            "id": "3019df5cbc8a",
+            "id": "0fcdfd963100",
             "kind": "primitive",
             "params": {
               "shape": "bowling_pin",
@@ -305,7 +299,7 @@
             "key": "bowling_pin_1"
           },
           {
-            "id": "e16664fd25d1",
+            "id": "cecdb3070873",
             "kind": "primitive",
             "params": {
               "shape": "step_stool",
@@ -336,7 +330,7 @@
             "key": "step_stool_2"
           },
           {
-            "id": "3a1c717b4a7d",
+            "id": "570e80f8511b",
             "kind": "primitive",
             "params": {
               "shape": "pipe",
@@ -367,7 +361,7 @@
             "key": "pipe_2"
           },
           {
-            "id": "2d237bca1d14",
+            "id": "1fd46b33f658",
             "kind": "primitive",
             "params": {
               "shape": "bucket",
@@ -398,7 +392,7 @@
             "key": "bucket_1"
           },
           {
-            "id": "1165d7894b20",
+            "id": "17e36260ab6e",
             "kind": "primitive",
             "params": {
               "shape": "bucket",
@@ -429,7 +423,7 @@
             "key": "bucket_2"
           },
           {
-            "id": "4f2bdd3f4f8e",
+            "id": "9906ddc1e8e7",
             "kind": "primitive",
             "params": {
               "shape": "pipe",
@@ -460,7 +454,7 @@
             "key": "pipe_3"
           },
           {
-            "id": "c85facacfb4c",
+            "id": "5dc9d579282c",
             "kind": "primitive",
             "params": {
               "shape": "pipe",
@@ -491,7 +485,7 @@
             "key": "pipe_4"
           },
           {
-            "id": "a92546be59cd",
+            "id": "502a6c207901",
             "kind": "primitive",
             "params": {
               "shape": "box",
@@ -522,7 +516,7 @@
             "key": "box_1"
           },
           {
-            "id": "d13391a5da0c",
+            "id": "5c2a3c4b2c69",
             "kind": "primitive",
             "params": {
               "shape": "bowling_pin",
@@ -553,7 +547,7 @@
             "key": "bowling_pin_2"
           },
           {
-            "id": "818edfc6bca0",
+            "id": "505fec5db3bb",
             "kind": "primitive",
             "params": {
               "shape": "cone",
@@ -584,7 +578,7 @@
             "key": "cone_1"
           },
           {
-            "id": "2ead61eecde0",
+            "id": "9a99659f3107",
             "kind": "primitive",
             "params": {
               "shape": "bowling_pin",
@@ -615,7 +609,7 @@
             "key": "bowling_pin_3"
           },
           {
-            "id": "15e7205d7d30",
+            "id": "56c7a04059a7",
             "kind": "primitive",
             "params": {
               "shape": "step_stool",
@@ -646,7 +640,7 @@
             "key": "step_stool_3"
           },
           {
-            "id": "70991354b92f",
+            "id": "570efef11320",
             "kind": "primitive",
             "params": {
               "shape": "pipe",
@@ -677,7 +671,7 @@
             "key": "pipe_5"
           },
           {
-            "id": "38b4d807d27f",
+            "id": "5710acc0bd8c",
             "kind": "primitive",
             "params": {
               "shape": "bucket",
@@ -708,7 +702,7 @@
             "key": "bucket_3"
           },
           {
-            "id": "22fafd2022f9",
+            "id": "0c8f44b859d8",
             "kind": "primitive",
             "params": {
               "shape": "box",
@@ -739,7 +733,7 @@
             "key": "box_2"
           },
           {
-            "id": "43ffde96e2a7",
+            "id": "cde9dab9c8c6",
             "kind": "primitive",
             "params": {
               "shape": "step_stool",
@@ -770,7 +764,7 @@
             "key": "step_stool_4"
           },
           {
-            "id": "39496c519208",
+            "id": "e2427c6171ac",
             "kind": "primitive",
             "params": {
               "shape": "cone",
@@ -801,7 +795,7 @@
             "key": "cone_2"
           },
           {
-            "id": "cdfb1e46ca33",
+            "id": "a27aaafb728a",
             "kind": "primitive",
             "params": {
               "shape": "bowling_pin",
@@ -832,7 +826,7 @@
             "key": "bowling_pin_4"
           },
           {
-            "id": "5fdda86a9d8f",
+            "id": "b812b5aed87f",
             "kind": "primitive",
             "params": {
               "shape": "ladder",
@@ -863,7 +857,7 @@
             "key": "ladder_1"
           },
           {
-            "id": "48c5e5d9b6dd",
+            "id": "432c17249c77",
             "kind": "stairs",
             "params": {
               "steps": 5,
@@ -904,7 +898,7 @@
             "key": "open_stairs_1"
           },
           {
-            "id": "f1d2c5e7f731",
+            "id": "a84f1875d193",
             "kind": "primitive",
             "params": {
               "shape": "pipe",

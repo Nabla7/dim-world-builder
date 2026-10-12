@@ -7,7 +7,7 @@ import { keyedProject } from "../src/world/keys.ts";
 import type { MeshAsset, Project } from "../src/world/types.ts";
 
 /** a Python package name: lower snake case, not starting with a digit */
-/** scene.json extensions key for this app's data (views, nav test, project) */
+/** scene.json extensions key for this app's data (views, project) */
 export const EXTENSION = "dim_world_builder";
 
 export function packageName(name: string): string {
@@ -45,20 +45,20 @@ export async function exportProject(
     files.push(path);
   };
   await write("scene.xml", scene.xml);
-  // one json: sim2's scene, plus (in extensions, which sim2 ignores) the views, the nav test and the editor's project
+  // sim2's scene, plus (in extensions, which sim2 ignores) the views and the editor's project
   const sceneJson = {
     ...(scene.sceneJson as Record<string, unknown>),
     extensions: {
-      [EXTENSION]: { views: (scene.viewsJson as { views: unknown[] }).views, nav: navEval(project), project },
+      [EXTENSION]: { views: (scene.viewsJson as { views: unknown[] }).views, project },
     },
   };
   await write("scene.json", JSON.stringify(sceneJson, null, 2) + "\n");
+  await write("nav_eval.json", JSON.stringify(navEvalFile(project), null, 2) + "\n");
   // earlier exports' files, now folded into scene.json (and dimos allows no __init__.py)
   const stale = [
     "movers.json",
     "views.json",
     "world.project.json",
-    "nav_eval.json",
     "world.json",
     "__init__.py",
     "__main__.py",
@@ -93,13 +93,20 @@ export async function exportProject(
   return { dir, name, files, bodies: world.bodies.length, movers: world.movers.length };
 }
 
-/** dimos.nav_eval.v1: the drawn navigation test in world coordinates (floor elevations applied) */
+/**
+ * nav_eval.json (dimos.nav_eval.v1): navigation tests against this scene, kept apart from it since one scene can have many.
+ * The editor's drawn test is the one named "default".
+ */
+export function navEvalFile(project: Project) {
+  return { format: "dimos.nav_eval.v1", scene: "scene.json", evals: [{ name: "default", ...navEval(project) }] };
+}
+
+/** one navigation test in world coordinates (floor elevations applied) */
 export function navEval(project: Project) {
   const lift = (floor: string) => project.floors.find((f) => f.id === floor)?.elevation ?? 0;
   const spawnKey = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, "_");
   const nav = project.nav;
   return {
-    format: "dimos.nav_eval.v1",
     start_spawn: nav ? spawnKey(nav.startSpawn) : "default",
     mapping_path: nav ? nav.mappingPath.map((p) => [p[0], p[1], p[2] + lift(nav.floor)]) : [],
     goals: (nav?.goals ?? []).map((g) => ({
@@ -116,8 +123,8 @@ function readme(name: string, project: Project): string {
   return `# ${name}
 
 A [dim-world-builder](https://github.com/jeff-hykin/dim-world-builder) world: ${project.items.length} items,
-${project.floors.length} floor(s). \`scene.json\` is sim2's scene; its \`extensions.${EXTENSION}\` holds the views, the nav
-test and the editor's project.
+${project.floors.length} floor(s). \`scene.json\` is sim2's scene; its \`extensions.${EXTENSION}\` holds the views and the editor's
+project; \`nav_eval.json\` holds navigation tests (\`verify/nav_eval.py\` runs them).
 
 \`\`\`sh
 uv pip install -e .                                          # into dimos's venv
@@ -136,7 +143,7 @@ function worldModule(name: string, project: Project): string {
   return `"""${name}: a dim-world-builder world for dimos sim2 (MuJoCo); \`python -m ${name}.world\` checks it.
 
 Files beside this one: scene.xml (MJCF), scene.json (dimos.scene.v1: entities, spawns, movers; its extensions.${EXTENSION}
-holds the remembered camera views, the nav test and the editor's project), meshes/, textures/, scene_data.py (the SceneData module) and
+holds the remembered camera views and the editor's project), nav_eval.json (navigation tests), meshes/, textures/, scene_data.py (the SceneData module) and
 blueprints.py (\`go2\`).
 ${project.items.length} items, ${project.floors.length} floor(s).
 """
@@ -162,8 +169,13 @@ ENTITIES: dict[str, dict[str, Any]] = _scene.get("entities", {})
 MOVERS: list[dict[str, Any]] = _scene.get("movers", [])
 # remembered camera views: each is a fixed <camera> in scene.xml named by its "camera" id
 VIEWS: list[dict[str, Any]] = _world.get("views", [])
-# the nav test: mapping path and goals (verify/nav_eval.py runs it)
-NAV: dict[str, Any] = _world.get("nav", {})
+NAV_EVAL_JSON = SCENE_DIR / "nav_eval.json"
+# navigation tests (mapping path and goals each; verify/nav_eval.py runs them), by name
+NAV_EVALS: dict[str, dict[str, Any]] = (
+    {e["name"]: e for e in json.loads(NAV_EVAL_JSON.read_text()).get("evals", [])}
+    if NAV_EVAL_JSON.exists()
+    else {}
+)
 
 
 def check() -> mujoco.MjModel:
