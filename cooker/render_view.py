@@ -7,7 +7,13 @@ from PIL import Image
 
 
 def main() -> None:
-    scene, camera, width, height, out = sys.argv[1], sys.argv[2], int(sys.argv[3]), int(sys.argv[4]), sys.argv[5]
+    scene, camera, width, height, out = (
+        sys.argv[1],
+        sys.argv[2],
+        int(sys.argv[3]),
+        int(sys.argv[4]),
+        sys.argv[5],
+    )
     model = mujoco.MjModel.from_xml_path(scene)
     data = mujoco.MjData(model)
     mujoco.mj_forward(model, data)

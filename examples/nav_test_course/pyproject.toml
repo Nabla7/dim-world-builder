@@ -8,7 +8,7 @@ description = "A dim-world-builder world for dimos sim2"
 requires-python = ">=3.10"
 
 [project.entry-points."dimos.blueprints"]
-go2 = "nav_test_course:go2"
+go2 = "nav_test_course.blueprints:go2"
 scene-data = "nav_test_course.scene_data:SceneData"
 
 [build-system]

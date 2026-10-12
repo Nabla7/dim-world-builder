@@ -158,6 +158,26 @@
   "hidden_geom_groups": [
     3
   ],
+  "movers": [
+    {
+      "body": "box_2",
+      "waypoints": [
+        [
+          1.4,
+          -14,
+          0
+        ],
+        [
+          1.4,
+          -10,
+          0
+        ]
+      ],
+      "speed": 0.4,
+      "mode": "pingpong",
+      "heading": "fixed"
+    }
+  ],
   "provenance": {
     "tool": "dim-world-builder"
   }

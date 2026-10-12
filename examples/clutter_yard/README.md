@@ -1,7 +1,7 @@
 # clutter_yard
 
 A world made with [dim-world-builder](https://github.com/jeff-hykin/dim-world-builder): 25 items on
-1 floor(s). Open `world.project.json` in the app to change it.
+1 floor(s). Open `world.json` in the app to change it.
 
 Run a simulated Go2 in it (dimos sim2; the Go2 FREE policy installs with
 `python -m dimos.control.go2_freewalk.models --install`):

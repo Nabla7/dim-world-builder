@@ -190,6 +190,7 @@
   "hidden_geom_groups": [
     3
   ],
+  "movers": [],
   "provenance": {
     "tool": "dim-world-builder"
   }

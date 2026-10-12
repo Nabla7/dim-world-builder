@@ -1,4 +1,4 @@
-"""Score a navigation stack on a world's nav test (nav_eval.json, drawn in World Builder). Any robot, any nav stack.
+"""Score a navigation stack on a world's nav test (world.json "nav", drawn in World Builder). Any robot, any nav stack.
 
 1. drive the robot along the mapping path with plain Twist commands (so the stack builds its map),
 2. send each goal as a PoseStamped and time how long the stack takes to get within the goal's tolerance.
@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import replace
+import itertools
 import json
 import math
 from pathlib import Path
@@ -69,7 +70,9 @@ class Robot:
         self.cmd.broadcast(None, Twist(linear=(vx, 0, 0), angular=(0, 0, wz)))
 
     def send_goal(self, xyz: list[float]) -> None:
-        self.goal.broadcast(None, PoseStamped(position=tuple(xyz), orientation=(0, 0, 0, 1), frame_id=self.frame))
+        self.goal.broadcast(
+            None, PoseStamped(position=tuple(xyz), orientation=(0, 0, 0, 1), frame_id=self.frame)
+        )
 
     def stop(self) -> None:
         for transport in (self.cmd, self.goal, self.odom):
@@ -77,10 +80,12 @@ class Robot:
 
 
 def path_length(points: list[tuple[float, float]]) -> float:
-    return sum(math.dist(a, b) for a, b in zip(points, points[1:], strict=False))
+    return sum(math.dist(a, b) for a, b in itertools.pairwise(points))
 
 
-def follow(robot: Robot, waypoints: list[list[float]], speed: float, reach: float = 0.35) -> dict[str, Any]:
+def follow(
+    robot: Robot, waypoints: list[list[float]], speed: float, reach: float = 0.35
+) -> dict[str, Any]:
     """Pure pursuit through the waypoints: turn toward the next one, walk when roughly facing it."""
     started = time.monotonic()
     reached = 0
@@ -104,7 +109,11 @@ def follow(robot: Robot, waypoints: list[list[float]], speed: float, reach: floa
             robot.drive(vx, wz)
             time.sleep(0.1)
     robot.drive(0, 0)
-    return {"waypoints": len(waypoints), "reached": reached, "seconds": round(time.monotonic() - started, 1)}
+    return {
+        "waypoints": len(waypoints),
+        "reached": reached,
+        "seconds": round(time.monotonic() - started, 1),
+    }
 
 
 def run_goals(robot: Robot, goals: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -127,15 +136,20 @@ def run_goals(robot: Robot, goals: list[dict[str, Any]]) -> list[dict[str, Any]]
             time.sleep(0.1)
         walked = [(x, y) for _, x, y, _ in robot.track[mark:]]
         straight = math.dist(start[:2], goal["position"][:2]) if start else None
-        results.append({
-            "goal": goal["name"],
-            "reached": reached_at is not None,
-            "seconds": round(reached_at, 1) if reached_at is not None else None,
-            "closest_m": round(closest, 2),
-            "path_m": round(path_length(walked), 2),
-            "straight_line_m": round(straight, 2) if straight is not None else None,
-        })
-        print(f"[{'PASS' if reached_at is not None else 'FAIL'}] {goal['name']}: {results[-1]}", flush=True)
+        results.append(
+            {
+                "goal": goal["name"],
+                "reached": reached_at is not None,
+                "seconds": round(reached_at, 1) if reached_at is not None else None,
+                "closest_m": round(closest, 2),
+                "path_m": round(path_length(walked), 2),
+                "straight_line_m": round(straight, 2) if straight is not None else None,
+            }
+        )
+        print(
+            f"[{'PASS' if reached_at is not None else 'FAIL'}] {goal['name']}: {results[-1]}",
+            flush=True,
+        )
     return results
 
 
@@ -153,34 +167,51 @@ def build_blueprint(name: str, world: Path) -> Any:
         blueprint = replace(
             blueprint,
             blueprints=tuple(
-                replace(atom, kwargs={**atom.kwargs, "viewer": False}) if atom.module is SimulationModule else atom
+                replace(atom, kwargs={**atom.kwargs, "viewer": False})
+                if atom.module is SimulationModule
+                else atom
                 for atom in blueprint.blueprints
             ),
         )
     except ImportError:
         pass
-    parsed = BlueprintConfigParser(blueprint).parse(global_overrides=global_config.model_dump(mode="python"))
+    parsed = BlueprintConfigParser(blueprint).parse(
+        global_overrides=global_config.model_dump(mode="python")
+    )
     return ModuleCoordinator.build(blueprint, parsed_config=parsed)
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("world", type=Path, help="an exported world folder (with nav_eval.json)")
-    parser.add_argument("--cmd-vel", default="cmd_vel", help="Twist topic that drives the robot (mapping phase)")
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument("world", type=Path, help="an exported world folder (with world.json)")
+    parser.add_argument(
+        "--cmd-vel", default="cmd_vel", help="Twist topic that drives the robot (mapping phase)"
+    )
     parser.add_argument("--odom", default="odom", help="the robot's pose topic")
     parser.add_argument("--odom-type", default="PoseStamped", choices=["PoseStamped", "Odometry"])
-    parser.add_argument("--goal", default="goal_request", help="PoseStamped topic the nav stack takes goals on")
+    parser.add_argument(
+        "--goal", default="goal_request", help="PoseStamped topic the nav stack takes goals on"
+    )
     parser.add_argument("--frame", default="world", help="frame_id of the goals")
     parser.add_argument("--transport", default="zenoh", choices=["zenoh", "lcm"])
     parser.add_argument("--speed", type=float, default=0.4, help="mapping walk speed, m/s")
-    parser.add_argument("--blueprint", help="build and run this blueprint here (sim2) instead of using a running one")
-    parser.add_argument("--settle", type=float, default=8.0, help="seconds to wait for the robot before starting")
+    parser.add_argument(
+        "--blueprint",
+        help="build and run this blueprint here (sim2) instead of using a running one",
+    )
+    parser.add_argument(
+        "--settle", type=float, default=8.0, help="seconds to wait for the robot before starting"
+    )
     parser.add_argument("--report", type=Path)
     args = parser.parse_args()
 
-    plan = json.loads((args.world / "nav_eval.json").read_text())
+    plan = json.loads((args.world / "world.json").read_text()).get("nav", {})
     if not plan["goals"] and not plan["mapping_path"]:
-        print(f"{args.world}/nav_eval.json has no mapping path or goals: draw them in World Builder's Nav test tab")
+        print(
+            f"{args.world}/world.json has no mapping path or goals: draw them in World Builder's Nav test tab"
+        )
         return 1
     global_config.update(transport=args.transport)
     coordinator = build_blueprint(args.blueprint, args.world.resolve()) if args.blueprint else None
@@ -203,7 +234,10 @@ def main() -> int:
         if coordinator is not None:
             coordinator.stop()
     passed = all(g["reached"] for g in report["goals"])
-    print(f"{sum(g['reached'] for g in report['goals'])}/{len(report['goals'])} goals reached", flush=True)
+    print(
+        f"{sum(g['reached'] for g in report['goals'])}/{len(report['goals'])} goals reached",
+        flush=True,
+    )
     if args.report:
         args.report.write_text(json.dumps(report, indent=2))
     return 0 if passed else 1

@@ -16,17 +16,14 @@ Exit codes: 0 ok, 1 error, 2 quality check failed.
 """
 
 import argparse
-import io
 import json
 import math
-import os
-import sys
-import tempfile
 from pathlib import Path
+import sys
 
 import numpy as np
-import trimesh
 from PIL import Image
+import trimesh
 
 
 def emit(stage, progress, **extra):
@@ -66,7 +63,9 @@ def place(meshes, up, scale, target_height):
     """Rotate to Z-up, scale, then put the footprint center at the origin and the lowest point at z=0."""
     transform = np.eye(4)
     if up == "y":
-        transform = trimesh.transformations.rotation_matrix(math.pi / 2, [1, 0, 0])  # (x, y, z) -> (x, -z, y)
+        transform = trimesh.transformations.rotation_matrix(
+            math.pi / 2, [1, 0, 0]
+        )  # (x, y, z) -> (x, -z, y)
     for mesh in meshes:
         mesh.apply_transform(transform)
     factor = scale
@@ -168,7 +167,7 @@ def color_groups(meshes, max_colors, merge_distance=0.06):
             merged.append(c)
     centers = np.array(merged)
     groups = []
-    for k in range(len(centers)):
+    for _ in range(len(centers)):
         groups.append({"meshes": [], "color_sum": np.zeros(4), "area": 0.0})
     for mesh, cols, area in parts:
         label = np.argmin(((cols[:, None, :3] - centers[None, :, :3]) ** 2).sum(axis=2), axis=1)
@@ -187,7 +186,12 @@ def color_groups(meshes, max_colors, merge_distance=0.06):
             color = group["color_sum"] / max(group["area"], 1e-12)
             others = [j for j in range(len(groups)) if j != k and sizes[j] >= 4 and not flat[j]]
             if others:
-                j = min(others, key=lambda j: np.linalg.norm(groups[j]["color_sum"][:3] / max(groups[j]["area"], 1e-12) - color[:3]))
+                j = min(
+                    others,
+                    key=lambda j: np.linalg.norm(
+                        groups[j]["color_sum"][:3] / max(groups[j]["area"], 1e-12) - color[:3]
+                    ),
+                )
                 groups[j]["meshes"] += group["meshes"]
                 group["meshes"] = []
     result = []
@@ -254,7 +258,9 @@ def shrink_material(mesh, texture_size):
     pbr = trimesh.visual.material.PBRMaterial(
         name=getattr(material, "name", None),
         baseColorFactor=getattr(material, "baseColorFactor", None),
-        baseColorTexture=image if isinstance(material, trimesh.visual.material.PBRMaterial) else None,
+        baseColorTexture=image
+        if isinstance(material, trimesh.visual.material.PBRMaterial)
+        else None,
         metallicFactor=0.0,
         roughnessFactor=0.8,
         doubleSided=getattr(material, "doubleSided", False),
@@ -312,7 +318,9 @@ def decompose(meshes, threshold, max_hulls, resolution, preprocess_resolution):
         )
         hulls = [trimesh.Trimesh(vertices=v, faces=f, process=True).convex_hull for v, f in parts]
         method = "coacd"
-    except Exception as error:  # coacd crashes on some inputs; a single hull still collides sensibly
+    except (
+        Exception
+    ) as error:  # coacd crashes on some inputs; a single hull still collides sensibly
         emit("decompose", 0.9, warning=f"coacd failed ({error}); using one convex hull")
         hulls = [combined.convex_hull]
         method = "convex_hull"
@@ -325,9 +333,13 @@ def check_hulls(hulls, source_bounds, tolerance=0.2):
         raise QualityError("decomposition produced no hulls")
     for i, h in enumerate(hulls):
         if len(h.vertices) < 4 or len(h.faces) < 4 or abs(h.volume) <= 1e-12 or is_flat([h], 1e-6):
-            raise QualityError(f"hull {i} is degenerate (verts={len(h.vertices)} volume={h.volume:.3g})")
+            raise QualityError(
+                f"hull {i} is degenerate (verts={len(h.vertices)} volume={h.volume:.3g})"
+            )
     total = sum(abs(h.volume) for h in hulls)
-    kept = [h for h in hulls if abs(h.volume) >= 1e-6 * total]  # drop negligible slivers, not worth a geom
+    kept = [
+        h for h in hulls if abs(h.volume) >= 1e-6 * total
+    ]  # drop negligible slivers, not worth a geom
     dropped = len(hulls) - len(kept)
     lo = np.min([h.bounds[0] for h in kept], axis=0)
     hi = np.max([h.bounds[1] for h in kept], axis=0)
@@ -361,12 +373,12 @@ def mjcf(out_dir, meta, with_floor=False):
         assets.append(f'<mesh name="h{i}" file="{h}"/>')
         geoms.append(f'<geom type="mesh" mesh="h{i}" group="3" rgba="0.9 0.3 0.9 0.4"/>')
     floor = '<geom name="floor" type="plane" size="5 5 0.1" group="2"/>' if with_floor else ""
-    return f"""<mujoco model="{meta['id']}">
+    return f"""<mujoco model="{meta["id"]}">
   <compiler meshdir="{out_dir}"/>
   <visual><global offwidth="1024" offheight="1024"/><quality shadowsize="0"/></visual>
   <asset>
     <material name="m" specular="0.15" shininess="0.2"/>
-    {chr(10).join('    ' + a for a in assets)}
+    {chr(10).join("    " + a for a in assets)}
   </asset>
   <worldbody>
     <light directional="true" pos="0 0 5" dir="-0.3 0.5 -1" diffuse="0.55 0.55 0.55" castshadow="false"/>
@@ -374,7 +386,7 @@ def mjcf(out_dir, meta, with_floor=False):
     {floor}
     <body name="asset" pos="0 0 {0.02 if with_floor else 0}">
       <freejoint/>
-      {chr(10).join('      ' + g for g in geoms)}
+      {chr(10).join("      " + g for g in geoms)}
     </body>
   </worldbody>
 </mujoco>"""
@@ -408,7 +420,9 @@ def render_thumb(out_dir, meta, size=256):
     sx, sy, sz = meta["size"]
     camera = mujoco.MjvCamera()
     camera.lookat[:] = [0, 0, sz / 2]
-    camera.azimuth = 60  # glTF front (+Z) lands on -Y after the Z-up turn: view from front-left, above
+    camera.azimuth = (
+        60  # glTF front (+Z) lands on -Y after the Z-up turn: view from front-left, above
+    )
     camera.elevation = -25
     radius = 0.5 * math.sqrt(sx * sx + sy * sy + sz * sz)
     fovy = math.radians(model.vis.global_.fovy)
@@ -448,7 +462,14 @@ def cook(args):
     lo, hi = bounds_of(meshes)
     size = hi - lo
     faces = sum(len(m.faces) for m in meshes)
-    emit("transform", 0.1, parts=len(meshes), faces=faces, scale=round(factor, 6), size=round_list(size))
+    emit(
+        "transform",
+        0.1,
+        parts=len(meshes),
+        faces=faces,
+        scale=round(factor, 6),
+        size=round_list(size),
+    )
 
     groups = color_groups(meshes, args.max_colors)
     visuals = []
@@ -465,13 +486,17 @@ def cook(args):
     emit("glb", 0.3, bytes=(out_dir / "visual.glb").stat().st_size)
 
     emit("decompose", 0.32, threshold=args.threshold, max_hulls=args.max_hulls)
-    _, hulls, method = decompose(meshes, args.threshold, args.max_hulls, args.resolution, args.preprocess_resolution)
+    _, hulls, method = decompose(
+        meshes, args.threshold, args.max_hulls, args.resolution, args.preprocess_resolution
+    )
     emit("decompose", 0.85, method=method, hulls=len(hulls))
 
     hulls, dropped = check_hulls(hulls, (lo, hi))
     # CoACD's manifold remesh inflates by a few mm; clamp to the source bbox so the asset still rests at z=0
     clamped = [trimesh.Trimesh(vertices=np.clip(h.vertices, lo, hi), faces=h.faces) for h in hulls]
-    hulls = [h.convex_hull for h in clamped if not is_flat([h], 1e-5)]  # a sliver that lay wholly outside goes flat
+    hulls = [
+        h.convex_hull for h in clamped if not is_flat([h], 1e-5)
+    ]  # a sliver that lay wholly outside goes flat
     hulls, _ = check_hulls(hulls, (lo, hi))
     hull_files = []
     for k, hull in enumerate(hulls):
@@ -501,30 +526,56 @@ def cook(args):
     if args.thumb:
         render_thumb(out_dir, meta)
         emit("thumb", 0.99)
-    emit("done", 1.0, out_dir=str(out_dir), size=meta["size"], visuals=len(visuals), hulls=len(hull_files))
+    emit(
+        "done",
+        1.0,
+        out_dir=str(out_dir),
+        size=meta["size"],
+        visuals=len(visuals),
+        hulls=len(hull_files),
+    )
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument("input", help=".glb, .gltf or .obj")
     parser.add_argument("out_dir")
     parser.add_argument("--id", required=True)
     parser.add_argument("--name", required=True)
     parser.add_argument("--category", default="misc")
-    parser.add_argument("--up", choices=["y", "z"], help="source up axis (default y, the glTF convention)")
-    parser.add_argument("--scale", type=float, default=1.0, help="uniform scale to meters (ignored with --target-height)")
-    parser.add_argument("--target-height", type=float, help="scale so the model is this tall in meters")
+    parser.add_argument(
+        "--up", choices=["y", "z"], help="source up axis (default y, the glTF convention)"
+    )
+    parser.add_argument(
+        "--scale",
+        type=float,
+        default=1.0,
+        help="uniform scale to meters (ignored with --target-height)",
+    )
+    parser.add_argument(
+        "--target-height", type=float, help="scale so the model is this tall in meters"
+    )
     parser.add_argument("--max-hulls", type=int, default=24)
     parser.add_argument("--threshold", type=float, default=0.05, help="CoACD concavity threshold")
     parser.add_argument("--resolution", type=int, default=2000, help="CoACD sampling resolution")
     parser.add_argument("--preprocess-resolution", type=int, default=40)
     parser.add_argument("--max-colors", type=int, default=6, help="max visual_<k>.obj color groups")
-    parser.add_argument("--max-faces", type=int, default=12000, help="face budget across visual OBJs")
-    parser.add_argument("--texture-size", type=int, default=512, help="max base color texture size in visual.glb")
+    parser.add_argument(
+        "--max-faces", type=int, default=12000, help="face budget across visual OBJs"
+    )
+    parser.add_argument(
+        "--texture-size", type=int, default=512, help="max base color texture size in visual.glb"
+    )
     parser.add_argument("--license", default="CC0-1.0")
     parser.add_argument("--source", default="")
-    parser.add_argument("--validate", action="store_true", help="load every OBJ into MuJoCo and step it")
-    parser.add_argument("--thumb", action="store_true", help="render thumb.png with mujoco.Renderer")
+    parser.add_argument(
+        "--validate", action="store_true", help="load every OBJ into MuJoCo and step it"
+    )
+    parser.add_argument(
+        "--thumb", action="store_true", help="render thumb.png with mujoco.Renderer"
+    )
     args = parser.parse_args()
     try:
         cook(args)

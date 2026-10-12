@@ -580,8 +580,8 @@ function ExportDialog({ open, onClose }: { open: boolean; onClose: () => void })
             )}
             <Text small muted>
               Writes{" "}
-              {packageName}/ with scene.xml (MuJoCo), scene.json (entities, spawns), movers.json,
-              __init__.py, meshes/ and the project file, which re-opens here.
+              {packageName}/ with scene.xml (MuJoCo), scene.json (entities, spawns, movers), world.json
+              (views, nav test, this project, which re-opens here), Python modules and meshes/.
             </Text>
           </div>
         )}

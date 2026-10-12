@@ -20,6 +20,9 @@ from pathlib import Path
 import threading
 from typing import Any
 
+import mujoco
+import numpy as np
+
 from dimos.core.core import rpc
 from dimos.core.module import Module
 from dimos.core.stream import In, Out
@@ -28,12 +31,19 @@ from dimos.msgs.std_msgs.String import String
 SCENE_DIR = Path(__file__).resolve().parent
 FORMAT = "dimos.scene_data.v1"
 
-_GEOM_TYPES = {0: "plane", 1: "hfield", 2: "sphere", 3: "capsule", 4: "ellipsoid", 5: "cylinder", 6: "box", 7: "mesh"}
+_GEOM_TYPES = {
+    0: "plane",
+    1: "hfield",
+    2: "sphere",
+    3: "capsule",
+    4: "ellipsoid",
+    5: "cylinder",
+    6: "box",
+    7: "mesh",
+}
 
 
 def _b64(array: Any, dtype: str) -> str:
-    import numpy as np
-
     return base64.b64encode(np.ascontiguousarray(array, dtype=dtype).tobytes()).decode("ascii")
 
 
@@ -47,9 +57,6 @@ def _floats(values: Any) -> list[float]:
 
 def scene_data(scene_dir: Path = SCENE_DIR) -> dict[str, Any]:
     """The dimos.scene_data.v1 description of the scene in `scene_dir` (scene.xml, scene.json)."""
-    import mujoco
-    import numpy as np
-
     model = mujoco.MjModel.from_xml_path(str(scene_dir / "scene.xml"))
     data = mujoco.MjData(model)
     mujoco.mj_forward(model, data)
@@ -57,14 +64,17 @@ def scene_data(scene_dir: Path = SCENE_DIR) -> dict[str, Any]:
     scene_json = json.loads(scene_json_path.read_text()) if scene_json_path.exists() else {}
     hidden = set(scene_json.get("hidden_geom_groups", []))
     entities = scene_json.get("entities", {})
-    name = lambda kind, i: mujoco.mj_id2name(model, kind, i) or f"{kind.name.lower()}_{i}"  # noqa: E731
+
+    def name(kind: int, i: int, unnamed: str) -> str:
+        found: str | None = mujoco.mj_id2name(model, kind, i)
+        return found or f"{unnamed}_{i}"
 
     meshes: dict[str, Any] = {}
     hfields: dict[str, Any] = {}
     textures: dict[str, Any] = {}
 
     def mesh(i: int) -> str:
-        key = name(mujoco.mjtObj.mjOBJ_MESH, i)
+        key = name(mujoco.mjtObj.mjOBJ_MESH, i, "mesh")
         if key not in meshes:
             v0, vn = model.mesh_vertadr[i], model.mesh_vertnum[i]
             f0, fn = model.mesh_faceadr[i], model.mesh_facenum[i]
@@ -81,7 +91,7 @@ def scene_data(scene_dir: Path = SCENE_DIR) -> dict[str, Any]:
         return key
 
     def hfield(i: int) -> str:
-        key = name(mujoco.mjtObj.mjOBJ_HFIELD, i)
+        key = name(mujoco.mjtObj.mjOBJ_HFIELD, i, "hfield")  # type: ignore[attr-defined]
         if key not in hfields:
             nrow, ncol = int(model.hfield_nrow[i]), int(model.hfield_ncol[i])
             start = model.hfield_adr[i]
@@ -95,9 +105,13 @@ def scene_data(scene_dir: Path = SCENE_DIR) -> dict[str, Any]:
         return key
 
     def texture(i: int) -> str:
-        key = name(mujoco.mjtObj.mjOBJ_TEXTURE, i)
+        key = name(mujoco.mjtObj.mjOBJ_TEXTURE, i, "texture")  # type: ignore[attr-defined]
         if key not in textures:
-            width, height, channels = int(model.tex_width[i]), int(model.tex_height[i]), int(model.tex_nchannel[i])
+            width, height, channels = (
+                int(model.tex_width[i]),
+                int(model.tex_height[i]),
+                int(model.tex_nchannel[i]),
+            )
             start = model.tex_adr[i]
             textures[key] = {
                 "width": width,
@@ -117,7 +131,7 @@ def scene_data(scene_dir: Path = SCENE_DIR) -> dict[str, Any]:
             if kind is None:
                 continue
             geom: dict[str, Any] = {
-                "name": name(mujoco.mjtObj.mjOBJ_GEOM, g),
+                "name": name(mujoco.mjtObj.mjOBJ_GEOM, g, "geom"),
                 "type": kind,
                 # MuJoCo's size: sphere [r], capsule/cylinder [r, half-length], box/ellipsoid half-extents
                 "size": _floats(model.geom_size[g]),
@@ -128,8 +142,12 @@ def scene_data(scene_dir: Path = SCENE_DIR) -> dict[str, Any]:
             }
             material = model.geom_matid[g]
             if material >= 0:
-                geom["rgba"] = _floats(model.mat_rgba[material]) if model.geom_rgba[g][3] == 1 else geom["rgba"]
-                tex = model.mat_texid[material][mujoco.mjtTextureRole.mjTEXROLE_RGB]
+                geom["rgba"] = (
+                    _floats(model.mat_rgba[material])
+                    if model.geom_rgba[g][3] == 1
+                    else geom["rgba"]
+                )
+                tex = model.mat_texid[material][mujoco.mjtTextureRole.mjTEXROLE_RGB]  # type: ignore[attr-defined]
                 if tex >= 0 and kind != "plane":
                     geom["texture"] = texture(tex)
             if kind == "mesh":
@@ -139,11 +157,13 @@ def scene_data(scene_dir: Path = SCENE_DIR) -> dict[str, Any]:
             geoms.append(geom)
         lights = [
             {
-                "name": name(mujoco.mjtObj.mjOBJ_LIGHT, li),
+                "name": name(mujoco.mjtObj.mjOBJ_LIGHT, li, "light"),  # type: ignore[attr-defined]
                 "pos": _floats(model.light_pos[li]),
                 "dir": _floats(model.light_dir[li]),
                 "diffuse": _floats(model.light_diffuse[li]),
-                "directional": bool(model.light_type[li] == mujoco.mjtLightType.mjLIGHT_DIRECTIONAL),
+                "directional": bool(
+                    model.light_type[li] == mujoco.mjtLightType.mjLIGHT_DIRECTIONAL  # type: ignore[attr-defined]
+                ),
                 "castshadow": bool(model.light_castshadow[li]),
                 "cutoff": float(model.light_cutoff[li]),
                 "attenuation": _floats(model.light_attenuation[li]),
@@ -153,7 +173,7 @@ def scene_data(scene_dir: Path = SCENE_DIR) -> dict[str, Any]:
         ]
         if not geoms and not lights:
             continue
-        body_name = name(mujoco.mjtObj.mjOBJ_BODY, b)
+        body_name = name(mujoco.mjtObj.mjOBJ_BODY, b, "body")
         entity = entities.get(body_name, {})
         bodies.append(
             {
@@ -171,11 +191,11 @@ def scene_data(scene_dir: Path = SCENE_DIR) -> dict[str, Any]:
     cameras = []
     for c in range(model.ncam):
         quat = np.zeros(4)
-        mujoco.mju_mat2Quat(quat, data.cam_xmat[c])
+        mujoco.mju_mat2Quat(quat, data.cam_xmat[c])  # type: ignore[attr-defined]
         cameras.append(
             {
-                "name": name(mujoco.mjtObj.mjOBJ_CAMERA, c),
-                "body": name(mujoco.mjtObj.mjOBJ_BODY, int(model.cam_bodyid[c])),
+                "name": name(mujoco.mjtObj.mjOBJ_CAMERA, c, "camera"),
+                "body": name(mujoco.mjtObj.mjOBJ_BODY, int(model.cam_bodyid[c]), "body"),
                 "pos": _floats(data.cam_xpos[c]),
                 # MuJoCo cameras look down their -z with +y up
                 "quat": _xyzw(quat),
@@ -225,8 +245,19 @@ class SceneData(Module):
 
     def _announce(self) -> None:
         scene_json = SCENE_DIR / "scene.json"
-        scene_id = json.loads(scene_json.read_text()).get("id", SCENE_DIR.name) if scene_json.exists() else SCENE_DIR.name
-        info = json.dumps({"format": "dimos.scene_info.v1", "id": scene_id, "request": "/scene_data_request", "data": "/scene_data"})
+        scene_id = (
+            json.loads(scene_json.read_text()).get("id", SCENE_DIR.name)
+            if scene_json.exists()
+            else SCENE_DIR.name
+        )
+        info = json.dumps(
+            {
+                "format": "dimos.scene_info.v1",
+                "id": scene_id,
+                "request": "/scene_data_request",
+                "data": "/scene_data",
+            }
+        )
         while not self._stop.wait(1.0):
             self.scene_info.publish(String(info))
 

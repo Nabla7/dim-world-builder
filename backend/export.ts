@@ -1,5 +1,5 @@
-// Writes a project as a directory dimos can load: `--scene-package <dir>` for sim2, `import <name>` for Python.
-//   <dir>/scene.xml  scene.json  movers.json  __init__.py  README.md  world.project.json  meshes/<asset>/*  [visual.glb]
+// Writes a project as a directory dimos can load: `--scene-package <dir>` for sim2, `import <name>.world` for Python (a namespace package: no __init__.py).
+//   <dir>/scene.xml  scene.json  world.json  world.py  blueprints.py  scene_data.py  pyproject.toml  README.md  meshes/<asset>/*  textures/  [visual.glb]
 
 import { buildWorld } from "../src/world/geometry.ts";
 import { toScene } from "../src/world/mjcf.ts";
@@ -43,15 +43,20 @@ export async function exportProject(
   };
   await write("scene.xml", scene.xml);
   await write("scene.json", JSON.stringify(scene.sceneJson, null, 2) + "\n");
-  await write("movers.json", JSON.stringify(scene.moversJson, null, 2) + "\n");
-  await write("views.json", JSON.stringify(scene.viewsJson, null, 2) + "\n");
-  await write("world.project.json", JSON.stringify(project, null, 2) + "\n");
-  await write("nav_eval.json", JSON.stringify(navEval(project), null, 2) + "\n");
-  await write("__init__.py", pythonPackage(name, project));
-  await write(
-    "__main__.py",
-    `"""python -m ${name}: compile the world with MuJoCo and summarize it."""\nfrom . import main\n\nmain()\n`,
-  );
+  // everything that isn't sim2's: the remembered camera views, the nav test, and the editor's project
+  const worldJson = {
+    format: "dim-world-builder.world.v1",
+    views: (scene.viewsJson as { views: unknown[] }).views,
+    nav: navEval(project),
+    project,
+  };
+  await write("world.json", JSON.stringify(worldJson, null, 2) + "\n");
+  // earlier exports' files: folded into scene.json / world.json, and dimos allows no __init__.py
+  const stale = ["movers.json", "views.json", "world.project.json", "nav_eval.json", "__init__.py", "__main__.py"];
+  for (const file of stale) await Deno.remove(`${dir}/${file}`).catch(() => {});
+  // a namespace package: the world, its blueprints, the SceneData module
+  await write("world.py", worldModule(name, project));
+  await write("blueprints.py", blueprintsModule(name));
   await write("README.md", readme(name, project));
   await write("pyproject.toml", pyproject(name));
   // the SceneData module (scene_data_request -> scene_data), the same file in every export
@@ -100,7 +105,7 @@ function readme(name: string, project: Project): string {
   return `# ${name}
 
 A world made with [dim-world-builder](https://github.com/jeff-hykin/dim-world-builder): ${project.items.length} items on
-${project.floors.length} floor(s). Open \`world.project.json\` in the app to change it.
+${project.floors.length} floor(s). Open \`world.json\` in the app to change it.
 
 Run a simulated Go2 in it (dimos sim2; the Go2 FREE policy installs with
 \`python -m dimos.control.go2_freewalk.models --install\`):
@@ -121,79 +126,58 @@ blueprint = ${name}.blueprint()   # unitree-go2-freewalk in this world
 `;
 }
 
-function pythonPackage(name: string, project: Project): string {
-  return `"""${name}: a dim-world-builder world for dimos sim2 (MuJoCo).
+function worldModule(name: string, project: Project): string {
+  return `"""${name}: a dim-world-builder world for dimos sim2 (MuJoCo); \`python -m ${name}.world\` checks it.
 
-Files beside this one: scene.xml (MJCF), scene.json (dimos.scene.v1: entities, spawns), movers.json
-(dimos.movers.v1: scripted obstacles), views.json (remembered camera views; render_view() looks from one), meshes/,
-world.project.json (the editor's project) and scene_data.py (the
-SceneData module: publish on scene_data_request, get the world's bodies, meshes and lights on scene_data).
+Files beside this one: scene.xml (MJCF), scene.json (dimos.scene.v1: entities, spawns, movers), world.json (remembered
+camera views, the nav test, the editor's project), meshes/, textures/, scene_data.py (the SceneData module) and
+blueprints.py (\`go2\`).
 ${project.items.length} items, ${project.floors.length} floor(s).
 """
 
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
-import sys
 from typing import Any
+
+import mujoco
+import numpy as np
+from numpy.typing import NDArray
 
 SCENE_DIR = Path(__file__).resolve().parent
 SCENE_XML = SCENE_DIR / "scene.xml"
 SCENE_JSON = SCENE_DIR / "scene.json"
-MOVERS_JSON = SCENE_DIR / "movers.json"
-PROJECT_JSON = SCENE_DIR / "world.project.json"
+WORLD_JSON = SCENE_DIR / "world.json"
 
 _scene = json.loads(SCENE_JSON.read_text())
+_world = json.loads(WORLD_JSON.read_text())
 SPAWNS: dict[str, dict[str, Any]] = _scene.get("spawns", {})
 ENTITIES: dict[str, dict[str, Any]] = _scene.get("entities", {})
-MOVERS: list[dict[str, Any]] = json.loads(MOVERS_JSON.read_text()).get("movers", [])
-VIEWS_JSON = SCENE_DIR / "views.json"
+MOVERS: list[dict[str, Any]] = _scene.get("movers", [])
 # remembered camera views: each is a fixed <camera> in scene.xml named by its "camera" id
-VIEWS: list[dict[str, Any]] = json.loads(VIEWS_JSON.read_text()).get("views", []) if VIEWS_JSON.exists() else []
+VIEWS: list[dict[str, Any]] = _world.get("views", [])
+# the nav test: mapping path and goals (verify/nav_eval.py runs it)
+NAV: dict[str, Any] = _world.get("nav", {})
 
 
-def check() -> Any:
-    """Compile scene.xml with MuJoCo; returns the MjModel."""
-    import mujoco
-
+def check() -> mujoco.MjModel:
+    """Compile scene.xml with MuJoCo."""
     return mujoco.MjModel.from_xml_path(str(SCENE_XML))
 
 
-def blueprint(robot: str = "unitree-go2-freewalk", scene_data: bool = True) -> Any:
-    """A dimos blueprint for \`robot\` in this world (sets the global scene package first), plus the SceneData module
-    (scene_data_request -> scene_data) so frontends can draw the world."""
-    from dimos.core.global_config import global_config
-
-    global_config.update(simulation="mujoco", scene_package=str(SCENE_DIR))
-    from dimos.robot.get_all_blueprints import get_blueprint_by_name
-
-    robot_blueprint = get_blueprint_by_name(robot)
-    if not scene_data:
-        return robot_blueprint
-    # module workers import SceneData by this package's name, so they need its parent on their path
-    parent = str(SCENE_DIR.parent)
-    paths = [p for p in os.environ.get("PYTHONPATH", "").split(os.pathsep) if p]
-    if parent not in paths:
-        os.environ["PYTHONPATH"] = os.pathsep.join([parent, *paths])
-    if parent not in sys.path:
-        sys.path.insert(0, parent)
-    from dimos.core.coordination.blueprints import autoconnect
-
-    from .scene_data import SceneData
-
-    return autoconnect(robot_blueprint, SceneData.blueprint())
-
-
-def render_view(name: str, width: int = 640, height: int = 480, model: Any = None, data: Any = None) -> Any:
-    """An RGB image (height x width x 3 uint8) from the remembered view \`name\` (see VIEWS).
+def render_view(
+    name: str,
+    width: int = 640,
+    height: int = 480,
+    model: mujoco.MjModel | None = None,
+    data: mujoco.MjData | None = None,
+) -> NDArray[np.uint8]:
+    """An RGB image (height x width x 3) from the remembered view \`name\` (see VIEWS).
 
     Without \`model\`/\`data\` it renders this world as exported; pass a running simulation's MjModel and MjData (whose
     scene includes this world's cameras) to see the live state, e.g. to check whether a task was done.
     """
-    import mujoco
-
     if model is None:
         model = check()
     if data is None:
@@ -205,16 +189,13 @@ def render_view(name: str, width: int = 640, height: int = 480, model: Any = Non
         raise KeyError(f"no camera {name!r} in the model (this world's views: {known})")
     width = min(width, int(model.vis.global_.offwidth))
     height = min(height, int(model.vis.global_.offheight))
-    with mujoco.Renderer(model, height, width) as renderer:
+    renderer = mujoco.Renderer(model, height, width)
+    try:
         renderer.update_scene(data, camera=camera)
-        return renderer.render()
-
-
-def __getattr__(attribute: str) -> Any:
-    # the go2 entry point (dimos run <world>.go2) is built on first use, not on import
-    if attribute == "go2":
-        return blueprint("unitree-go2-freewalk")
-    raise AttributeError(attribute)
+        image: NDArray[np.uint8] = renderer.render()
+        return image
+    finally:
+        renderer.close()
 
 
 def main() -> None:
@@ -223,6 +204,35 @@ def main() -> None:
         f"{SCENE_XML}: {model.nbody} bodies, {model.ngeom} geoms, {len(MOVERS)} movers, spawns {sorted(SPAWNS)}, "
         f"views {[view['camera'] for view in VIEWS]}"
     )
+
+
+if __name__ == "__main__":
+    main()
+`;
+}
+
+function blueprintsModule(name: string): string {
+  return `"""Runnable blueprints for this world (the pyproject's dimos.blueprints entry points): \`dimos run ${
+    name.replace(/_/g, "-")
+  }.go2\`."""
+
+from __future__ import annotations
+
+from ${name}.scene_data import SceneData
+from ${name}.world import SCENE_DIR
+
+from dimos.core.coordination.blueprints import Blueprint, autoconnect
+from dimos.core.global_config import global_config
+from dimos.robot.get_all_blueprints import get_blueprint_by_name
+
+
+def with_robot(robot: str) -> Blueprint:
+    """\`robot\` (any sim2 blueprint that honors scene_package) in this world, plus the SceneData module."""
+    global_config.update(simulation="mujoco", scene_package=str(SCENE_DIR))
+    return autoconnect(get_blueprint_by_name(robot), SceneData.blueprint())
+
+
+go2 = with_robot("unitree-go2-freewalk")
 `;
 }
 
@@ -245,7 +255,7 @@ description = "A dim-world-builder world for dimos sim2"
 requires-python = ">=3.10"
 
 [project.entry-points."dimos.blueprints"]
-go2 = "${name}:go2"
+go2 = "${name}.blueprints:go2"
 scene-data = "${name}.scene_data:SceneData"
 
 [build-system]

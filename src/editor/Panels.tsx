@@ -1136,7 +1136,7 @@ export function NavPanel() {
     <div style={section} data-testid="nav-panel">
       <Text small muted>
         A navigation test for any robot and nav stack: the robot is first driven along the mapping
-        path (to build its map), then sent to each goal in turn. Exported as nav_eval.json;
+        path (to build its map), then sent to each goal in turn. Exported in world.json (nav);
         verify/nav_eval.py runs and scores it.
       </Text>
       <Field label="Start at">

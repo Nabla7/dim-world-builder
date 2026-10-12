@@ -28,8 +28,8 @@ from dimos.core.coordination.module_coordinator import ModuleCoordinator
 from dimos.core.global_config import global_config
 from dimos.core.transport_factory import make_transport
 from dimos.msgs.geometry_msgs.PoseStamped import PoseStamped
-from dimos.msgs.nav_msgs.OccupancyGrid import OccupancyGrid
 from dimos.msgs.geometry_msgs.Twist import Twist
+from dimos.msgs.nav_msgs.OccupancyGrid import OccupancyGrid
 from dimos.msgs.sensor_msgs.PointCloud2 import PointCloud2
 from dimos.robot.get_all_blueprints import get_blueprint_by_name
 from dimos.robot.unitree.go2.freewalk_connection import Go2FreewalkConnection
@@ -48,7 +48,7 @@ class Recorder:
         self.reader.model.vis.global_.offwidth = 1280
         self.reader.model.vis.global_.offheight = 720
         self.renderer = mujoco.Renderer(self.reader.model, 720, 1280)
-        self.camera = mujoco.MjvCamera()
+        self.camera = mujoco.MjvCamera()  # type: ignore[attr-defined]
         self.camera.distance = 4.5
         self.camera.elevation = -25
         self.root = self.reader.model.body(f"{ROBOT}/base").id
@@ -58,8 +58,27 @@ class Recorder:
         self.written = 0
         self.caption = ""
         self.ffmpeg = subprocess.Popen(
-            ["ffmpeg", "-loglevel", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", "1280x720",
-             "-r", str(fps), "-i", "-", "-c:v", "libx264", "-pix_fmt", "yuv420p", str(path)],
+            [
+                "ffmpeg",
+                "-loglevel",
+                "error",
+                "-y",
+                "-f",
+                "rawvideo",
+                "-pix_fmt",
+                "rgb24",
+                "-s",
+                "1280x720",
+                "-r",
+                str(fps),
+                "-i",
+                "-",
+                "-c:v",
+                "libx264",
+                "-pix_fmt",
+                "yuv420p",
+                str(path),
+            ],
             stdin=subprocess.PIPE,
         )
 
@@ -132,18 +151,24 @@ class Course:
         next_sample = 0.0
         while time.monotonic() < end:
             if twist is not None:
-                self.cmd.broadcast(None, Twist(linear=(twist[0], twist[1], 0), angular=(0, 0, twist[2])))
+                self.cmd.broadcast(
+                    None, Twist(linear=(twist[0], twist[1], 0), angular=(0, 0, twist[2]))
+                )
             if self.recorder:
                 self.recorder.tick()
             if time.monotonic() >= next_sample:
                 next_sample = time.monotonic() + 0.1
                 state = self.sim.scene_state()
                 pose = state.robots[ROBOT]
-                samples.append({
-                    "xyz": pose.position.to_tuple(),
-                    "contacts": [tuple(c) for c in state.contacts],
-                    "entities": {k: v.pose.position.to_tuple() for k, v in state.entities.items()},
-                })
+                samples.append(
+                    {
+                        "xyz": pose.position.to_tuple(),
+                        "contacts": [tuple(c) for c in state.contacts],
+                        "entities": {
+                            k: v.pose.position.to_tuple() for k, v in state.entities.items()
+                        },
+                    }
+                )
             time.sleep(0.02)
         return samples
 
@@ -181,7 +206,9 @@ class Course:
             for pair in s["contacts"]
         )
 
-    def lidar_hits(self, box_min: tuple[float, float, float], box_max: tuple[float, float, float]) -> int:
+    def lidar_hits(
+        self, box_min: tuple[float, float, float], box_max: tuple[float, float, float]
+    ) -> int:
         """lidar points (world frame) inside a box, over the last second of scans"""
         recent = self.clouds[-10:]
         lo, hi = np.array(box_min), np.array(box_max)
@@ -201,7 +228,7 @@ class Course:
 
 
 def entity_named(scene: dict[str, Any], label: str) -> str:
-    return next(k for k, v in scene["entities"].items() if v["label"] == label)
+    return str(next(k for k, v in scene["entities"].items() if v["label"] == label))
 
 
 def main() -> int:
@@ -223,7 +250,10 @@ def main() -> int:
     try:
         if args.video:
             course.recorder = Recorder(course.sim.describe(), args.video)
-        want = lambda lane: not args.only or lane in args.only.split(",")  # noqa: E731
+
+        def want(lane: str) -> bool:
+            return not args.only or lane in args.only.split(",")
+
         if want("wall"):
             # wall lane: the room's solid west wall faces x = 2.425; the Go2's nose is ~0.35 m ahead of its base
             room = entity_named(scene, "Lab room")
@@ -231,12 +261,18 @@ def main() -> int:
             course.spawn("wall_lane")
             course.wait(1.0)
             course.check(
-                "wall", course.lidar_hits((2.3, -2, 0.05), (2.6, 2, 2.5)) > 50, "lidar sees the wall ahead"
+                "wall",
+                course.lidar_hits((2.3, -2, 0.05), (2.6, 2, 2.5)) > 50,
+                "lidar sees the wall ahead",
             )
             samples = course.wait(9.0, (0.5, 0, 0))
             xs = [s["xyz"][0] for s in samples]
             course.check("wall", max(xs) > 1.3, f"walked toward the wall (max x {max(xs):.2f})")
-            course.check("wall", max(xs) < 2.425, f"never crossed the wall plane x=2.425 (max base x {max(xs):.2f})")
+            course.check(
+                "wall",
+                max(xs) < 2.425,
+                f"never crossed the wall plane x=2.425 (max base x {max(xs):.2f})",
+            )
             course.check("wall", course.touched(samples, room), f"contact with {room} recorded")
 
         if want("box"):
@@ -257,11 +293,15 @@ def main() -> int:
             course.wait(1.0)
             course.wait(3.4, (0.5, 0, 0))
             course.check(
-                "mover", course.lidar_hits((1.0, -14.5, 0.0), (1.8, -9.5, 0.6)) > 20, "lidar sees the cart"
+                "mover",
+                course.lidar_hits((1.0, -14.5, 0.0), (1.8, -9.5, 0.6)) > 20,
+                "lidar sees the cart",
             )
             samples = course.wait(14.0)
             ys = [s["entities"][cart][1] for s in samples]
-            course.check("mover", max(ys) - min(ys) > 1.0, f"the cart moved ({min(ys):.2f}..{max(ys):.2f})")
+            course.check(
+                "mover", max(ys) - min(ys) > 1.0, f"the cart moved ({min(ys):.2f}..{max(ys):.2f})"
+            )
             pushed = max(math.dist(s["xyz"][:2], samples[0]["xyz"][:2]) for s in samples)
             course.check("mover", course.touched(samples, cart), f"contact with {cart} recorded")
             course.check("mover", pushed > 0.1, f"the cart displaced the Go2 by {pushed:.2f} m")
@@ -273,7 +313,9 @@ def main() -> int:
             course.spawn("stairs_lane")
             course.wait(1.0)
             course.check(
-                "stairs", course.lidar_hits((1.4, 5.3, 0.0), (3.0, 6.7, 1.1)) > 50, "lidar sees the stairs"
+                "stairs",
+                course.lidar_hits((1.4, 5.3, 0.0), (3.0, 6.7, 1.1)) > 50,
+                "lidar sees the stairs",
             )
             samples = course.wait(8.0, (0.4, 0, 0))
             top = max(s["xyz"][2] for s in samples)
@@ -313,7 +355,11 @@ def main() -> int:
             map_tap.subscribe(lambda msg: clouds.__setitem__("global_map", msg))
             for topic in ("global_costmap", "navigation_costmap"):
                 grid_tap = make_transport(topic, OccupancyGrid)
-                grid_tap.subscribe(lambda msg, topic=topic: costmaps.__setitem__(topic, msg))
+
+                def keep(msg: OccupancyGrid, topic: str = topic) -> None:
+                    costmaps[topic] = msg
+
+                grid_tap.subscribe(keep)
                 taps.append(grid_tap)
             samples = course.wait(180.0, None)
             map_tap.stop()
@@ -322,11 +368,19 @@ def main() -> int:
             if args.dump_costmap:
                 for topic, grid in costmaps.items():
                     o = grid.origin.position
-                    np.savez(f"{args.dump_costmap}_{topic}.npz", grid=grid.grid, origin=[o.x, o.y], resolution=grid.resolution,
-                             path=np.array([s["xyz"] for s in samples]))
+                    np.savez(
+                        f"{args.dump_costmap}_{topic}.npz",
+                        grid=grid.grid,
+                        origin=[o.x, o.y],
+                        resolution=grid.resolution,
+                        path=np.array([s["xyz"] for s in samples]),
+                    )
             for tap in taps:
                 tap.stop()
-            print(f"nav diagnostics: messages {counts}, largest commanded turn {turn['max_wz']:.2f} rad/s", flush=True)
+            print(
+                f"nav diagnostics: messages {counts}, largest commanded turn {turn['max_wz']:.2f} rad/s",
+                flush=True,
+            )
             reached = [s for s in samples if math.dist(s["xyz"][:2], goal) < 0.7]
             course.check(
                 "nav",
@@ -339,7 +393,10 @@ def main() -> int:
         course.stop()
     if args.report:
         args.report.write_text(json.dumps(course.results, indent=2))
-    print("FAILURES:\n  " + "\n  ".join(course.failures) if course.failures else "ALL PASSED", flush=True)
+    print(
+        "FAILURES:\n  " + "\n  ".join(course.failures) if course.failures else "ALL PASSED",
+        flush=True,
+    )
     return 1 if course.failures else 0
 
 

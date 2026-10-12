@@ -110,11 +110,12 @@ describe("export", () => {
       entities: Record<string, unknown>;
       spawns: Record<string, unknown>;
       hidden_geom_groups: number[];
+      movers: unknown[];
     };
     expect(Object.keys(json.entities)).toHaveLength(world.bodies.length);
     expect(json.spawns.default).toBeDefined();
     expect(json.hidden_geom_groups).toEqual([3]);
-    expect((scene.moversJson as { movers: unknown[] }).movers).toHaveLength(1);
+    expect(json.movers).toHaveLength(1);
     expect(scene.xml).toContain('mocap="true"');
     expect(scene.xml).toContain("<hfield name=");
   });

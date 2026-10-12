@@ -1,4 +1,4 @@
-// World -> the files sim2 loads: scene.xml (MJCF), scene.json (dimos.scene.v1), movers.json (dimos.movers.v1).
+// World -> the files sim2 loads: scene.xml (MJCF) and scene.json (dimos.scene.v1, movers included).
 // Mesh assets are referenced as meshes/<asset id>/<file>; the exporter copies those files beside scene.xml.
 
 import type { Body, Shape, World } from "./geometry.ts";
@@ -23,7 +23,6 @@ function yawQuat(yaw: number): Quat {
 export interface SceneFiles {
   xml: string;
   sceneJson: unknown;
-  moversJson: unknown;
   /** views.json: the remembered camera views (dim-world-builder.views.v1), each a <camera> in scene.xml */
   viewsJson: unknown;
   /** asset id -> files under that asset's folder that scene.xml references */
@@ -210,10 +209,7 @@ ${
     ),
     spawns,
     hidden_geom_groups: [HIDDEN_GROUP],
-    provenance: { tool: "dim-world-builder" },
-  };
-  const moversJson = {
-    format: "dimos.movers.v1",
+    // scripted obstacles, which sim2 moves every physics step
     movers: world.movers.map((m) => ({
       body: m.body,
       waypoints: m.waypoints as Vec3[],
@@ -221,10 +217,11 @@ ${
       mode: m.mode,
       heading: m.heading,
     })),
+    provenance: { tool: "dim-world-builder" },
   };
   const viewsJson = {
     format: "dim-world-builder.views.v1",
     views: world.cameras.map((c) => ({ camera: c.name, name: c.label, pos: c.pos, xyaxes: c.xyaxes, fovy: c.fovy })),
   };
-  return { xml, sceneJson, moversJson, viewsJson, meshFiles, textureFiles };
+  return { xml, sceneJson, viewsJson, meshFiles, textureFiles };
 }
