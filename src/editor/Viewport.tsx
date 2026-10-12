@@ -18,7 +18,7 @@ import { useSubscription } from "../ui.ts";
 import { buildWorld, type World } from "../world/geometry.ts";
 import { moverPose } from "../world/movers.ts";
 import type { Item, MeshAsset, Project, Quat, Vec3 } from "../world/types.ts";
-import { bodyObject, disposeObject, ghost } from "./three_world.ts";
+import { bodyObject, disposeObject, floorLevels, ghost } from "./three_world.ts";
 import { fadeGrid, gridFocus, SKY, skyDome, SUN_DIRECTION, windTime } from "./nature.ts";
 import {
   addItem,
@@ -394,6 +394,8 @@ function WorldLayer({ assets }: { assets: Record<string, MeshAsset> }) {
       disposeObject(object);
     }
     objects.clear();
+    const levels = project.floors.map((f) => f.elevation).slice(0, 4);
+    floorLevels.value.set(...([...levels, 1e6, 1e6, 1e6, 1e6].slice(0, 4) as [number, number, number, number]));
     const style = { collisionColor: themeColor("var(--danger)"), showCollision, grass };
     for (const body of world.bodies) {
       const object = bodyObject(body, assets, style, () => live.viewer.requestRender());

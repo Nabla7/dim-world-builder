@@ -53,7 +53,133 @@ export interface WorldStyle {
   grass?: boolean;
 }
 
-function material(shape: Shape): THREE.MeshStandardMaterial {
+/** the floors' elevations (up to 4), for the contact shade; the world layer keeps it current */
+export const floorLevels = { value: new THREE.Vector4(0, 1e6, 1e6, 1e6) };
+
+/** a surface detail for a flat-color material, picked by its name (the kits name them: wood, carpet, metalDark, stone) */
+type Detail = "wood" | "fabric" | "metal" | "stone";
+
+function detailFor(name: string): Detail | null {
+  if (/wood/i.test(name)) return "wood";
+  if (/carpet|fabric|cloth|cushion/i.test(name)) return "fabric";
+  if (/metal|steel|iron/i.test(name)) return "metal";
+  if (/stone|rock|dirt/i.test(name)) return "stone";
+  return null;
+}
+
+// per detail: meters per texture tile, and how far it swings the color (+-)
+const DETAIL_LOOK: Record<Detail, { tile: number; strength: number }> = {
+  wood: { tile: 0.6, strength: 0.32 },
+  fabric: { tile: 0.08, strength: 0.22 },
+  metal: { tile: 0.5, strength: 0.14 },
+  stone: { tile: 0.7, strength: 0.3 },
+};
+
+const detailTextures = new Map<Detail, THREE.DataTexture>();
+
+/** a tileable grayscale texture (mid-gray = no change), drawn once per kind */
+function detailTexture(kind: Detail): THREE.DataTexture {
+  let made = detailTextures.get(kind);
+  if (made) return made;
+  const n = 256;
+  let seed = 7;
+  const random = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  // periodic noise: a sum of integer-frequency waves wraps cleanly at the tile's edge
+  const waves = Array.from({ length: 24 }, (_, i) => ({
+    fx: Math.round(random() * (i + 2)),
+    fy: Math.round(random() * (i + 2)),
+    phase: random() * Math.PI * 2,
+    amp: 1 / (i + 2),
+  }));
+  const noise = (x: number, y: number) =>
+    waves.reduce(
+      (sum, w) => sum + w.amp * Math.sin(2 * Math.PI * (w.fx * x + w.fy * y) + w.phase),
+      0,
+    ) / 2;
+  const rows = Array.from({ length: n }, () => random());
+  const data = new Uint8Array(n * n * 4);
+  for (let y = 0; y < n; y++) {
+    for (let x = 0; x < n; x++) {
+      const u = x / n, v = y / n;
+      let value = 0;
+      if (kind === "wood") {
+        // grain: rings along u, bent by low noise, with fine streaks
+        const ring = Math.sin(2 * Math.PI * (v * 9 + noise(u, v) * 0.9));
+        value = 0.55 * ring * ring - 0.25 + 0.2 * (rows[y] - 0.5);
+      } else if (kind === "fabric") {
+        // a weave: alternating over/under threads plus a little fuzz
+        const weave = ((x >> 1) + (y >> 1)) % 2 ? 0.18 : -0.18;
+        value = weave * Math.sin(Math.PI * ((x % 2) + 0.5)) + 0.4 * (random() - 0.5) +
+          0.3 * noise(u, v);
+      } else if (kind === "metal") {
+        // brushed: streaks along u
+        value = (rows[y] - 0.5) * 0.9 + 0.15 * noise(u, v);
+      } else {
+        value = noise(u, v) * 0.8 + 0.35 * (random() - 0.5);
+      }
+      const byte = Math.max(0, Math.min(255, Math.round(128 + 127 * value)));
+      data.set([byte, byte, byte, 255], (y * n + x) * 4);
+    }
+  }
+  made = new THREE.DataTexture(data, n, n);
+  made.wrapS = made.wrapT = THREE.RepeatWrapping;
+  made.magFilter = THREE.LinearFilter;
+  made.minFilter = THREE.LinearMipmapLinearFilter;
+  made.generateMipmaps = true;
+  made.anisotropy = 4;
+  made.needsUpdate = true;
+  detailTextures.set(kind, made);
+  return made;
+}
+
+/**
+ * Two cheap game-art tricks for flat-color models, as a few shader lines (no extra pass):
+ * - a contact shade, a stand-in for ambient occlusion: everything darkens toward the floor it stands on (its bottom
+ *   35 cm), so furniture and walls sit on the ground instead of floating over it;
+ * - optionally a surface detail (wood grain, weave, brushed metal, stone) projected from the model's three axes
+ *   (triplanar), since the kits' models have no texture coordinates to put a texture on.
+ */
+function surfaceLook<M extends THREE.Material>(material: M, detail: Detail | null = null): M {
+  const look = detail ? DETAIL_LOOK[detail] : null;
+  material.onBeforeCompile = (shader) => {
+    shader.uniforms.uFloorLevels = floorLevels;
+    let vertexLines = "vWorldZ = (modelMatrix * vec4(transformed, 1.0)).z;";
+    let fragmentHead = "varying float vWorldZ;\nuniform vec4 uFloorLevels;";
+    let fragmentBody = `
+        float above = 1e6;
+        for (int i = 0; i < 4; i++) {
+          float h = vWorldZ - uFloorLevels[i];
+          if (h > -0.02) above = min(above, max(h, 0.0));
+        }
+        diffuseColor.rgb *= mix(0.55, 1.0, smoothstep(0.0, 0.35, above));`;
+    if (look) {
+      shader.uniforms.uDetail = { value: detailTexture(detail!) };
+      vertexLines += "\nvObjectPos = transformed;";
+      fragmentHead += `\nvarying vec3 vObjectPos;\nuniform sampler2D uDetail;`;
+      fragmentBody += `
+        vec3 facing = abs(normalize(cross(dFdx(vObjectPos), dFdy(vObjectPos))));
+        facing = pow(facing, vec3(4.0));
+        facing /= facing.x + facing.y + facing.z;
+        vec3 p = vObjectPos / ${look.tile.toFixed(3)};
+        float grain = texture2D(uDetail, p.yz).r * facing.x + texture2D(uDetail, p.xz).r * facing.y
+          + texture2D(uDetail, p.xy).r * facing.z;
+        diffuseColor.rgb *= 1.0 + (grain - 0.5) * ${(2 * look.strength).toFixed(3)};`;
+    }
+    shader.vertexShader = shader.vertexShader
+      .replace(
+        "#include <common>",
+        `#include <common>\nvarying float vWorldZ;${look ? "\nvarying vec3 vObjectPos;" : ""}`,
+      )
+      .replace("#include <worldpos_vertex>", `#include <worldpos_vertex>\n${vertexLines}`);
+    shader.fragmentShader = shader.fragmentShader
+      .replace("#include <common>", `#include <common>\n${fragmentHead}`)
+      .replace("#include <color_fragment>", `#include <color_fragment>${fragmentBody}`);
+  };
+  material.customProgramCacheKey = () => `surfaceLook:${detail ?? ""}`;
+  return material;
+}
+
+function material(shape: Shape, shaded = true): THREE.MeshStandardMaterial {
   const [r, g, b, a] = shape.rgba;
   if (shape.type === "hfield") {
     // its colors are per facet (lowPolyGround)
@@ -64,7 +190,7 @@ function material(shape: Shape): THREE.MeshStandardMaterial {
       metalness: 0,
     });
   }
-  return new THREE.MeshStandardMaterial({
+  const made = new THREE.MeshStandardMaterial({
     color: new THREE.Color().setRGB(r, g, b, THREE.SRGBColorSpace),
     roughness: 0.85,
     metalness: 0.02,
@@ -72,6 +198,7 @@ function material(shape: Shape): THREE.MeshStandardMaterial {
     opacity: a,
     flatShading: shape.type === "mesh",
   });
+  return shaded ? surfaceLook(made) : made;
 }
 
 function geometry(shape: Shape): THREE.BufferGeometry | null {
@@ -276,6 +403,7 @@ function livelier<M extends THREE.Material | THREE.Material[]>(material: M): M {
         standard.roughness = 0.9;
       }
     }
+    if (!standard.userData.foliage) surfaceLook(made, standard.map ? null : detailFor(source.name));
     livelyCache.set(source, made);
   }
   return made as M;
@@ -393,7 +521,8 @@ export function bodyObject(
           opacity: 0.8,
         }),
       )
-      : new THREE.Mesh(geo, material(shape));
+      // a floor slab is what the others darken toward, not something to darken
+      : new THREE.Mesh(geo, material(shape, body.kind !== "slab"));
     if (body.kind === "slab") {
       // the slab's top is the ground at z = 0, where the viewer's grid lies: push the slab back so the grid shows
       const m = mesh.material as THREE.Material;
