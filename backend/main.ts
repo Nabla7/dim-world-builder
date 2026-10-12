@@ -9,6 +9,7 @@
 //   GET  /api/projects               public: saved projects
 //   GET|POST /api/views, POST /api/views/remove   public: a saved world's remembered camera views
 //   GET  /api/views/image?name=&view=&width=&height=   public: a PNG of the world from one view (MuJoCo)
+//   POST /api/check                  public: items whose collision shapes interpenetrate (clips), as warnings
 //   GET|PUT /api/internal/projects/<name>   private: load / autosave one project
 //   POST /api/internal/import?name=&height=  private: upload a .glb/.gltf/.obj; cooks it in the background
 //   GET  /api/internal/import/<job>  private: a cook's progress and result
@@ -164,6 +165,44 @@ async function cook(job: CookJob, input: string, targetHeight: number | null) {
   }
 }
 
+// ── the clip check: export to a scratch folder, then MuJoCo reports every interpenetrating pair (cooker/check_clips.py) ──
+
+interface ClipReport {
+  tolerance_m?: number;
+  clips: unknown[];
+  warnings: string[];
+}
+
+async function clipCheck(project: Project, tolerance = 0.02): Promise<ClipReport> {
+  const parent = `${dataDir}/checks/${crypto.randomUUID()}`;
+  try {
+    const { list, dirs } = await assets();
+    const result = await exportProject(project, Object.fromEntries(list.map((a) => [a.id, a])), dirs, parent);
+    const output = await new Deno.Command(uvBinary(), {
+      args: [
+        "run",
+        "--frozen",
+        "--project",
+        cookerDir,
+        "python",
+        `${cookerDir}/check_clips.py`,
+        `${result.dir}/scene.xml`,
+        String(tolerance),
+      ],
+      stdout: "piped",
+      stderr: "piped",
+      env: { UV_PROJECT_ENVIRONMENT: `${dataDir}/cooker-venv` },
+    }).output();
+    if (!output.success) {
+      const detail = new TextDecoder().decode(output.stderr).trim().split("\n").slice(-3).join(" ");
+      return { clips: [], warnings: [`the clip check failed: ${detail}`] };
+    }
+    return JSON.parse(new TextDecoder().decode(output.stdout)) as ClipReport;
+  } finally {
+    await Deno.remove(parent, { recursive: true }).catch(() => {});
+  }
+}
+
 // ── routes ──
 
 const safeName = (name: string) => packageName(decodeURIComponent(name));
@@ -243,7 +282,8 @@ async function api(request: Request, url: URL): Promise<Response | null> {
     const added = (items ?? []).map((item) => completeItem(item, project.activeFloor));
     project.items.push(...added);
     await saveProject(project);
-    return json({ added: added.map((i) => i.id), items: project.items.length });
+    const { warnings } = await clipCheck(project);
+    return json({ added: added.map((i) => i.id), items: project.items.length, warnings });
   }
   if (route === "POST /api/generate") {
     const { kind, name, seed } = await request.json() as {
@@ -265,7 +305,8 @@ async function api(request: Request, url: URL): Promise<Response | null> {
     const project = make();
     if (name) project.name = name;
     await saveProject(project);
-    return json({ saved: packageName(project.name), items: project.items.length });
+    const { warnings } = await clipCheck(project);
+    return json({ saved: packageName(project.name), items: project.items.length, warnings });
   }
   if (route === "POST /api/export") {
     const body = await request.json() as { project?: Project; name?: string; parentDir?: string };
@@ -286,7 +327,16 @@ async function api(request: Request, url: URL): Promise<Response | null> {
       `${projectsDir}/${result.name}.json`,
       JSON.stringify(project, null, 2),
     );
-    return json(result);
+    const { warnings } = await clipCheck(project);
+    return json({ ...result, warnings });
+  }
+  if (route === "POST /api/check") {
+    // a saved world by name, or a project as the page has it right now
+    const body = await request.json() as { project?: Project; name?: string; tolerance?: number };
+    const project = body.project ??
+      await readJson<Project | null>(`${projectsDir}/${safeName(body.name ?? "")}.json`, null);
+    if (!project) return json({ error: "give a saved world's { name } or a { project }" }, 400);
+    return json(await clipCheck(project, body.tolerance ?? 0.02));
   }
   if (route === "GET /api/views") {
     const project = await readJson<Project | null>(

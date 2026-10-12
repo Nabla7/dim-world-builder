@@ -25,6 +25,7 @@ import { clutterYard } from "./world/examples_clutter.ts";
 import type { MeshAsset } from "./world/types.ts";
 import { AddPanel, FloorsPanel, Inspector, ItemsPanel, NavPanel, ViewsPanel } from "./editor/Panels.tsx";
 import { Viewport } from "./editor/Viewport.tsx";
+import { ClipBadge } from "./editor/ClipBadge.tsx";
 import {
   addItem,
   duplicateItem,
@@ -127,6 +128,7 @@ export function App() {
         />
         <ProjectMenu />
         <div style={{ flex: 1 }} />
+        <ClipBadge />
         <Segmented
           value={mode}
           items={[{ value: "edit", label: "Edit" }, { value: "view", label: "Viewer" }]}

@@ -70,3 +70,13 @@ export function startImport(file: File, name: string, height: number | null) {
   return json<{ job: string }>(`api/internal/import?${query}`, { method: "POST", body: file });
 }
 export const importStatus = (job: string) => json<CookJob>(`api/internal/import/${job}`);
+
+/** one item clipping into another (backend: cooker/check_clips.py, MuJoCo contacts) */
+export interface Clip {
+  a: { key: string; name: string; kind: string | null };
+  b: { key: string; name: string; kind: string | null };
+  depth_m: number;
+  at: [number, number, number];
+}
+export const checkClips = (project: Project) =>
+  send<{ clips: Clip[]; warnings: string[] }>("POST", "api/check", { project });

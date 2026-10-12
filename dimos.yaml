@@ -29,7 +29,7 @@ provides:
     endpoints:
         - method: POST
           path: api/export
-          description: Write a world as a dimos sim2 scene folder (scene.xml, scene.json, movers.json, nav_eval.json, a Python package)
+          description: "Write a world as a dimos sim2 scene folder (scene.xml, scene.json, a Python package); warnings lists items that clip into each other"
           params:
               project:
                   type: object
@@ -64,7 +64,7 @@ provides:
                   description: the world (dim-world-builder.project.v1)
         - method: POST
           path: api/project/items
-          description: "Add items to a saved world. Each item: kind (primitive|mesh|room|stairs|hill|hole|apriltag), params, and optionally name, floor, position [x,y,z], rotation [x,y,z,w], scale, mover"
+          description: "Add items to a saved world. Each item: kind (primitive|mesh|room|stairs|hill|hole|apriltag|light), params, and optionally name, floor, position [x,y,z], rotation [x,y,z,w], scale, mover. warnings lists items that now clip into each other"
           params:
               name:
                   type: string
@@ -74,7 +74,7 @@ provides:
                   description: the items to add
         - method: POST
           path: api/generate
-          description: Generate and save a world (playground is a big two-floor test scene; test_course, clutter_yard, empty)
+          description: "Generate and save a world (playground is a big two-floor test scene; test_course, clutter_yard, empty); warnings lists items that clip into each other"
           params:
               kind:
                   type: string
@@ -85,6 +85,20 @@ provides:
               seed:
                   type: number
                   description: for playground (optional)
+        - method: POST
+          path: api/check
+          description: "Which items clip into each other: MuJoCo checks every pair of collision shapes (floors and hills excluded). clips: [{a, b (key, name, kind), depth_m, at [x,y,z]}], warnings: one line each"
+          role: context
+          params:
+              name:
+                  type: string
+                  description: a saved world's name
+              project:
+                  type: object
+                  description: a world (dim-world-builder.project.v1) instead of a saved one
+              tolerance:
+                  type: number
+                  description: meters of overlap to ignore (default 0.02)
         - method: GET
           path: api/views
           description: A saved world's remembered camera views (key, name, eye, target, fov); each is a MuJoCo camera named by its key in the export
