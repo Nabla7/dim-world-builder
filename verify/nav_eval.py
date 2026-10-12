@@ -50,7 +50,11 @@ class Robot:
         self.frame = args.frame
 
     def _on_odom(self, msg: Any) -> None:
-        pose = msg.pose.pose if hasattr(msg.pose, "pose") else msg
+        # dimos's PoseStamped carries position/orientation itself; Odometry nests them (pose, or pose.pose)
+        pose = msg
+        for _ in range(2):
+            if not hasattr(pose, "position"):
+                pose = getattr(pose, "pose", pose)
         p, q = pose.position, pose.orientation
         yaw = math.atan2(2 * (q.w * q.z + q.x * q.y), 1 - 2 * (q.y * q.y + q.z * q.z))
         with self.lock:
