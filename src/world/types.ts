@@ -10,14 +10,26 @@ export interface Floor {
   name: string;
   /** height of this floor's ground above the world ground */
   elevation: number;
+  /**
+   * a solid slab under this floor (its top at the floor's elevation) that holes cut into; the ground floor has a
+   * thick one by default so a hole can be a pit
+   */
+  slab?: { thickness: number; sizeX: number; sizeY: number; center: [number, number] };
 }
 
+export type OpeningKind = "door" | "double" | "window" | "crawl" | "arch";
+
+/** a gap cut through a room's wall: a door (from the floor), a window (from a sill), a crawl-space hatch... */
 export interface DoorOpening {
   wall: "north" | "south" | "east" | "west";
   /** along the wall from its center, meters */
   offset: number;
   width: number;
+  /** top of the opening above the floor */
   height: number;
+  /** bottom of the opening above the floor (a window's sill); 0 for doors */
+  bottom?: number;
+  kind?: OpeningKind;
 }
 
 export interface RoomParams {
@@ -39,7 +51,29 @@ export interface StairsParams {
   /** thin treads with open gaps between them (no risers, like a ship's ladder) instead of solid blocks */
   openRisers?: boolean;
   treadThickness?: number;
+  /** straight; switchback: two flights back and forth with a landing; spiral: around a center post */
+  style?: "straight" | "switchback" | "spiral";
+  /** spiral: degrees turned over the whole climb */
+  spiralTurn?: number;
+  /** spiral: the center post's radius */
+  spiralCore?: number;
+  railing?: "none" | "left" | "right" | "both";
+  railingStyle?: "posts" | "panel" | "cables";
   color: Rgb;
+}
+
+export interface HoleParams {
+  sizeX: number;
+  sizeY: number;
+  /** how far down it goes; at least the slab's thickness cuts all the way through */
+  depth: number;
+}
+
+export interface AprilTagParams {
+  family: "tag36h11";
+  id: number;
+  /** the black square's edge, meters (what detectors take as tag_size) */
+  size: number;
 }
 
 export interface HillParams {
@@ -108,7 +142,9 @@ export type Item =
   | (ItemBase & { kind: "mesh"; params: MeshParams })
   | (ItemBase & { kind: "room"; params: RoomParams })
   | (ItemBase & { kind: "stairs"; params: StairsParams })
-  | (ItemBase & { kind: "hill"; params: HillParams });
+  | (ItemBase & { kind: "hill"; params: HillParams })
+  | (ItemBase & { kind: "hole"; params: HoleParams })
+  | (ItemBase & { kind: "apriltag"; params: AprilTagParams });
 
 export type ItemKind = Item["kind"];
 

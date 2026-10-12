@@ -23,11 +23,15 @@ import {
   Toggle,
 } from "../ui.ts";
 import { PAINT } from "../world/defaults.ts";
+import { openingPreset } from "../world/geometry.ts";
 import type {
+  AprilTagParams,
   DoorOpening,
   HillParams,
+  HoleParams,
   Item,
   MeshAsset,
+  OpeningKind,
   Quat,
   Rgb,
   RoomParams,
@@ -76,6 +80,10 @@ export function AddPanel({ assets, onImport }: { assets: MeshAsset[]; onImport: 
   const shown = entries.filter((e) => e.title.toLowerCase().includes(query.toLowerCase()));
   const groups = [...new Set(shown.map((e) => e.group))];
   const add = (entry: PaletteEntry) => {
+    if (entry.tool) {
+      setNavTool(entry.tool);
+      return;
+    }
     const at: Vec3 = [view.center[0], view.center[1], 0];
     if (entry.makeMany) addItems(entry.makeMany(floor, at));
     else addItem(entry.make(floor, at));
@@ -165,13 +173,32 @@ export function FloorsPanel() {
                 updateFloor(floor.id, { name })}
             />
           </Field>
+          <Toggle
+            value={Boolean(floor.slab)}
+            onChange={(on: boolean) =>
+              updateFloor(floor.id, {
+                slab: on ? { thickness: 0.3, sizeX: 30, sizeY: 30, center: [0, 0] } : undefined,
+              })}
+            label="Solid slab (holes cut into it)"
+          />
+          {floor.slab && (
+            <Range
+              label="Slab thickness"
+              value={floor.slab.thickness}
+              min={0.05}
+              max={5}
+              step={0.05}
+              unit="m"
+              onChange={(thickness) =>
+                updateFloor(floor.id, { slab: { ...floor.slab!, thickness } })}
+            />
+          )}
           <Field label="Elevation">
             <NumberInput
               value={floor.elevation}
               step={0.1}
               unit="m"
-              onChange={(elevation: number) =>
-                updateFloor(floor.id, { elevation })}
+              onChange={(elevation: number) => updateFloor(floor.id, { elevation })}
             />
           </Field>
         </div>
@@ -209,6 +236,14 @@ export function ItemsPanel() {
 }
 
 // ── Inspector ──
+
+const OPENING_LABELS: Record<OpeningKind, string> = {
+  door: "Door",
+  double: "Double door",
+  window: "Window",
+  crawl: "Crawl hatch",
+  arch: "Archway",
+};
 
 const toYaw = (q: Quat) =>
   Math.atan2(2 * (q[3] * q[2] + q[0] * q[1]), 1 - 2 * (q[1] * q[1] + q[2] * q[2]));
@@ -355,6 +390,70 @@ function StairsEditor({ item }: { item: Extract<Item, { kind: "stairs" }> }) {
           onChange={(treadThickness) => set({ treadThickness })}
         />
       )}
+      <Field label="Shape">
+        <Segmented
+          size="sm"
+          value={p.style ?? "straight"}
+          items={[
+            { value: "straight", label: "Straight" },
+            { value: "switchback", label: "Switchback" },
+            { value: "spiral", label: "Spiral" },
+          ]}
+          onChange={(style: string) => set({ style: style as StairsParams["style"] })}
+          data-testid="stairs-style"
+        />
+      </Field>
+      {p.style === "spiral" && (
+        <>
+          <Range
+            label="Turn"
+            value={p.spiralTurn ?? 360}
+            min={90}
+            max={720}
+            step={15}
+            unit="°"
+            onChange={(spiralTurn) => set({ spiralTurn })}
+          />
+          <Range
+            label="Center post"
+            value={p.spiralCore ?? 0.1}
+            min={0.05}
+            max={0.6}
+            step={0.01}
+            unit="m"
+            onChange={(spiralCore) => set({ spiralCore })}
+          />
+        </>
+      )}
+      <Field label="Railing">
+        <Segmented
+          size="sm"
+          value={p.railing ?? "none"}
+          items={[
+            { value: "none", label: "None" },
+            { value: "left", label: "Left" },
+            { value: "right", label: "Right" },
+            { value: "both", label: "Both" },
+          ]}
+          onChange={(railing: string) => set({ railing: railing as StairsParams["railing"] })}
+          data-testid="stairs-railing"
+        />
+      </Field>
+      {p.railing && p.railing !== "none" && p.style !== "spiral" && (
+        <Field label="Railing style">
+          <Segmented
+            size="sm"
+            value={p.railingStyle ?? "posts"}
+            items={[
+              { value: "posts", label: "Posts + rail" },
+              { value: "panel", label: "Solid panel" },
+              { value: "cables", label: "Cables" },
+            ]}
+            onChange={(railingStyle: string) =>
+              set({ railingStyle: railingStyle as StairsParams["railingStyle"] })}
+          />
+        </Field>
+      )}
       <Text small muted>
         Rise {(p.steps * p.stepHeight).toFixed(2)} m over {(p.steps * p.stepDepth).toFixed(2)}{" "}
         m (slope {deg(Math.atan2(p.stepHeight, p.stepDepth))}°)
@@ -500,7 +599,7 @@ function RoomEditor({ item }: { item: Extract<Item, { kind: "room" }> }) {
         data-testid="room-ceiling"
       />
       <Toggle value={p.floor} onChange={(floor: boolean) => set({ floor })} label="Floor slab" />
-      <p style={heading}>Doors</p>
+      <p style={heading}>Doors and windows</p>
       {p.doors.map((door, index) => (
         <div
           key={index}
@@ -513,6 +612,7 @@ function RoomEditor({ item }: { item: Extract<Item, { kind: "room" }> }) {
           }}
         >
           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            <Badge>{OPENING_LABELS[door.kind ?? "door"]}</Badge>
             <Segmented
               size="sm"
               value={door.wall}
@@ -526,7 +626,7 @@ function RoomEditor({ item }: { item: Extract<Item, { kind: "room" }> }) {
               icon="trash"
               size="sm"
               variant="ghost"
-              label="Remove door"
+              label="Remove opening"
               onClick={() => set({ doors: p.doors.filter((_, i) => i !== index) })}
             />
           </div>
@@ -540,18 +640,27 @@ function RoomEditor({ item }: { item: Extract<Item, { kind: "room" }> }) {
             onChange={(offset) => setDoor(index, { offset })}
           />
           <Range
-            label="Door width"
+            label="Opening width"
             value={door.width}
-            min={0.5}
-            max={4}
+            min={0.3}
+            max={6}
             step={0.05}
             unit="m"
             onChange={(width) => setDoor(index, { width })}
           />
           <Range
-            label="Door height"
+            label="Sill height"
+            value={door.bottom ?? 0}
+            min={0}
+            max={Math.max(0, p.height - 0.3)}
+            step={0.05}
+            unit="m"
+            onChange={(bottom) => setDoor(index, { bottom })}
+          />
+          <Range
+            label="Top"
             value={door.height}
-            min={1}
+            min={0.3}
             max={p.height}
             step={0.05}
             unit="m"
@@ -559,15 +668,93 @@ function RoomEditor({ item }: { item: Extract<Item, { kind: "room" }> }) {
           />
         </div>
       ))}
-      <Button
-        size="sm"
-        icon="plus"
-        onClick={() =>
-          set({ doors: [...p.doors, { wall: "north", offset: 0, width: 1, height: 2.1 }] })}
-      >
-        Add a door
-      </Button>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+        {(Object.keys(OPENING_LABELS) as OpeningKind[]).map((kind) => (
+          <Button
+            key={kind}
+            size="sm"
+            icon="plus"
+            data-testid={`add-opening-${kind}`}
+            onClick={() => set({ doors: [...p.doors, openingPreset(kind, "north")] })}
+          >
+            {OPENING_LABELS[kind]}
+          </Button>
+        ))}
+      </div>
       <Swatches value={p.color} onChange={(color) => set({ color })} />
+    </>
+  );
+}
+
+function HoleEditor({ item }: { item: Extract<Item, { kind: "hole" }> }) {
+  const p = item.params;
+  const set = (change: Partial<HoleParams>) =>
+    updateItem(item.id, (i) => ({ ...i, params: { ...p, ...change } } as Item), `hole-${item.id}`);
+  const slab = useEditor((s) => s.project.floors.find((f) => f.id === item.floor)?.slab);
+  return (
+    <>
+      <Range
+        label="Size X"
+        value={p.sizeX}
+        min={0.2}
+        max={20}
+        step={0.1}
+        unit="m"
+        onChange={(sizeX) => set({ sizeX })}
+      />
+      <Range
+        label="Size Y"
+        value={p.sizeY}
+        min={0.2}
+        max={20}
+        step={0.1}
+        unit="m"
+        onChange={(sizeY) => set({ sizeY })}
+      />
+      <Range
+        label="Depth"
+        value={p.depth}
+        min={0.05}
+        max={Math.max(0.1, slab?.thickness ?? 3)}
+        step={0.05}
+        unit="m"
+        onChange={(depth) => set({ depth })}
+      />
+      <Text small muted>
+        {slab
+          ? p.depth >= slab.thickness
+            ? "Cuts all the way through the floor."
+            : "A pit: it keeps a bottom."
+          : "This floor has no slab to cut: turn one on in Floors."}
+      </Text>
+    </>
+  );
+}
+
+function AprilTagEditor({ item }: { item: Extract<Item, { kind: "apriltag" }> }) {
+  const p = item.params;
+  const set = (change: Partial<AprilTagParams>) =>
+    updateItem(item.id, (i) => ({ ...i, params: { ...p, ...change } } as Item), `tag-${item.id}`);
+  return (
+    <>
+      <Field label="Tag id (tag36h11)">
+        <NumberInput
+          value={p.id}
+          min={0}
+          max={99}
+          step={1}
+          onChange={(id: number) => set({ id: Math.round(id) })}
+        />
+      </Field>
+      <Range
+        label="Tag size (black square)"
+        value={p.size}
+        min={0.05}
+        max={1}
+        step={0.01}
+        unit="m"
+        onChange={(size) => set({ size })}
+      />
     </>
   );
 }
@@ -732,8 +919,14 @@ export function Inspector({ assets }: { assets: MeshAsset[] }) {
       {item.kind === "stairs" && <StairsEditor item={item} />}
       {item.kind === "hill" && <HillEditor item={item} />}
       {item.kind === "room" && <RoomEditor item={item} />}
-      <p style={heading}>Motion</p>
-      <MoverEditor item={item} />
+      {item.kind === "hole" && <HoleEditor item={item} />}
+      {item.kind === "apriltag" && <AprilTagEditor item={item} />}
+      {item.kind !== "hole" && item.kind !== "apriltag" && (
+        <>
+          <p style={heading}>Motion</p>
+          <MoverEditor item={item} />
+        </>
+      )}
       <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
         <Button size="sm" icon="copy" onClick={() => duplicateItem(item.id)}>Duplicate</Button>
         <Button size="sm" icon="trash" variant="danger" onClick={() => removeItem(item.id)}>

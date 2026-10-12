@@ -18,7 +18,7 @@ export interface EditorState {
   /** the item whose mover path clicks on the ground extend */
   drawingPath: string | null;
   /** clicks on the ground extend the nav test's mapping path, or add a goal */
-  navTool: "path" | "goal" | null;
+  navTool: "path" | "goal" | "tag" | null;
   past: Project[];
   future: Project[];
   /** the last time the project changed, for autosave */
@@ -113,7 +113,7 @@ export function loadProject(project: Project) {
 
 export const select = (selected: string | null) =>
   set({ selected, drawingPath: null, navTool: null });
-export const setNavTool = (navTool: "path" | "goal" | null) =>
+export const setNavTool = (navTool: "path" | "goal" | "tag" | null) =>
   set({ navTool, drawingPath: null, selected: navTool ? null : state.selected });
 export const setGizmo = (gizmo: Gizmo) => set({ gizmo });
 export const setMode = (mode: Mode) => set({ mode, drawingPath: null });

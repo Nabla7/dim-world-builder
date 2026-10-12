@@ -26,6 +26,8 @@ export interface SceneFiles {
   moversJson: unknown;
   /** asset id -> files under that asset's folder that scene.xml references */
   meshFiles: Map<string, Set<string>>;
+  /** images (AprilTags) scene.xml references under textures/, as paths under the app's assets/ */
+  textureFiles: Set<string>;
 }
 
 export function toScene(world: World, name: string): SceneFiles {
@@ -40,7 +42,7 @@ export function toScene(world: World, name: string): SceneFiles {
       assets.push(
         `    <mesh name="${meshName}" vertex="${vec(shape.mesh.vertices)}" face="${
           shape.mesh.faces.join(" ")
-        }"/>`,
+        }"${shape.mesh.texcoords ? ` texcoord="${vec(shape.mesh.texcoords)}"` : ""}/>`,
       );
       return meshName;
     }
@@ -79,7 +81,11 @@ export function toScene(world: World, name: string): SceneFiles {
     }
     if (shape.pos.some((v) => v !== 0)) parts.push(`pos="${vec(shape.pos)}"`);
     if (shape.quat[3] !== 1) parts.push(`quat="${wxyz(shape.quat)}"`);
-    parts.push(`rgba="${vec(shape.rgba)}"`);
+    if (shape.texture) {
+      parts.push(`material="${textureMaterial(shape.texture)}"`);
+    } else {
+      parts.push(`rgba="${vec(shape.rgba)}"`);
+    }
     if (shape.role === "visual") {
       parts.push(`group="1" contype="0" conaffinity="0" mass="0"`);
     } else if (shape.role === "collision") {
@@ -88,8 +94,30 @@ export function toScene(world: World, name: string): SceneFiles {
     return `      <geom ${parts.join(" ")}/>`;
   }
 
+  const textureFiles = new Set<string>();
+  const materials = new Map<string, string>();
+  function textureMaterial(file: string): string {
+    let material = materials.get(file);
+    if (!material) {
+      material = `tex_${materials.size}`;
+      materials.set(file, material);
+      textureFiles.add(file);
+      // a 2d texture on a box shows on each face; the tag faces +x
+      assets.push(
+        `    <texture name="${material}" type="2d" file="${attr(file.split("/").pop()!)}"/>`,
+      );
+      assets.push(
+        `    <material name="${material}" texture="${material}" texuniform="false" specular="0.1"/>`,
+      );
+    }
+    return material;
+  }
+
   const bodies = world.bodies.map((body) => {
-    const geoms = body.shapes.map((shape, i) => geom(shape, body, i)).join("\n");
+    const geoms = body.shapes
+      .filter((shape) => shape.role !== "editor")
+      .map((shape, i) => geom(shape, body, i))
+      .join("\n");
     const mocap = body.mocap ? ` mocap="true"` : "";
     return `    <body name="${body.name}" pos="${vec(body.pos)}" quat="${
       wxyz(body.quat)
@@ -98,7 +126,7 @@ export function toScene(world: World, name: string): SceneFiles {
 
   const xml = `<mujoco model="${attr(name)}">
   <!-- written by dim-world-builder; open the project file in the app to change it -->
-  <compiler angle="radian" meshdir="meshes"/>
+  <compiler angle="radian" meshdir="meshes" texturedir="textures"/>
   <!-- the Go2 model's contact settings (elliptic cones, high impratio): its policy was trained with them -->
   <option cone="elliptic" impratio="100"/>
   <visual>
@@ -116,7 +144,9 @@ ${assets.join("\n")}
   </default>
   <worldbody>
     <light name="sun" directional="true" pos="0 0 20" dir="-0.3 -0.4 -1" diffuse="0.7 0.7 0.7" castshadow="true"/>
-    <geom name="ground" type="plane" size="0 0 0.05" material="ground"/>
+    <geom name="ground" type="plane" size="0 0 0.05" material="ground"${
+    world.groundZ ? ` pos="0 0 ${num(world.groundZ)}"` : ""
+  }/>
 ${bodies.join("\n")}
   </worldbody>
 </mujoco>
@@ -152,5 +182,5 @@ ${bodies.join("\n")}
       heading: m.heading,
     })),
   };
-  return { xml, sceneJson, moversJson, meshFiles };
+  return { xml, sceneJson, moversJson, meshFiles, textureFiles };
 }

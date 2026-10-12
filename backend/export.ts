@@ -27,6 +27,7 @@ export async function exportProject(
   parentDir: string,
   options: { visualGlb?: Uint8Array } = {},
 ): Promise<ExportResult> {
+  const assetsRoot = new URL("../assets", import.meta.url).pathname;
   const name = packageName(project.name);
   const dir = `${parentDir.replace(/\/+$/, "")}/${name}`;
   const world = buildWorld(project, assets);
@@ -56,6 +57,12 @@ export async function exportProject(
       await Deno.copyFile(`${source}/${file}`, `${dir}/meshes/${asset}/${file}`);
       files.push(`meshes/${asset}/${file}`);
     }
+  }
+  if (scene.textureFiles.size) await Deno.mkdir(`${dir}/textures`, { recursive: true });
+  for (const texture of scene.textureFiles) {
+    const name = texture.split("/").pop()!;
+    await Deno.copyFile(`${assetsRoot}/${texture}`, `${dir}/textures/${name}`);
+    files.push(`textures/${name}`);
   }
   if (options.visualGlb) {
     await Deno.writeFile(`${dir}/visual.glb`, options.visualGlb);

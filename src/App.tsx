@@ -37,6 +37,7 @@ import {
   setDrawingPath,
   setGizmo,
   setMode,
+  setNavTool,
   setShowCollision,
   setSnap,
   undo,
@@ -57,6 +58,7 @@ export function App() {
   const snap = useEditor((s) => s.snap);
   const showCollision = useEditor((s) => s.showCollision);
   const project = useEditor((s) => s.project);
+  const navTool = useEditor((s) => s.navTool);
   const revision = useEditor((s) => s.revision);
   const assetMap = useAssetMap(assets);
 
@@ -204,6 +206,16 @@ export function App() {
                   label="Collision"
                   data-testid="show-collision"
                 />
+                {navTool === "tag" && (
+                  <Button
+                    size="sm"
+                    icon="close"
+                    onClick={() => setNavTool(null)}
+                    data-testid="tag-tool-done"
+                  >
+                    Placing AprilTags: click a wall · Done
+                  </Button>
+                )}
                 <IconButton icon="rotate-left" label="Undo" size="sm" onClick={undo} />
                 <IconButton icon="rotate-right" label="Redo" size="sm" onClick={redo} />
               </div>
@@ -279,7 +291,8 @@ function useKeyboard() {
       } else if ((e.key === "Delete" || e.key === "Backspace") && selected) {
         removeItem(selected);
       } else if (e.key === "Escape") {
-        if (getState().drawingPath) setDrawingPath(null);
+        if (getState().navTool) setNavTool(null);
+        else if (getState().drawingPath) setDrawingPath(null);
         else select(null);
       } else if (!mod && getState().mode === "edit") {
         const key = e.key.toLowerCase();

@@ -1,7 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { buildWorld, hillHeights, hillShapes, roomShapes, stairsShapes } from "./geometry.ts";
+import {
+  aprilTagShapes,
+  buildWorld,
+  floorSlab,
+  hillHeights,
+  hillShapes,
+  openingPreset,
+  roomShapes,
+  stairsShapes,
+} from "./geometry.ts";
 import { toScene } from "./mjcf.ts";
-import { defaultHill, defaultRoom, defaultStairs } from "./defaults.ts";
+import { defaultHill, defaultRoom, defaultStairs, makeItem } from "./defaults.ts";
 import { testCourse } from "./examples.ts";
 
 describe("rooms", () => {
@@ -85,5 +94,57 @@ describe("export", () => {
     expect((scene.moversJson as { movers: unknown[] }).movers).toHaveLength(1);
     expect(scene.xml).toContain('mocap="true"');
     expect(scene.xml).toContain("<hfield name=");
+  });
+});
+
+describe("openings, holes, stairs styles, tags", () => {
+  it("a window keeps wall under its sill and over its top", () => {
+    const room = {
+      ...defaultRoom(),
+      width: 6,
+      depth: 4,
+      height: 2.8,
+      doors: [openingPreset("window", "south")],
+    };
+    const south = roomShapes(room).filter((s) => Math.abs(s.pos[1] + 2) < 1e-6);
+    const under = south.filter((s) =>
+      s.pos[2] - s.size[2] < 1e-6 && s.pos[2] + s.size[2] <= 0.9 + 1e-6
+    );
+    expect(under).toHaveLength(1);
+    expect(south.some((s) => Math.abs(s.pos[2] - s.size[2] - 2.0) < 1e-6)).toBe(true);
+  });
+  it("a hole cuts its floor's slab, a pit keeps a bottom", () => {
+    const floor = {
+      id: "g",
+      name: "g",
+      elevation: 0,
+      slab: { thickness: 1, sizeX: 10, sizeY: 10, center: [0, 0] as [number, number] },
+    };
+    const hole = (depth: number) =>
+      makeItem("hole", { sizeX: 2, sizeY: 2, depth }, { name: "h", floor: "g" });
+    const covered = (depth: number) => {
+      const slab = floorSlab(floor, [hole(depth)], 0)!;
+      // the column of slab over the hole's center: its top
+      const over = slab.shapes.filter((s) =>
+        Math.abs(s.pos[0]) < s.size[0] && Math.abs(s.pos[1]) < s.size[1]
+      );
+      return over.map((s) => s.pos[2] + s.size[2]);
+    };
+    expect(covered(0.4).map((v) => Number(v.toFixed(6)))).toEqual([-0.4]);
+    expect(covered(2)).toEqual([]);
+  });
+  it("spiral stairs: one tread per step around a post", () => {
+    const spiral = stairsShapes({ ...defaultStairs(), style: "spiral", steps: 12 });
+    expect(spiral.filter((s) => s.type === "box")).toHaveLength(12);
+  });
+  it("switchback stairs: both flights and a landing reach the full rise", () => {
+    const s = stairsShapes({ ...defaultStairs(), style: "switchback", steps: 10, stepHeight: 0.2 });
+    expect(Math.max(...s.map((b) => b.pos[2] + b.size[2]))).toBeCloseTo(2.0, 5);
+  });
+  it("an AprilTag is printed 10/8 its black square, with texcoords for its image", () => {
+    const [tag] = aprilTagShapes({ family: "tag36h11", id: 7, size: 0.1 });
+    expect(tag.size[1] * 2).toBeCloseTo(0.125, 6);
+    expect(tag.texture).toBe("apriltags/tag36h11_00007.png");
+    expect(tag.mesh?.texcoords).toHaveLength(16);
   });
 });

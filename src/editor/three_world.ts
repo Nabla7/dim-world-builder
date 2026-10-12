@@ -7,6 +7,20 @@ import type { Body, Shape } from "../world/geometry.ts";
 import type { MeshAsset } from "../world/types.ts";
 
 const gltfLoader = new GLTFLoader();
+const textureLoader = new THREE.TextureLoader();
+const textures = new Map<string, THREE.Texture>();
+
+/** an image under files/ (AprilTags), loaded once, sharp pixels */
+function texture(path: string, onLoaded: () => void): THREE.Texture {
+  let t = textures.get(path);
+  if (!t) {
+    t = textureLoader.load(`files/${path}`, onLoaded);
+    t.magFilter = THREE.NearestFilter;
+    t.colorSpace = THREE.SRGBColorSpace;
+    textures.set(path, t);
+  }
+  return t;
+}
 const objLoader = new OBJLoader();
 const glbCache = new Map<string, Promise<THREE.Object3D>>();
 const objCache = new Map<string, Promise<THREE.Object3D>>();
@@ -145,8 +159,45 @@ export function bodyObject(
       }
       continue;
     }
+    if (shape.texture && shape.mesh?.texcoords) {
+      // the image on the mesh's front: its first four vertices and texcoords
+      const m = shape.mesh;
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.Float32BufferAttribute(m.vertices.slice(0, 12), 3));
+      // three's v runs up the image, MuJoCo's down
+      geo.setAttribute(
+        "uv",
+        new THREE.Float32BufferAttribute(
+          m.texcoords!.slice(0, 8).map((v, i) => (i % 2 ? 1 - v : v)),
+          2,
+        ),
+      );
+      geo.setIndex([0, 1, 2, 0, 2, 3]);
+      geo.computeVertexNormals();
+      const plane = new THREE.Mesh(
+        geo,
+        new THREE.MeshStandardMaterial({ map: texture(shape.texture, onLoaded), roughness: 0.9 }),
+      );
+      place(plane, shape);
+      group.add(plane);
+      continue;
+    }
     const geo = geometry(shape);
     if (!geo) continue;
+    if (shape.role === "editor") {
+      const handle = new THREE.Mesh(
+        geo,
+        new THREE.MeshBasicMaterial({
+          color: style.collisionColor,
+          transparent: true,
+          opacity: 0.25,
+          depthWrite: false,
+        }),
+      );
+      place(handle, shape);
+      group.add(handle);
+      continue;
+    }
     const mesh = shape.role === "collision"
       ? new THREE.Mesh(
         geo,
@@ -158,6 +209,13 @@ export function bodyObject(
         }),
       )
       : new THREE.Mesh(geo, material(shape));
+    if (body.kind === "slab") {
+      // the slab's top is the ground at z = 0, where the viewer's grid lies: push the slab back so the grid shows
+      const m = mesh.material as THREE.Material;
+      m.polygonOffset = true;
+      m.polygonOffsetFactor = 2;
+      m.polygonOffsetUnits = 2;
+    }
     mesh.castShadow = shape.role !== "collision";
     mesh.receiveShadow = true;
     place(mesh, shape);

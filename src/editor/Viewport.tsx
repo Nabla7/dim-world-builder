@@ -18,7 +18,20 @@ import { useSubscription } from "../ui.ts";
 import { buildWorld, type World } from "../world/geometry.ts";
 import type { Item, MeshAsset, Project, Quat, Vec3 } from "../world/types.ts";
 import { bodyObject, disposeObject, ghost } from "./three_world.ts";
-import { addNavPoint, getState, select, setDrawingPath, updateItem, useEditor } from "./store.ts";
+import {
+  addItem,
+  addNavPoint,
+  getState,
+  select,
+  setDrawingPath,
+  setNavTool,
+  updateItem,
+  useEditor,
+} from "./store.ts";
+import { makeItem } from "../world/defaults.ts";
+
+/** keep the tag tool on after a placement (one tag per click) */
+const setNavToolTag = () => setNavTool("tag");
 import { themeColor } from "./theme_color.ts";
 import { view } from "./palette.ts";
 
@@ -254,8 +267,14 @@ function WorldLayer({ assets }: { assets: Record<string, MeshAsset> }) {
     // a different world was opened: frame all of it (once; an empty world is never framed later)
     const justOpened = framed.current !== opened;
     framed.current = opened;
-    if (justOpened && world.bodies.length) {
-      const bounds = new THREE.Box3().setFromObject(root);
+    const framedBodies = world.bodies.filter((b) => b.kind !== "slab");
+    if (justOpened && framedBodies.length) {
+      // the items, not the (huge) floor slabs
+      const bounds = new THREE.Box3();
+      for (const b of framedBodies) {
+        const object = objects.get(b.itemId);
+        if (object) bounds.expandByObject(object);
+      }
       const center = bounds.getCenter(new THREE.Vector3());
       const size = Math.max(4, bounds.getSize(new THREE.Vector3()).length());
       const frame = () => {
@@ -293,6 +312,18 @@ function Picker({ objects }: { objects: () => Map<string, THREE.Group> | undefin
       );
       raycaster.setFromCamera(ndc, viewer.camera);
       const state = getState();
+      if (state.navTool === "tag") {
+        // stick a tag on whatever surface is under the click, facing out of it
+        const surfaces = [...(objects()?.values() ?? [])].filter((o) => o.userData.pickable);
+        const hit = raycaster.intersectObjects(surfaces, true).find((h) => h.face);
+        if (hit?.face) {
+          const normal = hit.face.normal.clone().transformDirection(hit.object.matrixWorld)
+            .normalize();
+          if (normal.dot(raycaster.ray.direction) > 0) normal.negate();
+          placeTag(hit.point.clone().addScaledVector(normal, 0.001), normal);
+        }
+        return;
+      }
       if (state.navTool) {
         const floor = state.project.floors.find((f) => f.id === state.project.activeFloor);
         const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -(floor?.elevation ?? 0));
@@ -321,6 +352,29 @@ function Picker({ objects }: { objects: () => Map<string, THREE.Group> | undefin
     };
   }, [viewer, objects]);
   return null;
+}
+
+/** a new AprilTag item at a world point, its front (+x) along the surface normal, its top up */
+function placeTag(point: THREE.Vector3, normal: THREE.Vector3) {
+  const state = getState();
+  const floor = state.project.floors.find((f) => f.id === state.project.activeFloor);
+  const yawAngle = Math.atan2(normal.y, normal.x);
+  const pitch = -Math.asin(Math.max(-1, Math.min(1, normal.z)));
+  const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, pitch, yawAngle, "ZYX"));
+  const used = new Set(
+    state.project.items.flatMap((i) => (i.kind === "apriltag" ? [i.params.id] : [])),
+  );
+  let id = 0;
+  while (used.has(id)) id++;
+  addItem(makeItem("apriltag", { family: "tag36h11", id, size: 0.1 }, {
+    name: `Tag ${id}`,
+    floor: state.project.activeFloor,
+    position: [point.x, point.y, point.z - (floor?.elevation ?? 0)].map((v) =>
+      Math.round(v * 1000) / 1000
+    ) as Vec3,
+    rotation: q.toArray() as Quat,
+  }));
+  setNavToolTag();
 }
 
 function addWaypoint(id: string, point: Vec3) {

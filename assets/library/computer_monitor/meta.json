@@ -1,0 +1,34 @@
+{
+  "id": "computer_monitor",
+  "name": "Computer Monitor",
+  "category": "office",
+  "size": [
+    0.6005,
+    0.159,
+    0.45
+  ],
+  "base": "",
+  "visuals": [
+    {
+      "file": "visual_0.obj",
+      "rgba": [
+        0.589,
+        0.656,
+        0.656,
+        1.0
+      ]
+    }
+  ],
+  "hulls": [
+    "hull_0.obj",
+    "hull_1.obj",
+    "hull_2.obj",
+    "hull_3.obj",
+    "hull_4.obj",
+    "hull_5.obj",
+    "hull_6.obj"
+  ],
+  "license": "CC0-1.0",
+  "source": "https://kenney.nl/assets/furniture-kit",
+  "frame": "z-up"
+}

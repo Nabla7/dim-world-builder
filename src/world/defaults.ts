@@ -66,6 +66,11 @@ export const defaultStairs = (): StairsParams => ({
   stepHeight: 0.15,
   stepDepth: 0.3,
   width: 1.2,
+  style: "straight",
+  railing: "none",
+  railingStyle: "posts",
+  spiralTurn: 360,
+  spiralCore: 0.1,
   color: PAINT.concrete,
 });
 
@@ -102,7 +107,13 @@ export function makeItem<K extends Item["kind"]>(
 }
 
 export function emptyProject(name = "untitled_world"): Project {
-  const ground: Floor = { id: "ground", name: "Ground floor", elevation: 0 };
+  // a thick ground slab, so a hole can be a pit (the slab's top is the ground at z = 0)
+  const ground: Floor = {
+    id: "ground",
+    name: "Ground floor",
+    elevation: 0,
+    slab: { thickness: 1.5, sizeX: 60, sizeY: 60, center: [0, 0] },
+  };
   return {
     format: "dim-world-builder.project.v1",
     name,

@@ -21,6 +21,8 @@ export interface PaletteEntry {
   make: (floor: string, at: Vec3) => Item;
   /** a palette entry that adds several items at once (a scatter) */
   makeMany?: (floor: string, at: Vec3) => Item[];
+  /** a palette entry that is a click-to-place tool instead */
+  tool?: "tag";
 }
 
 /** the ground point the camera orbits and the drawn world, set by the viewport */
@@ -96,6 +98,31 @@ export const BUILT_IN: PaletteEntry[] = [
     icon: "sparkle",
     make: (floor, at) => scatterClutter(floor, at, 1)[0],
     makeMany: (floor, at) => scatterClutter(floor, at, Math.floor(Math.random() * 100000)),
+  },
+  {
+    key: "build:hole",
+    title: "Hole in the floor",
+    group: "Builders",
+    icon: "minus",
+    make: (floor, at) =>
+      makeItem("hole", { sizeX: 1.5, sizeY: 1.5, depth: 0.5 }, {
+        name: "Hole",
+        floor,
+        position: snap(at),
+      }),
+  },
+  {
+    key: "tool:apriltag",
+    title: "AprilTag (click a wall)",
+    group: "Builders",
+    icon: "grid",
+    make: (floor, at) =>
+      makeItem("apriltag", { family: "tag36h11", id: 0, size: 0.1 }, {
+        name: "Tag 0",
+        floor,
+        position: at,
+      }),
+    tool: "tag",
   },
   {
     key: "build:wall",

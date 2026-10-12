@@ -1,0 +1,42 @@
+{
+  "id": "floor_lamp",
+  "name": "Floor Lamp",
+  "category": "decor",
+  "size": [
+    0.2829,
+    0.3266,
+    1.6
+  ],
+  "base": "",
+  "visuals": [
+    {
+      "file": "visual_0.obj",
+      "rgba": [
+        1.0,
+        0.961,
+        0.791,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_1.obj",
+      "rgba": [
+        0.876,
+        0.918,
+        0.926,
+        1.0
+      ]
+    }
+  ],
+  "hulls": [
+    "hull_0.obj",
+    "hull_1.obj",
+    "hull_2.obj",
+    "hull_3.obj",
+    "hull_4.obj",
+    "hull_5.obj"
+  ],
+  "license": "CC0-1.0",
+  "source": "https://kenney.nl/assets/furniture-kit",
+  "frame": "z-up"
+}

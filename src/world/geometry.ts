@@ -3,6 +3,9 @@
 
 import { fbm } from "./noise.ts";
 import type {
+  AprilTagParams,
+  DoorOpening,
+  Floor,
   HillParams,
   Item,
   MeshAsset,
@@ -18,11 +21,14 @@ import type {
 export type Rgba = [number, number, number, number];
 
 /** "both": collides and is seen; "visual": seen only (lidar, camera); "collision": collides only (hidden). */
-export type Role = "both" | "visual" | "collision";
+/** "editor": drawn only in the editor (a handle to pick), never exported */
+export type Role = "both" | "visual" | "collision" | "editor";
 
 export interface InlineMesh {
   vertices: number[];
   faces: number[];
+  /** per-vertex (u, v), when the mesh carries an image */
+  texcoords?: number[];
 }
 
 export interface Shape {
@@ -34,6 +40,8 @@ export interface Shape {
   size: number[];
   mesh?: InlineMesh;
   meshFile?: { asset: string; file: string; scale: Vec3 };
+  /** an image on the shape's +x face (AprilTags): a path under the app's assets, e.g. apriltags/tag36h11_00003.png */
+  texture?: string;
   hfield?: {
     nrow: number;
     ncol: number;
@@ -66,6 +74,8 @@ export interface WorldMover {
 }
 
 export interface World {
+  /** where MuJoCo's infinite ground plane sits: 0, or under the ground floor's slab */
+  groundZ: number;
   bodies: Body[];
   spawns: { name: string; pos: Vec3; yaw: number }[];
   movers: WorldMover[];
@@ -428,32 +438,37 @@ export function roomShapes(p: RoomParams): Shape[] {
   ] as const;
   for (const w of walls) {
     const half = w.length / 2;
-    const doors = p.doors
+    const openings = p.doors
       .filter((d) => d.wall === w.wall)
       .map((d) => {
         const width = Math.min(Math.max(d.width, 0.1), w.length);
         const center = Math.min(Math.max(d.offset, -half + width / 2), half - width / 2);
+        const bottom = Math.min(Math.max(d.bottom ?? 0, 0), p.height - 0.05);
         return {
           start: center - width / 2,
           end: center + width / 2,
-          height: Math.min(d.height, p.height),
+          bottom,
+          top: Math.min(Math.max(d.height, bottom + 0.05), p.height),
         };
       })
       .sort((a, b) => a.start - b.start);
-    // full-height pieces between doors, then a lintel over each door
+    // full-height pieces between openings; under each opening its sill, over it its lintel
     let cursor = -half;
-    const pieces: { start: number; end: number; bottom: number }[] = [];
-    for (const d of doors) {
-      if (d.start > cursor) pieces.push({ start: cursor, end: d.start, bottom: 0 });
-      if (d.height < p.height) pieces.push({ start: d.start, end: d.end, bottom: d.height });
-      cursor = Math.max(cursor, d.end);
+    const pieces: { start: number; end: number; bottom: number; top: number }[] = [];
+    for (const o of openings) {
+      if (o.start > cursor) pieces.push({ start: cursor, end: o.start, bottom: 0, top: p.height });
+      if (o.bottom > 0) pieces.push({ start: o.start, end: o.end, bottom: 0, top: o.bottom });
+      if (o.top < p.height) {
+        pieces.push({ start: o.start, end: o.end, bottom: o.top, top: p.height });
+      }
+      cursor = Math.max(cursor, o.end);
     }
-    if (cursor < half) pieces.push({ start: cursor, end: half, bottom: 0 });
+    if (cursor < half) pieces.push({ start: cursor, end: half, bottom: 0, top: p.height });
     for (const piece of pieces) {
       const length = piece.end - piece.start;
-      if (length < 1e-3) continue;
+      const height = piece.top - piece.bottom;
+      if (length < 1e-3 || height < 1e-3) continue;
       const mid = (piece.start + piece.end) / 2;
-      const height = p.height - piece.bottom;
       const cx = w.center[0] + w.along[0] * mid;
       const cy = w.center[1] + w.along[1] * mid;
       const size: Vec3 = w.along[0] ? [length, t, height] : [t, length, height];
@@ -463,46 +478,183 @@ export function roomShapes(p: RoomParams): Shape[] {
   return shapes;
 }
 
-/** solid steps rising along +x; origin at the bottom of the first step's front edge, centered across */
-export function stairsShapes(p: StairsParams): Shape[] {
-  const color = rgba(p.color);
+/** a ready-made opening of each kind (offset 0, on the given wall) */
+export function openingPreset(kind: DoorOpening["kind"], wall: DoorOpening["wall"]): DoorOpening {
+  switch (kind) {
+    case "double":
+      return { wall, kind, offset: 0, width: 1.8, height: 2.1, bottom: 0 };
+    case "window":
+      return { wall, kind, offset: 0, width: 1.2, height: 2.0, bottom: 0.9 };
+    case "crawl":
+      return { wall, kind, offset: 0, width: 0.7, height: 0.6, bottom: 0 };
+    case "arch":
+      return { wall, kind, offset: 0, width: 2.4, height: 2.5, bottom: 0 };
+    default:
+      return { wall, kind: "door", offset: 0, width: 0.9, height: 2.1, bottom: 0 };
+  }
+}
+
+/** one straight flight rising along +x from x0 (at height z0), solid or open-riser */
+function flight(
+  p: StairsParams,
+  steps: number,
+  x0: number,
+  y: number,
+  z0: number,
+  direction: 1 | -1,
+  color: Rgba,
+): Shape[] {
   const shapes: Shape[] = [];
-  const steps = Math.max(1, Math.round(p.steps));
-  if (p.openRisers) {
-    // thin treads with gaps between them, carried by two sloped stringers
-    const tread = Math.min(Math.max(p.treadThickness ?? 0.04, 0.01), p.stepHeight * 0.9);
-    for (let i = 0; i < steps; i++) {
-      const top = (i + 1) * p.stepHeight;
-      shapes.push(
-        box(
-          [(i + 0.5) * p.stepDepth, 0, top - tread / 2],
-          [p.stepDepth + 0.02, p.width, tread],
-          color,
-        ),
-      );
+  const tread = Math.min(Math.max(p.treadThickness ?? 0.04, 0.01), p.stepHeight * 0.9);
+  for (let i = 0; i < steps; i++) {
+    const top = z0 + (i + 1) * p.stepHeight;
+    const x = x0 + direction * (i + 0.5) * p.stepDepth;
+    if (p.openRisers) {
+      shapes.push(box([x, y, top - tread / 2], [p.stepDepth + 0.02, p.width, tread], color));
+    } else {
+      const bottom = z0;
+      shapes.push(box([x, y, (top + bottom) / 2], [p.stepDepth, p.width, top - bottom], color));
     }
-    const run = steps * p.stepDepth;
-    const rise = steps * p.stepHeight;
-    const length = Math.hypot(run, rise);
-    const slope = axisAngle([0, 1, 0], -Math.atan2(rise, run));
+  }
+  const run = steps * p.stepDepth;
+  const rise = steps * p.stepHeight;
+  const slope = axisAngle([0, 1, 0], -direction * Math.atan2(rise, run));
+  const length = Math.hypot(run, rise);
+  if (p.openRisers) {
     const depth = Math.min(0.2, p.stepHeight * 1.2);
     for (const side of [1, -1]) {
+      shapes.push(rotatedBox(
+        [x0 + direction * run / 2, y + side * (p.width / 2 + 0.02), z0 + rise / 2 - depth / 2],
+        [length, 0.04, depth],
+        slope,
+        color,
+      ));
+    }
+  }
+  shapes.push(...railings(p, x0, y, z0, direction, run, rise, color));
+  return shapes;
+}
+
+/** handrails along a flight's sides: posts and a top rail, a solid panel, or posts and three cables */
+function railings(
+  p: StairsParams,
+  x0: number,
+  y: number,
+  z0: number,
+  direction: 1 | -1,
+  run: number,
+  rise: number,
+  color: Rgba,
+): Shape[] {
+  const which = p.railing ?? "none";
+  if (which === "none") return [];
+  const sides = which === "both" ? [1, -1] : which === "left" ? [1] : [-1];
+  const style = p.railingStyle ?? "posts";
+  const height = 0.9;
+  const slopeAngle = Math.atan2(rise, run);
+  const slope = axisAngle([0, 1, 0], -direction * slopeAngle);
+  const length = Math.hypot(run, rise);
+  const metal: Rgba = [0.35, 0.36, 0.38, 1];
+  const shapes: Shape[] = [];
+  for (const side of sides) {
+    const ry = y + side * (p.width / 2 + 0.05);
+    const at = (fraction: number, lift: number): Vec3 => [
+      x0 + direction * run * fraction,
+      ry,
+      z0 + rise * fraction + lift,
+    ];
+    if (style === "panel") {
       shapes.push(
-        rotatedBox(
-          [run / 2, side * (p.width / 2 + 0.02), rise / 2 - depth / 2],
-          [length, 0.04, depth],
-          slope,
-          color,
-        ),
+        rotatedBox(at(0.5, height / 2 + p.stepHeight / 2), [length, 0.03, height], slope, color),
       );
+      continue;
+    }
+    const posts = Math.max(2, Math.round(run / 0.6) + 1);
+    for (let i = 0; i < posts; i++) {
+      const f = i / (posts - 1);
+      const base = at(f, p.stepHeight);
+      shapes.push({
+        type: "cylinder",
+        pos: [base[0], base[1], base[2] + height / 2],
+        quat: IDENTITY,
+        size: [0.02, height / 2],
+        rgba: metal,
+        role: "both",
+      });
+    }
+    const rails = style === "cables" ? [0.3, 0.6, 0.9] : [1];
+    for (const r of rails) {
+      shapes.push(
+        rotatedBox(at(0.5, p.stepHeight + height * r), [length + 0.1, 0.04, 0.04], slope, metal),
+      );
+    }
+  }
+  return shapes;
+}
+
+/** stairs; origin at the bottom of the first step's front edge, centered across */
+export function stairsShapes(p: StairsParams): Shape[] {
+  const color = rgba(p.color);
+  const steps = Math.max(1, Math.round(p.steps));
+  const style = p.style ?? "straight";
+  if (style === "switchback") {
+    // up along +x, a landing, then back along -x beside the first flight
+    const first = Math.ceil(steps / 2);
+    const second = steps - first;
+    const run1 = first * p.stepDepth;
+    const landingZ = first * p.stepHeight;
+    const gap = 0.1;
+    const offset = p.width + gap;
+    const landing = p.width;
+    const shapes = flight(p, first, 0, 0, 0, 1, color);
+    shapes.push(box(
+      [run1 + landing / 2, offset / 2, landingZ / 2],
+      [landing, p.width * 2 + gap, landingZ],
+      color,
+    ));
+    shapes.push(...flight(p, second, run1, offset, landingZ, -1, color));
+    return shapes;
+  }
+  if (style === "spiral") {
+    // wedge-like treads around a center post, climbing counterclockwise
+    const turn = ((p.spiralTurn ?? 360) * Math.PI) / 180;
+    const core = Math.max(0.05, p.spiralCore ?? 0.1);
+    const outer = core + p.width;
+    const tread = Math.min(Math.max(p.treadThickness ?? 0.05, 0.02), p.stepHeight * 0.9);
+    const step = turn / steps;
+    const shapes: Shape[] = [{
+      type: "cylinder",
+      pos: [0, 0, (steps * p.stepHeight + 1) / 2],
+      quat: IDENTITY,
+      size: [core, (steps * p.stepHeight + 1) / 2],
+      rgba: color,
+      role: "both",
+    }];
+    const middle = (core + outer) / 2;
+    const chord = 2 * outer * Math.sin(step / 2) * 1.05;
+    for (let i = 0; i < steps; i++) {
+      const angle = (i + 0.5) * step;
+      const top = (i + 1) * p.stepHeight;
+      shapes.push(rotatedBox(
+        [Math.cos(angle) * middle, Math.sin(angle) * middle, top - tread / 2],
+        [outer - core, chord, tread],
+        axisAngle([0, 0, 1], angle),
+        color,
+      ));
+      if (p.railing && p.railing !== "none") {
+        shapes.push({
+          type: "cylinder",
+          pos: [Math.cos(angle) * (outer - 0.04), Math.sin(angle) * (outer - 0.04), top + 0.45],
+          quat: IDENTITY,
+          size: [0.02, 0.45],
+          rgba: [0.35, 0.36, 0.38, 1],
+          role: "both",
+        });
+      }
     }
     return shapes;
   }
-  for (let i = 0; i < steps; i++) {
-    const top = (i + 1) * p.stepHeight;
-    shapes.push(box([(i + 0.5) * p.stepDepth, 0, top / 2], [p.stepDepth, p.width, top], color));
-  }
-  return shapes;
+  return flight(p, steps, 0, 0, 0, 1, color);
 }
 
 /** heights in meters on a resolution x resolution grid, rows from -y to +y, columns from -x to +x */
@@ -603,7 +755,140 @@ export function itemShapes(item: Item, assets: Record<string, MeshAsset>): Shape
       return hillShapes(item.params);
     case "mesh":
       return meshShapes(assets[item.params.asset], item.scale);
+    case "hole":
+      // the hole is cut out of its floor's slab (floorSlab); this is only a handle to pick it by in the editor
+      return [box(
+        [0, 0, -item.params.depth / 2],
+        [item.params.sizeX, item.params.sizeY, item.params.depth],
+        [0.9, 0.3, 0.2, 0.18],
+        "editor",
+      )];
+    case "apriltag":
+      return aprilTagShapes(item.params);
   }
+}
+
+/**
+ * the AprilTag printed with its white margin (10 cells around tag36h11's 8-cell black square), facing +x: a thin
+ * slab whose front face carries the image (texcoords set so it reads correctly from in front, +y to the right)
+ */
+export function aprilTagShapes(p: AprilTagParams): Shape[] {
+  const h = (p.size * (10 / 8)) / 2;
+  const t = 0.002;
+  // front corners (x = t) then back corners (x = 0): bottom-left, bottom-right, top-right, top-left as seen from +x
+  const vertices = [t, -h, -h, t, h, -h, t, h, h, t, -h, h, 0, -h, -h, 0, h, -h, 0, h, h, 0, -h, h];
+  const faces = [
+    0,
+    1,
+    2,
+    0,
+    2,
+    3,
+    4,
+    6,
+    5,
+    4,
+    7,
+    6,
+    0,
+    4,
+    5,
+    0,
+    5,
+    1,
+    1,
+    5,
+    6,
+    1,
+    6,
+    2,
+    2,
+    6,
+    7,
+    2,
+    7,
+    3,
+    3,
+    7,
+    4,
+    3,
+    4,
+    0,
+  ];
+  const texcoords = [0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0];
+  return [{
+    type: "mesh",
+    pos: [0, 0, 0],
+    quat: IDENTITY,
+    size: [t / 2, h, h],
+    mesh: { vertices, faces, texcoords },
+    rgba: [1, 1, 1, 1],
+    role: "visual",
+    texture: `apriltags/${p.family}_${String(p.id).padStart(5, "0")}.png`,
+  }];
+}
+
+/** a floor's slab with its holes cut out: boxes over the cells a grid of the hole edges makes; pits keep a bottom */
+export function floorSlab(floor: Floor, holes: Item[], elevation: number): Body | null {
+  const slab = floor.slab;
+  if (!slab || slab.thickness <= 0) return null;
+  const color: Rgba = [0.26, 0.27, 0.29, 1];
+  const x0 = slab.center[0] - slab.sizeX / 2, x1 = slab.center[0] + slab.sizeX / 2;
+  const y0 = slab.center[1] - slab.sizeY / 2, y1 = slab.center[1] + slab.sizeY / 2;
+  const rects = holes.flatMap((h) =>
+    h.kind === "hole"
+      ? [{
+        x0: Math.max(x0, h.position[0] - h.params.sizeX / 2),
+        x1: Math.min(x1, h.position[0] + h.params.sizeX / 2),
+        y0: Math.max(y0, h.position[1] - h.params.sizeY / 2),
+        y1: Math.min(y1, h.position[1] + h.params.sizeY / 2),
+        depth: Math.min(h.params.depth, slab.thickness),
+      }]
+      : []
+  ).filter((r) => r.x1 > r.x0 && r.y1 > r.y0);
+  const xs = [...new Set([x0, x1, ...rects.flatMap((r) => [r.x0, r.x1])])].sort((a, b) => a - b);
+  const ys = [...new Set([y0, y1, ...rects.flatMap((r) => [r.y0, r.y1])])].sort((a, b) => a - b);
+  const shapes: Shape[] = [];
+  for (let j = 0; j < ys.length - 1; j++) {
+    // the cells of this row, each the depth cut there (0: solid), merged into runs of equal depth
+    let run: { start: number; depth: number } | null = null;
+    const flush = (end: number) => {
+      if (!run) return;
+      const top = -run.depth;
+      const bottom = -slab.thickness;
+      if (top - bottom > 1e-6) {
+        shapes.push(box(
+          [(run.start + end) / 2, (ys[j] + ys[j + 1]) / 2, (top + bottom) / 2],
+          [end - run.start, ys[j + 1] - ys[j], top - bottom],
+          color,
+        ));
+      }
+      run = null;
+    };
+    for (let i = 0; i < xs.length - 1; i++) {
+      const cx = (xs[i] + xs[i + 1]) / 2, cy = (ys[j] + ys[j + 1]) / 2;
+      const depth = Math.max(
+        0,
+        ...rects.filter((r) => cx > r.x0 && cx < r.x1 && cy > r.y0 && cy < r.y1).map((r) =>
+          r.depth
+        ),
+      );
+      if (run && run.depth !== depth) flush(xs[i]);
+      run ??= { start: xs[i], depth };
+    }
+    flush(xs[xs.length - 1]);
+  }
+  return {
+    name: `slab_${floor.id.replace(/[^a-z0-9]+/gi, "_").toLowerCase()}`,
+    label: `${floor.name} slab`,
+    kind: "slab",
+    itemId: `slab:${floor.id}`,
+    floor: floor.id,
+    pos: [0, 0, elevation],
+    quat: IDENTITY,
+    mocap: false,
+    shapes,
+  };
 }
 
 export function buildWorld(project: Project, assets: Record<string, MeshAsset>): World {
@@ -635,10 +920,24 @@ export function buildWorld(project: Project, assets: Record<string, MeshAsset>):
       });
     }
   }
+  let groundZ = 0;
+  for (const floor of project.floors) {
+    const slab = floorSlab(
+      floor,
+      project.items.filter((i) => i.kind === "hole" && i.floor === floor.id),
+      floor.elevation,
+    );
+    if (slab) {
+      bodies.push(slab);
+      if (floor.elevation === Math.min(...project.floors.map((f) => f.elevation))) {
+        groundZ = floor.elevation - (floor.slab?.thickness ?? 0);
+      }
+    }
+  }
   const spawns = project.spawns.map((s) => ({
     name: s.name,
     pos: [s.position[0], s.position[1], s.position[2] + (elevation.get(s.floor) ?? 0)] as Vec3,
     yaw: s.yaw,
   }));
-  return { bodies, spawns, movers };
+  return { groundZ, bodies, spawns, movers };
 }
