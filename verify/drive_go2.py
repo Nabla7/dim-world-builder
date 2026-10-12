@@ -27,6 +27,7 @@ from dimos.core.coordination.blueprint_config.parser import BlueprintConfigParse
 from dimos.core.coordination.module_coordinator import ModuleCoordinator
 from dimos.core.global_config import global_config
 from dimos.core.transport_factory import make_transport
+from dimos.msgs.geometry_msgs.PoseStamped import PoseStamped
 from dimos.msgs.geometry_msgs.Twist import Twist
 from dimos.msgs.sensor_msgs.PointCloud2 import PointCloud2
 from dimos.robot.get_all_blueprints import get_blueprint_by_name
@@ -112,6 +113,8 @@ class Course:
         self.policy = self.coordinator.get_instance(Go2FreewalkConnection)
         self.cmd = make_transport("cmd_vel", Twist)
         self.cmd.start()
+        self.goal = make_transport("goal_request", PoseStamped)
+        self.goal.start()
         self.clouds: list[PointCloud2] = []
         self.lidar = make_transport("pointcloud", PointCloud2)
         self.lidar.subscribe(self.clouds.append)
@@ -119,13 +122,16 @@ class Course:
         self.failures: list[str] = []
         self.results: dict[str, Any] = {}
 
-    def wait(self, seconds: float, twist: tuple[float, float, float] = (0, 0, 0)) -> list[dict[str, Any]]:
-        """Command (vx, vy, wz) for `seconds`; returns ~10 Hz samples of pose and contacts."""
+    def wait(
+        self, seconds: float, twist: tuple[float, float, float] | None = (0, 0, 0)
+    ) -> list[dict[str, Any]]:
+        """Command (vx, vy, wz) for `seconds` (None: leave cmd_vel to the nav stack); ~10 Hz pose/contact samples."""
         samples = []
         end = time.monotonic() + seconds
         next_sample = 0.0
         while time.monotonic() < end:
-            self.cmd.broadcast(None, Twist(linear=(twist[0], twist[1], 0), angular=(0, 0, twist[2])))
+            if twist is not None:
+                self.cmd.broadcast(None, Twist(linear=(twist[0], twist[1], 0), angular=(0, 0, twist[2])))
             if self.recorder:
                 self.recorder.tick()
             if time.monotonic() >= next_sample:
@@ -188,6 +194,7 @@ class Course:
         if self.recorder:
             self.recorder.close()
         self.cmd.stop()
+        self.goal.stop()
         self.lidar.stop()
         self.coordinator.stop()
 
@@ -201,6 +208,7 @@ def main() -> int:
     parser.add_argument("scene_dir", type=Path)
     parser.add_argument("--video", type=Path)
     parser.add_argument("--report", type=Path)
+    parser.add_argument("--skip-nav", action="store_true", help="skip the navigation lane")
     args = parser.parse_args()
     course = Course(args.scene_dir.resolve())
     scene = course.scene
@@ -263,6 +271,25 @@ def main() -> int:
             climbed or (max(xs) < 1.5 + 0.3 and course.touched(samples, stairs)),
             f"{'climbed' if climbed else 'blocked at'} the stairs (max x {max(xs):.2f}, max z {top:.2f})",
         )
+
+        if not args.skip_nav:
+            # nav lane: the dimos nav stack (lidar -> voxel map -> costmap -> A*) takes the Go2 into the lab room,
+            # whose west wall blocks the straight line, so it has to find the south door
+            course.say("nav lane: navigate into the room through its door")
+            course.spawn("wall_lane")
+            goal = (5.5, 0.5)
+            course.goal.broadcast(
+                None, PoseStamped(position=(*goal, 0.0), orientation=(0, 0, 0, 1), frame_id="world")
+            )
+            samples = course.wait(90.0, None)
+            reached = [s for s in samples if math.dist(s["xyz"][:2], goal) < 0.7]
+            course.check(
+                "nav",
+                bool(reached),
+                f"reached the goal inside the room ({min(math.dist(s['xyz'][:2], goal) for s in samples):.2f} m closest)",
+            )
+            crossed = any(2.3 < s["xyz"][0] < 2.6 and abs(s["xyz"][1]) < 2.3 for s in samples)
+            course.check("nav", not crossed, "never went through the west wall")
     finally:
         course.stop()
     if args.report:
