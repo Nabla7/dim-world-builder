@@ -18,7 +18,8 @@ import { useSubscription } from "../ui.ts";
 import { buildWorld, type World } from "../world/geometry.ts";
 import { moverPose } from "../world/movers.ts";
 import type { Item, MeshAsset, Project, Quat, Vec3 } from "../world/types.ts";
-import { bodyObject, disposeObject, floorLevels, ghost } from "./three_world.ts";
+import { bodyObject, disposeObject, floorLevels, ghost, slabAO } from "./three_world.ts";
+import { bakeFloorAO, type FloorAO, floorAO } from "./floor_ao.ts";
 import { fadeGrid, gridFocus, SKY, skyDome, SUN_DIRECTION, windTime } from "./nature.ts";
 import {
   addItem,
@@ -318,6 +319,8 @@ function WorldLayer({ assets }: { assets: Record<string, MeshAsset> }) {
     [],
   );
   const framed = useRef(-1);
+  const aoTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const aoByFloor = useRef(new Map<string, FloorAO>());
   const opened = useEditor((s) => s.opened);
   worldRef.current = world;
   const tf = useTf();
@@ -386,6 +389,7 @@ function WorldLayer({ assets }: { assets: Record<string, MeshAsset> }) {
         state: WorldLayerState;
         viewer: {
           requestRender(): void;
+          renderer: THREE.WebGLRenderer;
           camera: THREE.PerspectiveCamera;
           controls: { target: THREE.Vector3; update(): void };
         };
@@ -399,10 +403,15 @@ function WorldLayer({ assets }: { assets: Record<string, MeshAsset> }) {
     }
     objects.clear();
     const levels = project.floors.map((f) => f.elevation).slice(0, 4);
-    floorLevels.value.set(...([...levels, 1e6, 1e6, 1e6, 1e6].slice(0, 4) as [number, number, number, number]));
+    floorLevels.value.set(
+      ...([...levels, 1e6, 1e6, 1e6, 1e6].slice(0, 4) as [number, number, number, number]),
+    );
     const style = { collisionColor: themeColor("var(--danger)"), showCollision, grass };
     for (const body of world.bodies) {
-      const object = bodyObject(body, assets, style, () => live.viewer.requestRender());
+      const object = bodyObject(body, assets, style, () => {
+        live.viewer.requestRender();
+        bake();
+      });
       const editable = mode === "view" || body.floor === project.activeFloor;
       ghost(object, !editable);
       // the floor slab is ground, not an item to pick
@@ -411,6 +420,48 @@ function WorldLayer({ assets }: { assets: Record<string, MeshAsset> }) {
       root.add(object);
     }
     live.state.grass = hasGrass(root);
+    // each floor's slab reads one shared occlusion map (before its shader compiles), which the bake below fills
+    for (const floor of project.floors) {
+      const slab = objects.get(`slab:${floor.id}`);
+      if (!slab) continue;
+      const shared = aoByFloor.current.get(floor.id) ?? floorAO();
+      aoByFloor.current.set(floor.id, shared);
+      slab.traverse((child) => {
+        const m = (child as THREE.Mesh).material as THREE.Material | undefined;
+        if (m && slabAO.has(m)) slabAO.set(m, shared);
+      });
+    }
+    // the floors' sky occlusion, re-baked shortly after the world (or a late-loading model) changes
+    const bake = () => {
+      clearTimeout(aoTimer.current);
+      aoTimer.current = setTimeout(() => {
+        const start = performance.now();
+        for (const floor of project.floors) {
+          const slab = objects.get(`slab:${floor.id}`);
+          if (!slab || !floor.slab || !aoByFloor.current.has(floor.id)) continue;
+          const shared = aoByFloor.current.get(floor.id)!;
+          // only what stands on this floor and stays put
+          const shown = new Map<THREE.Object3D, boolean>();
+          for (const body of world.bodies) {
+            const object = objects.get(body.itemId);
+            if (!object) continue;
+            shown.set(object, object.visible);
+            object.visible = body.floor === floor.id && !body.mocap &&
+              !["slab", "hill", "hole", "light"].includes(body.kind);
+          }
+          bakeFloorAO(live.viewer.renderer, root, floor.elevation, {
+            x0: floor.slab.center[0] - floor.slab.sizeX / 2,
+            y0: floor.slab.center[1] - floor.slab.sizeY / 2,
+            sizeX: floor.slab.sizeX,
+            sizeY: floor.slab.sizeY,
+          }, shared);
+          for (const [object, visible] of shown) object.visible = visible;
+        }
+        (globalThis as unknown as { dimWorldBuilderAOms?: number }).dimWorldBuilderAOms =
+          performance.now() - start;
+        live.viewer.requestRender();
+      }, 250);
+    };
     // a different world was opened: frame all of it (once; an empty world is never framed later)
     const justOpened = framed.current !== opened;
     framed.current = opened;
@@ -434,6 +485,7 @@ function WorldLayer({ assets }: { assets: Record<string, MeshAsset> }) {
       frame();
       setTimeout(frame, 400);
     }
+    bake();
     live.viewer.requestRender();
   }, [world, assets, showCollision, grass, mode, project.activeFloor, layer]);
   return <Picker objects={pickable} />;

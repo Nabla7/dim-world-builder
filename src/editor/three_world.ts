@@ -2,6 +2,7 @@
 
 import * as THREE from "three";
 import { grassOn } from "./nature.ts";
+import { type FloorAO, floorAO } from "./floor_ao.ts";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import type { Body, Shape, WorldLight } from "../world/geometry.ts";
@@ -181,14 +182,27 @@ function surfaceLook<M extends THREE.Material>(material: M, detail: Detail | nul
   return material;
 }
 
+/** a slab material's floor occlusion uniforms */
+export const slabAO = new WeakMap<THREE.Material, FloorAO>();
+
 /**
- * Sealed concrete for a floor slab's top, in world meters so it lines up across slabs: broad mottling, a fine
- * aggregate speckle, saw-cut control joints every 3.6 m, and a little sheen. Only faces that look up get it.
+ * A floor slab's top: the baked floor occlusion (floor_ao.ts) on its sky light, so under and around furniture is
+ * darker even inside the sun's shadow, and optionally sealed concrete in world meters (lines up across slabs): broad
+ * mottling, a fine aggregate speckle, saw-cut control joints every 3.6 m, a little sheen. Only faces that look up.
+ * The occlusion uniforms are `slabAO.get(material)`, shared per floor and filled in by the world layer (not userData:
+ * material clones JSON-copy that).
  */
-function concreteLook(material: THREE.MeshStandardMaterial): THREE.MeshStandardMaterial {
-  material.roughness = 0.6;
+function slabLook(
+  material: THREE.MeshStandardMaterial,
+  concrete: boolean,
+): THREE.MeshStandardMaterial {
+  if (concrete) material.roughness = 0.6;
+  slabAO.set(material, floorAO());
   material.onBeforeCompile = (shader) => {
-    shader.uniforms.uDetail = { value: detailTexture("stone") };
+    const ao = slabAO.get(material)!;
+    shader.uniforms.uFloorAO = ao.map;
+    shader.uniforms.uFloorAOBounds = ao.bounds;
+    if (concrete) shader.uniforms.uDetail = { value: detailTexture("stone") };
     shader.vertexShader = shader.vertexShader
       .replace("#include <common>", "#include <common>\nvarying vec3 vWorldPos;")
       .replace(
@@ -198,25 +212,40 @@ function concreteLook(material: THREE.MeshStandardMaterial): THREE.MeshStandardM
     shader.fragmentShader = shader.fragmentShader
       .replace(
         "#include <common>",
-        "#include <common>\nvarying vec3 vWorldPos;\nuniform sampler2D uDetail;",
+        `#include <common>
+        varying vec3 vWorldPos;
+        uniform sampler2D uFloorAO;
+        uniform vec4 uFloorAOBounds;
+        ${concrete ? "uniform sampler2D uDetail;" : ""}
+        float slabUp() { return step(0.9, abs(normalize(cross(dFdx(vWorldPos), dFdy(vWorldPos))).z)); }`,
       )
       .replace(
         "#include <color_fragment>",
-        `#include <color_fragment>
-        float up = step(0.9, abs(normalize(cross(dFdx(vWorldPos), dFdy(vWorldPos))).z));
+        concrete
+          ? `#include <color_fragment>
         vec2 xy = vWorldPos.xy;
         float mottle = texture2D(uDetail, xy / 5.3).r - 0.5;
         float speckle = texture2D(uDetail, xy / 0.41 + 0.37).r - 0.5;
         vec2 toJoint = abs(fract(xy / 3.6 + 0.5) - 0.5) * 3.6;
         float joint = 1.0 - smoothstep(0.006, 0.016, min(toJoint.x, toJoint.y));
-        diffuseColor.rgb *= 1.0 + up * (mottle * 0.22 + speckle * 0.1 - joint * 0.28);`,
+        diffuseColor.rgb *= 1.0 + slabUp() * (mottle * 0.22 + speckle * 0.1 - joint * 0.28);`
+          : "#include <color_fragment>",
+      )
+      .replace(
+        "#include <aomap_fragment>",
+        `#include <aomap_fragment>
+        vec2 aoUv = (vWorldPos.xy - uFloorAOBounds.xy) / uFloorAOBounds.zw;
+        float floorOcclusion = mix(1.0, texture2D(uFloorAO, clamp(aoUv, 0.0, 1.0)).r, slabUp());
+        reflectedLight.indirectDiffuse *= floorOcclusion;
+        reflectedLight.indirectSpecular *= floorOcclusion;
+        reflectedLight.directDiffuse *= mix(1.0, floorOcclusion, 0.35);`,
       );
   };
-  material.customProgramCacheKey = () => "concreteLook";
+  material.customProgramCacheKey = () => `slabLook:${concrete}`;
   return material;
 }
 
-function material(shape: Shape, shaded = true): THREE.MeshStandardMaterial {
+function material(shape: Shape, slab = false): THREE.MeshStandardMaterial {
   const [r, g, b, a] = shape.rgba;
   if (shape.type === "hfield") {
     // its colors are per facet (lowPolyGround)
@@ -235,8 +264,8 @@ function material(shape: Shape, shaded = true): THREE.MeshStandardMaterial {
     opacity: a,
     flatShading: shape.type === "mesh",
   });
-  if (shape.finish === "concrete") return concreteLook(made);
-  return shaded ? surfaceLook(made) : made;
+  if (slab) return slabLook(made, shape.finish === "concrete");
+  return surfaceLook(made);
 }
 
 function geometry(shape: Shape): THREE.BufferGeometry | null {
@@ -560,7 +589,7 @@ export function bodyObject(
         }),
       )
       // a floor slab is what the others darken toward, not something to darken
-      : new THREE.Mesh(geo, material(shape, body.kind !== "slab"));
+      : new THREE.Mesh(geo, material(shape, body.kind === "slab"));
     if (body.kind === "slab") {
       // the slab's top is the ground at z = 0, where the viewer's grid lies: push the slab back so the grid shows
       const m = mesh.material as THREE.Material;
