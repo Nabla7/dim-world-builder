@@ -3,7 +3,7 @@
 It publishes a small `scene_info` (std_msgs.String, JSON dimos.scene_info.v1: the scene id) every second so frontends
 can discover it. Publish anything on `scene_data_request` (a std_msgs.String; its text is echoed back as `request`) and it answers on
 `scene_data` with one std_msgs.String holding JSON (format dimos.scene_data.v1): every body's world pose, its geoms
-(primitives, meshes, height fields), lights, cameras (the world's remembered views), and the mesh / height-field /
+(primitives, meshes, height fields; their material name, e.g. grass_0 on hills), lights, cameras (the world's remembered views), and the mesh / height-field /
 texture data they use, read from the compiled
 scene.xml beside this file. Collision-only geoms (scene.json's hidden_geom_groups) are left out. Bodies that move (the
 scripted movers) carry `mocap: true`; their live poses are on the TF tree under the body's name.
@@ -142,6 +142,8 @@ def scene_data(scene_dir: Path = SCENE_DIR) -> dict[str, Any]:
             }
             material = model.geom_matid[g]
             if material >= 0:
+                # e.g. "grass_0" on hills: a frontend may draw grass blades there
+                geom["material"] = name(mujoco.mjtObj.mjOBJ_MATERIAL, int(material), "material")  # type: ignore[attr-defined]
                 geom["rgba"] = (
                     _floats(model.mat_rgba[material])
                     if model.geom_rgba[g][3] == 1

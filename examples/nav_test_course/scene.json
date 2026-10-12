@@ -287,7 +287,7 @@
         ],
         "items": [
           {
-            "id": "e87d532efa06",
+            "id": "57f4cbdf634e",
             "kind": "room",
             "params": {
               "width": 6,
@@ -331,7 +331,7 @@
             "key": "lab_room_1"
           },
           {
-            "id": "91dd056f0324",
+            "id": "acb893ba04c1",
             "kind": "room",
             "params": {
               "width": 6,
@@ -375,7 +375,7 @@
             "key": "upper_room_1"
           },
           {
-            "id": "688ad3c66ff6",
+            "id": "becbfe20e57f",
             "kind": "primitive",
             "params": {
               "shape": "box",
@@ -406,7 +406,7 @@
             "key": "box_1"
           },
           {
-            "id": "07171fbcbb8b",
+            "id": "1c18f46f45a8",
             "kind": "primitive",
             "params": {
               "shape": "box",
@@ -454,7 +454,7 @@
             "key": "box_2"
           },
           {
-            "id": "0034d1122c5c",
+            "id": "fe25c1de14a5",
             "kind": "stairs",
             "params": {
               "steps": 6,
@@ -493,7 +493,7 @@
             "key": "stairs_1"
           },
           {
-            "id": "13b044e848aa",
+            "id": "81324069688e",
             "kind": "hill",
             "params": {
               "sizeX": 10,
@@ -534,7 +534,7 @@
             "key": "hill_1"
           },
           {
-            "id": "689f4903f6c7",
+            "id": "6ec183394c98",
             "kind": "primitive",
             "params": {
               "shape": "cone",
@@ -565,7 +565,7 @@
             "key": "cone_1"
           },
           {
-            "id": "34a2ef202fcb",
+            "id": "7cf3f0a0fcca",
             "kind": "primitive",
             "params": {
               "shape": "cone",
@@ -596,7 +596,7 @@
             "key": "cone_2"
           },
           {
-            "id": "116e32636ab4",
+            "id": "46db48886b92",
             "kind": "primitive",
             "params": {
               "shape": "beanbag",
@@ -627,7 +627,7 @@
             "key": "beanbag_1"
           },
           {
-            "id": "9e7a5a945a7b",
+            "id": "921c9d1a8f46",
             "kind": "primitive",
             "params": {
               "shape": "ramp",
@@ -658,7 +658,7 @@
             "key": "ramp_1"
           },
           {
-            "id": "8bf1fc817c04",
+            "id": "f33cdd980ca3",
             "kind": "primitive",
             "params": {
               "shape": "cylinder",

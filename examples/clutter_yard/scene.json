@@ -224,7 +224,7 @@
         ],
         "items": [
           {
-            "id": "2feb8c8c2cbe",
+            "id": "48356cc3f9d5",
             "kind": "primitive",
             "params": {
               "shape": "step_stool",
@@ -255,7 +255,7 @@
             "key": "step_stool_1"
           },
           {
-            "id": "ad28dcfeaa27",
+            "id": "04a6b1b42c7e",
             "kind": "primitive",
             "params": {
               "shape": "pipe",
@@ -286,7 +286,7 @@
             "key": "pipe_1"
           },
           {
-            "id": "91bcd5d6db7d",
+            "id": "482150611000",
             "kind": "primitive",
             "params": {
               "shape": "soccer_ball",
@@ -317,7 +317,7 @@
             "key": "soccer_ball_1"
           },
           {
-            "id": "6dd48eb9000d",
+            "id": "c6fdf2dfb8b1",
             "kind": "primitive",
             "params": {
               "shape": "step_stool",
@@ -348,7 +348,7 @@
             "key": "step_stool_2"
           },
           {
-            "id": "98518ccb2374",
+            "id": "cf74d910bc99",
             "kind": "primitive",
             "params": {
               "shape": "step_stool",
@@ -379,7 +379,7 @@
             "key": "step_stool_3"
           },
           {
-            "id": "e8aaadbd1ab1",
+            "id": "95832c6a3577",
             "kind": "primitive",
             "params": {
               "shape": "pipe",
@@ -410,7 +410,7 @@
             "key": "pipe_2"
           },
           {
-            "id": "f362ada9257f",
+            "id": "781e3a99b225",
             "kind": "primitive",
             "params": {
               "shape": "cone",
@@ -441,7 +441,7 @@
             "key": "cone_1"
           },
           {
-            "id": "ed59fce1dde7",
+            "id": "ff03f1c26137",
             "kind": "primitive",
             "params": {
               "shape": "step_stool",
@@ -472,7 +472,7 @@
             "key": "step_stool_4"
           },
           {
-            "id": "132133ba9cf7",
+            "id": "41d97e236dd0",
             "kind": "primitive",
             "params": {
               "shape": "soccer_ball",
@@ -503,7 +503,7 @@
             "key": "soccer_ball_2"
           },
           {
-            "id": "aca65f629c5a",
+            "id": "6fe38de5f144",
             "kind": "primitive",
             "params": {
               "shape": "soccer_ball",
@@ -534,7 +534,7 @@
             "key": "soccer_ball_3"
           },
           {
-            "id": "1013080c718a",
+            "id": "53376abe91ef",
             "kind": "primitive",
             "params": {
               "shape": "cone",
@@ -565,7 +565,7 @@
             "key": "cone_2"
           },
           {
-            "id": "a3a777cedb6a",
+            "id": "9b546b907832",
             "kind": "primitive",
             "params": {
               "shape": "bowling_pin",
@@ -596,7 +596,7 @@
             "key": "bowling_pin_1"
           },
           {
-            "id": "8dcfc84e18b6",
+            "id": "75d59c5f48f9",
             "kind": "primitive",
             "params": {
               "shape": "box",
@@ -627,7 +627,7 @@
             "key": "box_1"
           },
           {
-            "id": "60d8ba98a7cb",
+            "id": "1c07b262c21c",
             "kind": "primitive",
             "params": {
               "shape": "cone",
@@ -658,7 +658,7 @@
             "key": "cone_3"
           },
           {
-            "id": "5646a5bf0280",
+            "id": "5c4ff278eb85",
             "kind": "primitive",
             "params": {
               "shape": "ladder",
@@ -689,7 +689,7 @@
             "key": "ladder_1"
           },
           {
-            "id": "668a9ea5b0a6",
+            "id": "47153d25bb48",
             "kind": "primitive",
             "params": {
               "shape": "box",
@@ -720,7 +720,7 @@
             "key": "box_2"
           },
           {
-            "id": "3389cd85a79d",
+            "id": "d7aef4d946ba",
             "kind": "primitive",
             "params": {
               "shape": "soccer_ball",
@@ -751,7 +751,7 @@
             "key": "soccer_ball_4"
           },
           {
-            "id": "394e0dcdbc50",
+            "id": "4c5155a50e85",
             "kind": "primitive",
             "params": {
               "shape": "cone",
@@ -782,7 +782,7 @@
             "key": "cone_4"
           },
           {
-            "id": "8fc7f2b2bfda",
+            "id": "68039e6d9ca6",
             "kind": "primitive",
             "params": {
               "shape": "step_stool",
@@ -813,7 +813,7 @@
             "key": "step_stool_5"
           },
           {
-            "id": "06ca8180cb67",
+            "id": "3866a05455d9",
             "kind": "primitive",
             "params": {
               "shape": "cone",
@@ -844,7 +844,7 @@
             "key": "cone_5"
           },
           {
-            "id": "9152efd822d2",
+            "id": "3c0ae9d92de5",
             "kind": "primitive",
             "params": {
               "shape": "cone",
@@ -875,7 +875,7 @@
             "key": "cone_6"
           },
           {
-            "id": "b1a5c5c50ac1",
+            "id": "c8d052552089",
             "kind": "primitive",
             "params": {
               "shape": "bowling_pin",
@@ -906,7 +906,7 @@
             "key": "bowling_pin_2"
           },
           {
-            "id": "55acfc72a995",
+            "id": "89f4cb66339e",
             "kind": "primitive",
             "params": {
               "shape": "ladder",
@@ -937,7 +937,7 @@
             "key": "ladder_2"
           },
           {
-            "id": "85eddf2043d8",
+            "id": "59d2ce5d3372",
             "kind": "stairs",
             "params": {
               "steps": 5,
@@ -978,7 +978,7 @@
             "key": "open_stairs_1"
           },
           {
-            "id": "fb7b9f0cc432",
+            "id": "90e7d2f63dd6",
             "kind": "primitive",
             "params": {
               "shape": "pipe",
