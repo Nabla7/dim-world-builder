@@ -389,69 +389,213 @@ function ladderShapes(sx: number, sy: number, sz: number, color: Rgba): Shape[] 
   return shapes;
 }
 
+type Ring = { t: number; w: number; d: number; dx?: number; rot?: number };
+
 /**
- * a standing person facing +x (so a mover with heading "path" walks forward), in human proportions of its height sz:
- * shoes, legs, hips, torso, shoulders, arms and hands, a neck the head sits on, hair
+ * a low-poly limb: polygon rings (`sides` corners) swept from a to b, each `w` wide (across), `d` deep (front-back)
+ * and nudged `dx` forward; interior rings turn by `rot` for the faceted, crystal look, the end rings stay square so
+ * neighboring parts meet cleanly
  */
-function personShapes(sx: number, sy: number, sz: number, color: Rgba): Shape[] {
-  const skin: Rgba = [0.86, 0.69, 0.56, 1];
-  const hair: Rgba = [0.22, 0.15, 0.1, 1];
-  const shoe: Rgba = [0.14, 0.13, 0.13, 1];
-  const trousers: Rgba = [color[0] * 0.45, color[1] * 0.45, color[2] * 0.5, 1];
-  const width = sx, depth = sy;
-  const hip = sz * 0.48, shoulder = sz * 0.81, neckTop = sz * 0.885;
-  const headRadius = sz * 0.064;
-  const legRadius = width * 0.12;
-  const armRadius = width * 0.075;
-  const armY = width / 2 - armRadius;
-  const shapes: Shape[] = [];
-  for (const side of [1, -1]) {
-    const legY = side * width * 0.17;
-    shapes.push(
-      box([depth * 0.08, legY, sz * 0.02], [depth * 0.62, legRadius * 2.1, sz * 0.04], shoe),
-    );
-    shapes.push(
-      cylinderAlong("z", [0, legY, (sz * 0.04 + hip) / 2], legRadius, hip - sz * 0.04, trousers),
-    );
-    // arms hang from the shoulders to mid-thigh, hands at the ends
-    const handZ = sz * 0.43;
-    shapes.push(
-      cylinderAlong(
-        "z",
-        [0, side * armY, (shoulder + handZ) / 2],
-        armRadius,
-        shoulder - handZ,
-        color,
-      ),
-    );
-    shapes.push(sphere([0, side * armY, handZ], armRadius * 1.1, skin));
-    shapes.push(sphere([0, side * armY, shoulder], armRadius * 1.35, color));
+function loftMesh(a: Vec3, b: Vec3, rings: Ring[], sides = 6, twist = Math.PI / sides): InlineMesh {
+  const axis: Vec3 = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
+  const length = Math.hypot(...axis);
+  const up: Vec3 = [axis[0] / length, axis[1] / length, axis[2] / length];
+  // front is +x taken off the bone, across completes the frame
+  const raw: Vec3 = [1 - up[0] * up[0], -up[0] * up[1], -up[0] * up[2]];
+  const rawLength = Math.hypot(...raw);
+  const front: Vec3 = rawLength < 1e-3
+    ? [0, 0, 1]
+    : [raw[0] / rawLength, raw[1] / rawLength, raw[2] / rawLength];
+  const across: Vec3 = [
+    up[1] * front[2] - up[2] * front[1],
+    up[2] * front[0] - up[0] * front[2],
+    up[0] * front[1] - up[1] * front[0],
+  ];
+  const vertices: number[] = [];
+  const faces: number[] = [];
+  rings.forEach((ring, r) => {
+    const interior = r > 0 && r < rings.length - 1;
+    const c = [a[0] + axis[0] * ring.t, a[1] + axis[1] * ring.t, a[2] + axis[2] * ring.t];
+    for (let i = 0; i < sides; i++) {
+      const angle = twist + (interior ? ring.rot ?? 0 : 0) + (i / sides) * Math.PI * 2;
+      const f = Math.cos(angle) * ring.d + (ring.dx ?? 0);
+      const g = Math.sin(angle) * ring.w;
+      vertices.push(
+        c[0] + front[0] * f + across[0] * g,
+        c[1] + front[1] * f + across[1] * g,
+        c[2] + front[2] * f + across[2] * g,
+      );
+    }
+  });
+  for (let r = 0; r < rings.length - 1; r++) {
+    for (let i = 0; i < sides; i++) {
+      const p = r * sides + i, q = r * sides + ((i + 1) % sides);
+      faces.push(p, q, q + sides, p, q + sides, p + sides);
+    }
   }
-  shapes.push(box([0, 0, hip], [depth * 0.62, width * 0.62, sz * 0.08], trousers));
-  shapes.push(
-    box([0, 0, (hip + shoulder) / 2], [depth * 0.7, width * 0.72, shoulder - hip], color),
-  );
-  // the neck runs from inside the torso up into the head
-  shapes.push(
-    cylinderAlong(
-      "z",
-      [0, 0, (shoulder + neckTop) / 2],
-      headRadius * 0.5,
-      neckTop - shoulder + sz * 0.02,
-      skin,
-    ),
-  );
-  const headZ = neckTop + headRadius * 0.75;
-  shapes.push(sphere([0, 0, headZ], headRadius, skin));
-  // hair: a slightly bigger sphere set back and up, so the face shows in front
-  shapes.push(
-    sphere([-headRadius * 0.18, 0, headZ + headRadius * 0.16], headRadius * 0.98, hair, "visual"),
-  );
-  return shapes;
+  const last = (rings.length - 1) * sides;
+  for (let i = 1; i < sides - 1; i++) faces.push(0, i + 1, i, last, last + i, last + i + 1);
+  return { vertices, faces };
 }
 
-function sphere(center: Vec3, radius: number, color: Rgba, role: Role = "both"): Shape {
-  return { type: "sphere", pos: center, quat: IDENTITY, size: [radius], rgba: color, role };
+type Cloth = "skin" | "shirt" | "pants" | "shoes";
+
+/** a faceted, Superhot-style mannequin 1.75 m tall, facing +x: [what it's dressed in, mesh] per part */
+function mannequinParts(): [Cloth, InlineMesh][] {
+  let k = 0;
+  const R = (t: number, w: number, d: number, dx = 0): Ring => ({
+    t,
+    w,
+    d,
+    dx,
+    rot: (k++ % 2 ? 1 : -1) * 0.18,
+  });
+  const parts: [Cloth, InlineMesh][] = [
+    // a skull with a flat face plane, jaw narrower, crown back
+    [
+      "skin",
+      loftMesh(
+        [0, 0, 1.52],
+        [-0.01, 0, 1.76],
+        [
+          R(0, 0.04, 0.045, 0.035),
+          R(0.15, 0.065, 0.075, 0.025),
+          R(0.42, 0.085, 0.105, 0.005),
+          R(0.75, 0.083, 0.1, -0.012),
+          R(1, 0.04, 0.05, -0.02),
+        ],
+        6,
+        0,
+      ),
+    ],
+    ["skin", loftMesh([-0.012, 0, 1.4], [0, 0, 1.56], [R(0, 0.065, 0.06), R(1, 0.05, 0.05)])],
+    // a broad chest with the pecs forward, narrowing to the ribs
+    [
+      "shirt",
+      loftMesh(
+        [0, 0, 1.15],
+        [0, 0, 1.47],
+        [
+          R(0, 0.14, 0.105),
+          R(0.4, 0.185, 0.135, 0.018),
+          R(0.62, 0.2, 0.14, 0.022),
+          R(0.86, 0.215, 0.115),
+          R(1, 0.15, 0.08, -0.015),
+        ],
+        6,
+        0,
+      ),
+    ],
+    [
+      "shirt",
+      loftMesh(
+        [0, 0, 0.98],
+        [0, 0, 1.18],
+        [R(0, 0.14, 0.1), R(0.5, 0.125, 0.095, 0.008), R(1, 0.14, 0.1)],
+        6,
+        0,
+      ),
+    ],
+    [
+      "pants",
+      loftMesh(
+        [0, 0, 0.84],
+        [0, 0, 1.0],
+        [R(0, 0.12, 0.09), R(0.45, 0.165, 0.11), R(1, 0.145, 0.1)],
+        6,
+        0,
+      ),
+    ],
+  ];
+  for (const side of [1, -1]) {
+    const y = (v: number) => side * v;
+    parts.push(
+      [
+        "shirt",
+        loftMesh([-0.01, y(0.15), 1.42], [-0.01, y(0.26), 1.36], [
+          R(0, 0.06, 0.07),
+          R(0.6, 0.065, 0.068),
+          R(1, 0.04, 0.05),
+        ]),
+      ],
+      [
+        "pants",
+        loftMesh([0, y(0.088), 0.97], [0.012, y(0.105), 0.5], [
+          R(0, 0.09, 0.098),
+          R(0.3, 0.095, 0.1),
+          R(1, 0.062, 0.064),
+        ]),
+      ],
+      [
+        "pants",
+        loftMesh([0.012, y(0.105), 0.52], [-0.01, y(0.105), 0.075], [
+          R(0, 0.062, 0.064),
+          R(0.28, 0.066, 0.074, -0.01),
+          R(1, 0.042, 0.045),
+        ]),
+      ],
+      [
+        "shoes",
+        loftMesh(
+          [-0.065, y(0.105), 0.06],
+          [0.18, y(0.11), 0.03],
+          [R(0, 0.045, 0.06), R(0.55, 0.055, 0.045), R(1, 0.04, 0.022)],
+          4,
+          Math.PI / 4,
+        ),
+      ],
+      // arms hang a little away from the body, elbows soft
+      [
+        "shirt",
+        loftMesh([-0.012, y(0.24), 1.38], [-0.025, y(0.275), 1.1], [
+          R(0, 0.06, 0.065),
+          R(0.35, 0.058, 0.06),
+          R(1, 0.044, 0.046),
+        ]),
+      ],
+      [
+        "skin",
+        loftMesh([-0.025, y(0.275), 1.11], [0.03, y(0.3), 0.85], [
+          R(0, 0.044, 0.046),
+          R(0.25, 0.048, 0.051),
+          R(1, 0.032, 0.034),
+        ]),
+      ],
+      [
+        "skin",
+        loftMesh([0.03, y(0.3), 0.86], [0.05, y(0.305), 0.7], [
+          R(0, 0.026, 0.033),
+          R(0.45, 0.022, 0.048, 0.006),
+          R(1, 0.014, 0.028, 0.012),
+        ]),
+      ],
+    );
+  }
+  return parts;
+}
+
+/**
+ * a standing person facing +x (so a mover with heading "path" walks forward): a faceted mannequin in a shirt of
+ * `color`, sz tall (sx and sy widen or narrow it); a box for collisions
+ */
+function personShapes(sx: number, sy: number, sz: number, color: Rgba): Shape[] {
+  const look: Record<Cloth, Rgba> = {
+    skin: [0.93, 0.93, 0.93, 1],
+    shirt: color,
+    pants: [0.23, 0.25, 0.29, 1],
+    shoes: [0.13, 0.13, 0.15, 1],
+  };
+  // the mannequin is 1.76 m tall; the palette's 0.45 x 0.28 footprint keeps its own proportions
+  const grow = sz / 1.76;
+  const scale: Vec3 = [grow * sy / 0.28, grow * sx / 0.45, grow];
+  const shapes: Shape[] = mannequinParts().map(([cloth, mesh]) =>
+    visualMesh(
+      mapVertices(mesh, (x, y, z) => [x * scale[0], y * scale[1], z * scale[2]]),
+      look[cloth],
+    )
+  );
+  shapes.push(box([0, 0, sz / 2], [sy * 0.8, sx * 0.8, sz], color, "collision"));
+  return shapes;
 }
 
 /** an open-topped bucket / can: tapered walls you can see into, a solid cylinder to collide with */
