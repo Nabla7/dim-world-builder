@@ -111,6 +111,8 @@ export function office555(): Project {
   });
 
   const walls: Segment[] = [];
+  // pieces standing inside a window's gap: the joins don't apply to them (they'd trim a mullion away)
+  const inGaps: Segment[] = [];
   /** a run of wall along x0,y0 -> x1,y1 with gaps (door openings) at [from, to] distances along it */
   const wall = (
     x0: number,
@@ -169,7 +171,7 @@ export function office555(): Project {
     const piece = (a: number, b: number, bottom: number, top: number, name: string) => {
       const [ax, ay] = at(a);
       const [bx, by] = at(b);
-      walls.push({ x0: ax, y0: ay, x1: bx, y1: by, bottom, height: top - bottom, floor, name });
+      inGaps.push({ x0: ax, y0: ay, x1: bx, y1: by, bottom, height: top - bottom, floor, name });
     };
     piece(from, to, 0, sill, "Window sill wall");
     piece(from, to, head, height, "Window lintel");
@@ -250,7 +252,7 @@ export function office555(): Project {
   wall(1.4, -9.65, 1.4, -11.0, up, 3, [], "Room wall");
   wall(1.4, -11.0, 4.2, -11.0, up, 3, [], "Room wall");
 
-  const items: Item[] = trimmed(walls).map(wallItem);
+  const items: Item[] = [...trimmed(walls), ...inGaps].map(wallItem);
   const add = (...more: Item[]) => items.push(...more);
   const mesh = (
     asset: string,
@@ -597,7 +599,7 @@ export function office555(): Project {
     ),
   );
   add(person("Walker B", ground, [[12, -6], [19, -6]], PAINT.red, 0.9, "pingpong"));
-  add(person("Walker C", ground, [[12.5, 12], [22, 12]], PAINT.green, 1.0, "pingpong"));
+  add(person("Walker C", ground, [[12.5, 12.25], [22, 12.25]], PAINT.green, 1.0, "pingpong"));
   add(
     person(
       "Walker D",
