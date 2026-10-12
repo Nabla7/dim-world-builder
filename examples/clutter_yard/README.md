@@ -1,6 +1,6 @@
 # clutter_yard
 
-A [dim-world-builder](https://github.com/jeff-hykin/dim-world-builder) world: 25 items,
+A [dim-world-builder](https://github.com/jeff-hykin/dim-world-builder) world: 23 items,
 1 floor(s). `scene.json` is sim2's scene; its `extensions.dim_world_builder` holds the views, the nav
 test and the editor's project.
 

@@ -3,7 +3,7 @@
 Files beside this one: scene.xml (MJCF), scene.json (dimos.scene.v1: entities, spawns, movers; its extensions.dim_world_builder
 holds the remembered camera views, the nav test and the editor's project), meshes/, textures/, scene_data.py (the SceneData module) and
 blueprints.py (`go2`).
-25 items, 1 floor(s).
+23 items, 1 floor(s).
 """
 
 from __future__ import annotations

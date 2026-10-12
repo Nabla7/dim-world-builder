@@ -14,20 +14,14 @@
       "kind": "pipe",
       "movable": false
     },
-    "soccer_ball_1": {
-      "body": "soccer_ball_1",
-      "label": "Soccer ball",
-      "kind": "soccer_ball",
+    "bowling_pin_1": {
+      "body": "bowling_pin_1",
+      "label": "Bowling pin",
+      "kind": "bowling_pin",
       "movable": false
     },
     "step_stool_2": {
       "body": "step_stool_2",
-      "label": "Step stool",
-      "kind": "step_stool",
-      "movable": false
-    },
-    "step_stool_3": {
-      "body": "step_stool_3",
       "label": "Step stool",
       "kind": "step_stool",
       "movable": false
@@ -38,40 +32,28 @@
       "kind": "pipe",
       "movable": false
     },
-    "cone_1": {
-      "body": "cone_1",
-      "label": "Cone",
-      "kind": "cone",
+    "bucket_1": {
+      "body": "bucket_1",
+      "label": "Bucket",
+      "kind": "bucket",
       "movable": false
     },
-    "step_stool_4": {
-      "body": "step_stool_4",
-      "label": "Step stool",
-      "kind": "step_stool",
+    "bucket_2": {
+      "body": "bucket_2",
+      "label": "Bucket",
+      "kind": "bucket",
       "movable": false
     },
-    "soccer_ball_2": {
-      "body": "soccer_ball_2",
-      "label": "Soccer ball",
-      "kind": "soccer_ball",
+    "pipe_3": {
+      "body": "pipe_3",
+      "label": "Pipe",
+      "kind": "pipe",
       "movable": false
     },
-    "soccer_ball_3": {
-      "body": "soccer_ball_3",
-      "label": "Soccer ball",
-      "kind": "soccer_ball",
-      "movable": false
-    },
-    "cone_2": {
-      "body": "cone_2",
-      "label": "Cone",
-      "kind": "cone",
-      "movable": false
-    },
-    "bowling_pin_1": {
-      "body": "bowling_pin_1",
-      "label": "Bowling pin",
-      "kind": "bowling_pin",
+    "pipe_4": {
+      "body": "pipe_4",
+      "label": "Pipe",
+      "kind": "pipe",
       "movable": false
     },
     "box_1": {
@@ -80,16 +62,40 @@
       "kind": "box",
       "movable": false
     },
-    "cone_3": {
-      "body": "cone_3",
+    "bowling_pin_2": {
+      "body": "bowling_pin_2",
+      "label": "Bowling pin",
+      "kind": "bowling_pin",
+      "movable": false
+    },
+    "cone_1": {
+      "body": "cone_1",
       "label": "Cone",
       "kind": "cone",
       "movable": false
     },
-    "ladder_1": {
-      "body": "ladder_1",
-      "label": "Ladder",
-      "kind": "ladder",
+    "bowling_pin_3": {
+      "body": "bowling_pin_3",
+      "label": "Bowling pin",
+      "kind": "bowling_pin",
+      "movable": false
+    },
+    "step_stool_3": {
+      "body": "step_stool_3",
+      "label": "Step stool",
+      "kind": "step_stool",
+      "movable": false
+    },
+    "pipe_5": {
+      "body": "pipe_5",
+      "label": "Pipe",
+      "kind": "pipe",
+      "movable": false
+    },
+    "bucket_3": {
+      "body": "bucket_3",
+      "label": "Bucket",
+      "kind": "bucket",
       "movable": false
     },
     "box_2": {
@@ -98,44 +104,26 @@
       "kind": "box",
       "movable": false
     },
-    "soccer_ball_4": {
-      "body": "soccer_ball_4",
-      "label": "Soccer ball",
-      "kind": "soccer_ball",
-      "movable": false
-    },
-    "cone_4": {
-      "body": "cone_4",
-      "label": "Cone",
-      "kind": "cone",
-      "movable": false
-    },
-    "step_stool_5": {
-      "body": "step_stool_5",
+    "step_stool_4": {
+      "body": "step_stool_4",
       "label": "Step stool",
       "kind": "step_stool",
       "movable": false
     },
-    "cone_5": {
-      "body": "cone_5",
+    "cone_2": {
+      "body": "cone_2",
       "label": "Cone",
       "kind": "cone",
       "movable": false
     },
-    "cone_6": {
-      "body": "cone_6",
-      "label": "Cone",
-      "kind": "cone",
-      "movable": false
-    },
-    "bowling_pin_2": {
-      "body": "bowling_pin_2",
+    "bowling_pin_4": {
+      "body": "bowling_pin_4",
       "label": "Bowling pin",
       "kind": "bowling_pin",
       "movable": false
     },
-    "ladder_2": {
-      "body": "ladder_2",
+    "ladder_1": {
+      "body": "ladder_1",
       "label": "Ladder",
       "kind": "ladder",
       "movable": false
@@ -146,8 +134,8 @@
       "kind": "stairs",
       "movable": false
     },
-    "pipe_3": {
-      "body": "pipe_3",
+    "pipe_6": {
+      "body": "pipe_6",
       "label": "Big pipe",
       "kind": "pipe",
       "movable": false
@@ -224,7 +212,7 @@
         ],
         "items": [
           {
-            "id": "48356cc3f9d5",
+            "id": "db5fff2beecb",
             "kind": "primitive",
             "params": {
               "shape": "step_stool",
@@ -255,7 +243,7 @@
             "key": "step_stool_1"
           },
           {
-            "id": "04a6b1b42c7e",
+            "id": "e259253d8f84",
             "kind": "primitive",
             "params": {
               "shape": "pipe",
@@ -268,15 +256,15 @@
             "name": "Pipe",
             "floor": "ground",
             "position": [
-              0.58,
-              3.25,
+              0.69,
+              -2.05,
               0
             ],
             "rotation": [
               0,
               0,
-              0.5841991559174959,
-              -0.8116103413740396
+              0.13364476340959522,
+              0.9910293018943452
             ],
             "scale": [
               1.6,
@@ -286,48 +274,17 @@
             "key": "pipe_1"
           },
           {
-            "id": "482150611000",
+            "id": "3019df5cbc8a",
             "kind": "primitive",
             "params": {
-              "shape": "soccer_ball",
+              "shape": "bowling_pin",
               "color": [
                 0.92,
                 0.92,
                 0.9
               ]
             },
-            "name": "Soccer ball",
-            "floor": "ground",
-            "position": [
-              1,
-              0.27,
-              0
-            ],
-            "rotation": [
-              0,
-              0,
-              0.9302607220776348,
-              -0.3668991536643246
-            ],
-            "scale": [
-              0.22,
-              0.22,
-              0.22
-            ],
-            "key": "soccer_ball_1"
-          },
-          {
-            "id": "c6fdf2dfb8b1",
-            "kind": "primitive",
-            "params": {
-              "shape": "step_stool",
-              "color": [
-                0.25,
-                0.45,
-                0.8
-              ]
-            },
-            "name": "Step stool",
+            "name": "Bowling pin",
             "floor": "ground",
             "position": [
               1.27,
@@ -341,14 +298,14 @@
               0.5061707824637056
             ],
             "scale": [
-              0.5,
-              0.45,
-              0.5
+              0.12,
+              0.12,
+              0.38
             ],
-            "key": "step_stool_2"
+            "key": "bowling_pin_1"
           },
           {
-            "id": "cf74d910bc99",
+            "id": "e16664fd25d1",
             "kind": "primitive",
             "params": {
               "shape": "step_stool",
@@ -376,10 +333,10 @@
               0.45,
               0.5
             ],
-            "key": "step_stool_3"
+            "key": "step_stool_2"
           },
           {
-            "id": "95832c6a3577",
+            "id": "3a1c717b4a7d",
             "kind": "primitive",
             "params": {
               "shape": "pipe",
@@ -392,15 +349,15 @@
             "name": "Pipe",
             "floor": "ground",
             "position": [
-              -0.58,
-              3.48,
+              2.24,
+              0.59,
               0
             ],
             "rotation": [
               0,
               0,
-              0.14586261255899566,
-              -0.989304856076965
+              0.6533730863214863,
+              -0.7570360692006264
             ],
             "scale": [
               1.6,
@@ -410,193 +367,131 @@
             "key": "pipe_2"
           },
           {
-            "id": "781e3a99b225",
+            "id": "2d237bca1d14",
             "kind": "primitive",
             "params": {
-              "shape": "cone",
+              "shape": "bucket",
               "color": [
-                0.95,
-                0.45,
-                0.1
+                0.12,
+                0.12,
+                0.13
               ]
             },
-            "name": "Cone",
+            "name": "Bucket",
             "floor": "ground",
             "position": [
-              0.2,
-              -2.1,
+              -3.11,
+              2.41,
               0
             ],
             "rotation": [
               0,
               0,
-              0.7585579792651697,
-              0.6516055494646608
+              0.8502216976136894,
+              -0.5264247951102762
             ],
             "scale": [
-              0.3,
-              0.3,
-              0.45
-            ],
-            "key": "cone_1"
-          },
-          {
-            "id": "ff03f1c26137",
-            "kind": "primitive",
-            "params": {
-              "shape": "step_stool",
-              "color": [
-                0.25,
-                0.45,
-                0.8
-              ]
-            },
-            "name": "Step stool",
-            "floor": "ground",
-            "position": [
-              -0.74,
-              3.17,
-              0
-            ],
-            "rotation": [
-              0,
-              0,
-              0.4749928587596061,
-              -0.8799896500115083
-            ],
-            "scale": [
-              0.5,
-              0.45,
-              0.5
-            ],
-            "key": "step_stool_4"
-          },
-          {
-            "id": "41d97e236dd0",
-            "kind": "primitive",
-            "params": {
-              "shape": "soccer_ball",
-              "color": [
-                0.92,
-                0.92,
-                0.9
-              ]
-            },
-            "name": "Soccer ball",
-            "floor": "ground",
-            "position": [
-              0.99,
-              -0.55,
-              0
-            ],
-            "rotation": [
-              0,
-              0,
-              0.12784183375174984,
-              0.991794568216115
-            ],
-            "scale": [
-              0.22,
-              0.22,
-              0.22
-            ],
-            "key": "soccer_ball_2"
-          },
-          {
-            "id": "6fe38de5f144",
-            "kind": "primitive",
-            "params": {
-              "shape": "soccer_ball",
-              "color": [
-                0.92,
-                0.92,
-                0.9
-              ]
-            },
-            "name": "Soccer ball",
-            "floor": "ground",
-            "position": [
-              0.5,
-              -3.41,
-              0
-            ],
-            "rotation": [
-              0,
-              0,
-              0.9459909601714842,
-              0.3241930031228827
-            ],
-            "scale": [
-              0.22,
-              0.22,
-              0.22
-            ],
-            "key": "soccer_ball_3"
-          },
-          {
-            "id": "53376abe91ef",
-            "kind": "primitive",
-            "params": {
-              "shape": "cone",
-              "color": [
-                0.95,
-                0.45,
-                0.1
-              ]
-            },
-            "name": "Cone",
-            "floor": "ground",
-            "position": [
-              -1.41,
-              -2.84,
-              0
-            ],
-            "rotation": [
-              0,
-              0,
-              0.9115351525460956,
-              0.4112221609699145
-            ],
-            "scale": [
-              0.3,
-              0.3,
-              0.45
-            ],
-            "key": "cone_2"
-          },
-          {
-            "id": "9b546b907832",
-            "kind": "primitive",
-            "params": {
-              "shape": "bowling_pin",
-              "color": [
-                0.92,
-                0.92,
-                0.9
-              ]
-            },
-            "name": "Bowling pin",
-            "floor": "ground",
-            "position": [
-              1.71,
-              -0.08,
-              0
-            ],
-            "rotation": [
-              0,
-              0,
-              0.1046596914058007,
-              -0.9945080939815636
-            ],
-            "scale": [
-              0.12,
-              0.12,
+              0.32,
+              0.32,
               0.38
             ],
-            "key": "bowling_pin_1"
+            "key": "bucket_1"
           },
           {
-            "id": "75d59c5f48f9",
+            "id": "1165d7894b20",
+            "kind": "primitive",
+            "params": {
+              "shape": "bucket",
+              "color": [
+                0.12,
+                0.12,
+                0.13
+              ]
+            },
+            "name": "Bucket",
+            "floor": "ground",
+            "position": [
+              -0.47,
+              0.53,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.022135657834041263,
+              -0.9997549763078223
+            ],
+            "scale": [
+              0.32,
+              0.32,
+              0.38
+            ],
+            "key": "bucket_2"
+          },
+          {
+            "id": "4f2bdd3f4f8e",
+            "kind": "primitive",
+            "params": {
+              "shape": "pipe",
+              "color": [
+                0.55,
+                0.57,
+                0.6
+              ]
+            },
+            "name": "Pipe",
+            "floor": "ground",
+            "position": [
+              3.42,
+              1.88,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.22755128467847469,
+              -0.973766097603103
+            ],
+            "scale": [
+              1.6,
+              0.2,
+              0.2
+            ],
+            "key": "pipe_3"
+          },
+          {
+            "id": "c85facacfb4c",
+            "kind": "primitive",
+            "params": {
+              "shape": "pipe",
+              "color": [
+                0.55,
+                0.57,
+                0.6
+              ]
+            },
+            "name": "Pipe",
+            "floor": "ground",
+            "position": [
+              -1.95,
+              1.43,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.26975601033970603,
+              -0.9629287070627838
+            ],
+            "scale": [
+              1.6,
+              0.2,
+              0.2
+            ],
+            "key": "pipe_4"
+          },
+          {
+            "id": "a92546be59cd",
             "kind": "primitive",
             "params": {
               "shape": "box",
@@ -609,15 +504,15 @@
             "name": "Box",
             "floor": "ground",
             "position": [
-              -0.43,
-              2.77,
+              -1.89,
+              0.3,
               0
             ],
             "rotation": [
               0,
               0,
-              0.528964637463034,
-              0.8486438665975269
+              0.17230939105409698,
+              0.9850428791451499
             ],
             "scale": [
               0.4,
@@ -627,255 +522,7 @@
             "key": "box_1"
           },
           {
-            "id": "1c07b262c21c",
-            "kind": "primitive",
-            "params": {
-              "shape": "cone",
-              "color": [
-                0.95,
-                0.45,
-                0.1
-              ]
-            },
-            "name": "Cone",
-            "floor": "ground",
-            "position": [
-              -3.01,
-              -2.2,
-              0
-            ],
-            "rotation": [
-              0,
-              0,
-              0.6666968706815253,
-              -0.7453289761061631
-            ],
-            "scale": [
-              0.3,
-              0.3,
-              0.45
-            ],
-            "key": "cone_3"
-          },
-          {
-            "id": "5c4ff278eb85",
-            "kind": "primitive",
-            "params": {
-              "shape": "ladder",
-              "color": [
-                0.95,
-                0.78,
-                0.15
-              ]
-            },
-            "name": "Ladder",
-            "floor": "ground",
-            "position": [
-              -2.75,
-              0.67,
-              0
-            ],
-            "rotation": [
-              0,
-              0,
-              0.6146107538026696,
-              -0.7888305403000788
-            ],
-            "scale": [
-              2.4,
-              0.45,
-              0.06
-            ],
-            "key": "ladder_1"
-          },
-          {
-            "id": "47153d25bb48",
-            "kind": "primitive",
-            "params": {
-              "shape": "box",
-              "color": [
-                0.6,
-                0.45,
-                0.3
-              ]
-            },
-            "name": "Box",
-            "floor": "ground",
-            "position": [
-              -2.91,
-              -1.51,
-              0
-            ],
-            "rotation": [
-              0,
-              0,
-              0.09999462328536077,
-              -0.9949879774720993
-            ],
-            "scale": [
-              0.4,
-              0.3,
-              0.3
-            ],
-            "key": "box_2"
-          },
-          {
-            "id": "d7aef4d946ba",
-            "kind": "primitive",
-            "params": {
-              "shape": "soccer_ball",
-              "color": [
-                0.92,
-                0.92,
-                0.9
-              ]
-            },
-            "name": "Soccer ball",
-            "floor": "ground",
-            "position": [
-              1.68,
-              0.14,
-              0
-            ],
-            "rotation": [
-              0,
-              0,
-              0.2484399235034953,
-              0.9686473065102579
-            ],
-            "scale": [
-              0.22,
-              0.22,
-              0.22
-            ],
-            "key": "soccer_ball_4"
-          },
-          {
-            "id": "4c5155a50e85",
-            "kind": "primitive",
-            "params": {
-              "shape": "cone",
-              "color": [
-                0.95,
-                0.45,
-                0.1
-              ]
-            },
-            "name": "Cone",
-            "floor": "ground",
-            "position": [
-              1.49,
-              -0.74,
-              0
-            ],
-            "rotation": [
-              0,
-              0,
-              0.5100816861434273,
-              0.8601259637175698
-            ],
-            "scale": [
-              0.3,
-              0.3,
-              0.45
-            ],
-            "key": "cone_4"
-          },
-          {
-            "id": "68039e6d9ca6",
-            "kind": "primitive",
-            "params": {
-              "shape": "step_stool",
-              "color": [
-                0.25,
-                0.45,
-                0.8
-              ]
-            },
-            "name": "Step stool",
-            "floor": "ground",
-            "position": [
-              -1.82,
-              -1.14,
-              0
-            ],
-            "rotation": [
-              0,
-              0,
-              0.16243033577364469,
-              -0.9867200139960987
-            ],
-            "scale": [
-              0.5,
-              0.45,
-              0.5
-            ],
-            "key": "step_stool_5"
-          },
-          {
-            "id": "3866a05455d9",
-            "kind": "primitive",
-            "params": {
-              "shape": "cone",
-              "color": [
-                0.95,
-                0.45,
-                0.1
-              ]
-            },
-            "name": "Cone",
-            "floor": "ground",
-            "position": [
-              3.92,
-              0.39,
-              0
-            ],
-            "rotation": [
-              0,
-              0,
-              0.930592599513149,
-              -0.366056571763655
-            ],
-            "scale": [
-              0.3,
-              0.3,
-              0.45
-            ],
-            "key": "cone_5"
-          },
-          {
-            "id": "3c0ae9d92de5",
-            "kind": "primitive",
-            "params": {
-              "shape": "cone",
-              "color": [
-                0.95,
-                0.45,
-                0.1
-              ]
-            },
-            "name": "Cone",
-            "floor": "ground",
-            "position": [
-              0.31,
-              3.08,
-              0
-            ],
-            "rotation": [
-              0,
-              0,
-              0.986739974771429,
-              -0.16230903298362548
-            ],
-            "scale": [
-              0.3,
-              0.3,
-              0.45
-            ],
-            "key": "cone_6"
-          },
-          {
-            "id": "c8d052552089",
+            "id": "d13391a5da0c",
             "kind": "primitive",
             "params": {
               "shape": "bowling_pin",
@@ -888,15 +535,15 @@
             "name": "Bowling pin",
             "floor": "ground",
             "position": [
-              3.16,
-              -1.97,
+              1.44,
+              -0.38,
               0
             ],
             "rotation": [
               0,
               0,
-              0.1143841274633014,
-              -0.9934365965598707
+              0.5490108886436995,
+              -0.8358151973676091
             ],
             "scale": [
               0.12,
@@ -906,7 +553,286 @@
             "key": "bowling_pin_2"
           },
           {
-            "id": "89f4cb66339e",
+            "id": "818edfc6bca0",
+            "kind": "primitive",
+            "params": {
+              "shape": "cone",
+              "color": [
+                0.95,
+                0.45,
+                0.1
+              ]
+            },
+            "name": "Cone",
+            "floor": "ground",
+            "position": [
+              0.98,
+              -0.67,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.7712282852197628,
+              0.6365586635000613
+            ],
+            "scale": [
+              0.3,
+              0.3,
+              0.45
+            ],
+            "key": "cone_1"
+          },
+          {
+            "id": "2ead61eecde0",
+            "kind": "primitive",
+            "params": {
+              "shape": "bowling_pin",
+              "color": [
+                0.92,
+                0.92,
+                0.9
+              ]
+            },
+            "name": "Bowling pin",
+            "floor": "ground",
+            "position": [
+              -1.84,
+              -3.26,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.9997130864767259,
+              -0.02395296906812287
+            ],
+            "scale": [
+              0.12,
+              0.12,
+              0.38
+            ],
+            "key": "bowling_pin_3"
+          },
+          {
+            "id": "15e7205d7d30",
+            "kind": "primitive",
+            "params": {
+              "shape": "step_stool",
+              "color": [
+                0.25,
+                0.45,
+                0.8
+              ]
+            },
+            "name": "Step stool",
+            "floor": "ground",
+            "position": [
+              -0.8,
+              -2.1,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.3321535179634303,
+              0.9432253391976475
+            ],
+            "scale": [
+              0.5,
+              0.45,
+              0.5
+            ],
+            "key": "step_stool_3"
+          },
+          {
+            "id": "70991354b92f",
+            "kind": "primitive",
+            "params": {
+              "shape": "pipe",
+              "color": [
+                0.55,
+                0.57,
+                0.6
+              ]
+            },
+            "name": "Pipe",
+            "floor": "ground",
+            "position": [
+              2.69,
+              -2.79,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.3495838423441729,
+              -0.9369050843985662
+            ],
+            "scale": [
+              1.6,
+              0.2,
+              0.2
+            ],
+            "key": "pipe_5"
+          },
+          {
+            "id": "38b4d807d27f",
+            "kind": "primitive",
+            "params": {
+              "shape": "bucket",
+              "color": [
+                0.12,
+                0.12,
+                0.13
+              ]
+            },
+            "name": "Bucket",
+            "floor": "ground",
+            "position": [
+              2.72,
+              -0.66,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.9765652567949242,
+              0.21522151198489337
+            ],
+            "scale": [
+              0.32,
+              0.32,
+              0.38
+            ],
+            "key": "bucket_3"
+          },
+          {
+            "id": "22fafd2022f9",
+            "kind": "primitive",
+            "params": {
+              "shape": "box",
+              "color": [
+                0.6,
+                0.45,
+                0.3
+              ]
+            },
+            "name": "Box",
+            "floor": "ground",
+            "position": [
+              -3.9,
+              -0.19,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.8961440235648901,
+              0.44376332546632297
+            ],
+            "scale": [
+              0.4,
+              0.3,
+              0.3
+            ],
+            "key": "box_2"
+          },
+          {
+            "id": "43ffde96e2a7",
+            "kind": "primitive",
+            "params": {
+              "shape": "step_stool",
+              "color": [
+                0.25,
+                0.45,
+                0.8
+              ]
+            },
+            "name": "Step stool",
+            "floor": "ground",
+            "position": [
+              3.78,
+              -0.84,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.32802925287927315,
+              -0.9446675654723549
+            ],
+            "scale": [
+              0.5,
+              0.45,
+              0.5
+            ],
+            "key": "step_stool_4"
+          },
+          {
+            "id": "39496c519208",
+            "kind": "primitive",
+            "params": {
+              "shape": "cone",
+              "color": [
+                0.95,
+                0.45,
+                0.1
+              ]
+            },
+            "name": "Cone",
+            "floor": "ground",
+            "position": [
+              -1.69,
+              2.68,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.9991698525291983,
+              0.040738259618938726
+            ],
+            "scale": [
+              0.3,
+              0.3,
+              0.45
+            ],
+            "key": "cone_2"
+          },
+          {
+            "id": "cdfb1e46ca33",
+            "kind": "primitive",
+            "params": {
+              "shape": "bowling_pin",
+              "color": [
+                0.92,
+                0.92,
+                0.9
+              ]
+            },
+            "name": "Bowling pin",
+            "floor": "ground",
+            "position": [
+              -3.01,
+              1.55,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0.6952066989123786,
+              -0.7188098815315168
+            ],
+            "scale": [
+              0.12,
+              0.12,
+              0.38
+            ],
+            "key": "bowling_pin_4"
+          },
+          {
+            "id": "5fdda86a9d8f",
             "kind": "primitive",
             "params": {
               "shape": "ladder",
@@ -934,10 +860,10 @@
               0.45,
               0.06
             ],
-            "key": "ladder_2"
+            "key": "ladder_1"
           },
           {
-            "id": "59d2ce5d3372",
+            "id": "48c5e5d9b6dd",
             "kind": "stairs",
             "params": {
               "steps": 5,
@@ -978,7 +904,7 @@
             "key": "open_stairs_1"
           },
           {
-            "id": "90e7d2f63dd6",
+            "id": "f1d2c5e7f731",
             "kind": "primitive",
             "params": {
               "shape": "pipe",
@@ -1006,7 +932,7 @@
               0.6,
               0.6
             ],
-            "key": "pipe_3"
+            "key": "pipe_6"
           }
         ],
         "spawns": [

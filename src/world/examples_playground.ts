@@ -14,6 +14,7 @@ import {
   yaw,
 } from "./defaults.ts";
 import { openingPreset } from "./geometry.ts";
+import { footprintRadius, Footprints } from "./placement.ts";
 import { scatterClutter } from "./scatter.ts";
 import type { Item, MeshAsset, Project, Quat, Vec3 } from "./types.ts";
 
@@ -37,25 +38,28 @@ export function playground(library: MeshAsset[], seed = 7): Project {
       position,
       rotation: yaw(angle),
     });
-  /** a few library things inside a room's footprint, away from its walls */
+  /** a few library things inside a room, clear of its walls and of each other (one that won't fit is left out) */
   const furnish = (
+    assets: MeshAsset[],
     center: [number, number],
     width: number,
     depth: number,
     floor: string,
     count: number,
   ) => {
-    for (let i = 0; i < count && furniture.length; i++) {
-      const x = center[0] + (random() - 0.5) * (width - 2.2);
-      const y = center[1] + (random() - 0.5) * (depth - 2.2);
-      add(
-        mesh(
-          pick(furniture),
-          floor,
-          [round(x), round(y), 0],
-          Math.round(random() * 4) * (Math.PI / 2),
-        ),
+    const footprints = new Footprints();
+    const wall = defaultRoom().wallThickness;
+    for (let i = 0; i < count && assets.length; i++) {
+      const asset = pick(assets);
+      const r = footprintRadius(asset.size[0], asset.size[1]);
+      const reachX = width / 2 - wall - r - 0.1;
+      const reachY = depth / 2 - wall - r - 0.1;
+      if (reachX <= 0 || reachY <= 0) continue;
+      const spot = footprints.place(
+        () => [round(center[0] + (random() * 2 - 1) * reachX), round(center[1] + (random() * 2 - 1) * reachY)],
+        r,
       );
+      if (spot) add(mesh(asset, floor, [spot[0], spot[1], 0], Math.round(random() * 4) * (Math.PI / 2)));
     }
   };
   /** tag36h11 tags on a room's inner walls, facing in, 1.3 m up */
@@ -93,7 +97,7 @@ export function playground(library: MeshAsset[], seed = 7): Project {
     { ...openingPreset("door", "east"), offset: 2.5 },
   ];
   add(makeItem("room", lab, { name: "Lab", floor: ground, position: [0, 0, 0] }));
-  furnish([0, 0], lab.width, lab.depth, ground, 7);
+  furnish(furniture, [0, 0], lab.width, lab.depth, ground, 7);
   tags([0, 0], lab.width, lab.depth, lab.wallThickness, ground);
   const office = {
     ...defaultRoom(),
@@ -107,7 +111,7 @@ export function playground(library: MeshAsset[], seed = 7): Project {
     ...openingPreset("window", "south"),
   }];
   add(makeItem("room", office, { name: "Office", floor: "upper", position: [0, 0, 0] }));
-  furnish([0, 0], office.width, office.depth, "upper", 5);
+  furnish(furniture, [0, 0], office.width, office.depth, "upper", 5);
   // straight stairs up the east side to a landing at the office's east door (3 m up)
   add(makeItem("stairs", {
     ...defaultStairs(),
@@ -121,7 +125,8 @@ export function playground(library: MeshAsset[], seed = 7): Project {
   add(makeItem("primitive", { shape: "box", color: PAINT.concrete }, {
     name: "Landing",
     floor: ground,
-    position: [6.1, 2.3, 0],
+    // its south face meets the top step (18 x 0.28 m from y = -3.8), clear of it
+    position: [6.1, 2.36, 0],
     scale: [1.2, 2.2, 3],
   }));
   // a freestanding switchback, for climbing tests
@@ -142,15 +147,7 @@ export function playground(library: MeshAsset[], seed = 7): Project {
     offset: 1.5,
   }];
   add(makeItem("room", store, { name: "Storeroom", floor: ground, position: [14, 0, 0] }));
-  for (let i = 0; i < 5 && storage.length; i++) {
-    add(
-      mesh(pick(storage), ground, [
-        round(14 + (random() - 0.5) * 3.5),
-        round((random() - 0.5) * 3.5),
-        0,
-      ]),
-    );
-  }
+  furnish(storage, [14, 0], store.width, store.depth, ground, 5);
   tags([14, 0], store.width, store.depth, store.wallThickness, ground);
 
   // ── a long corridor with a cart riding through it ──
@@ -252,12 +249,18 @@ export function playground(library: MeshAsset[], seed = 7): Project {
       position: [-5, -6, 0],
     }),
   );
-  add(...scatterClutter(ground, [-6, -14, 0], seed + 1, 18, 3.5));
-  add(...scatterClutter(ground, [16, 10, 0], seed + 2, 14, 3));
+  // outdoors, nothing overlaps: the clutter fields and the ring of plants share one set of footprints
+  const outdoors = new Footprints();
+  add(...scatterClutter(ground, [-6, -14, 0], seed + 1, 18, 3.5, outdoors));
+  add(...scatterClutter(ground, [16, 10, 0], seed + 2, 14, 3, outdoors));
   for (let i = 0; i < 10 && plants.length; i++) {
-    const angle = random() * Math.PI * 2;
-    const r = 19 + random() * 4;
-    add(mesh(pick(plants), ground, [round(Math.cos(angle) * r), round(Math.sin(angle) * r), 0]));
+    const plant = pick(plants);
+    const spot = outdoors.place(() => {
+      const angle = random() * Math.PI * 2;
+      const r = 19 + random() * 4;
+      return [round(Math.cos(angle) * r), round(Math.sin(angle) * r)];
+    }, footprintRadius(plant.size[0], plant.size[1]));
+    if (spot) add(mesh(plant, ground, [spot[0], spot[1], 0]));
   }
   add(
     makeItem("stairs", {
