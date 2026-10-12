@@ -220,7 +220,7 @@ export function office555(): Project {
 
   // the south rooms
   // (no wall along the south stairs' east side: the south room opens onto them)
-  wall(1.45, -11.15, 6.35, -11.15, ground, 3, [[3.6, 4.6]], "South room wall");
+  wall(1.2, -11.15, 6.35, -11.15, ground, 3, [[3.85, 4.85]], "South room wall"); // from the south stairs' side, no slit
   wall(6.35, -11.15, 6.35, -7.35, ground, 3, [], "South room wall");
   wall(6.6, -7.3, 9.55, -7.3, ground, 3, [], "South room wall");
   wall(6.35, -10.55, 9.55, -10.55, ground, 3, [[1.0, 2.0]], "South room wall");
