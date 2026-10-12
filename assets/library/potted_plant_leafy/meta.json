@@ -1,0 +1,87 @@
+{
+  "id": "potted_plant_leafy",
+  "name": "Leafy Potted Plant",
+  "category": "nature",
+  "size": [
+    0.7012,
+    0.6574,
+    0.8412
+  ],
+  "base": "",
+  "visuals": [
+    {
+      "file": "visual_0.obj",
+      "rgba": [
+        0.477,
+        0.301,
+        0.202,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_1.obj",
+      "rgba": [
+        0.288,
+        0.317,
+        0.215,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_2.obj",
+      "rgba": [
+        0.243,
+        0.23,
+        0.172,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_3.obj",
+      "rgba": [
+        0.171,
+        0.153,
+        0.126,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_4.obj",
+      "rgba": [
+        0.359,
+        0.401,
+        0.252,
+        1.0
+      ]
+    }
+  ],
+  "hulls": [
+    "hull_0.obj",
+    "hull_1.obj",
+    "hull_2.obj",
+    "hull_3.obj",
+    "hull_4.obj",
+    "hull_5.obj",
+    "hull_6.obj",
+    "hull_7.obj",
+    "hull_8.obj",
+    "hull_9.obj",
+    "hull_10.obj",
+    "hull_11.obj",
+    "hull_12.obj",
+    "hull_13.obj",
+    "hull_14.obj",
+    "hull_15.obj",
+    "hull_16.obj",
+    "hull_17.obj",
+    "hull_18.obj",
+    "hull_19.obj",
+    "hull_20.obj",
+    "hull_21.obj",
+    "hull_22.obj",
+    "hull_23.obj"
+  ],
+  "license": "CC0-1.0",
+  "source": "https://polyhaven.com/a/potted_plant_02",
+  "frame": "z-up"
+}

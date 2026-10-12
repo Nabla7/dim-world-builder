@@ -1,0 +1,57 @@
+{
+  "id": "berry_bush",
+  "name": "Berry Bush",
+  "category": "nature",
+  "size": [
+    0.9821,
+    1.2124,
+    0.9
+  ],
+  "base": "",
+  "visuals": [
+    {
+      "file": "visual_0.obj",
+      "rgba": [
+        0.295,
+        0.383,
+        0.24,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_1.obj",
+      "rgba": [
+        0.644,
+        0.166,
+        0.194,
+        1.0
+      ]
+    }
+  ],
+  "hulls": [
+    "hull_0.obj",
+    "hull_1.obj",
+    "hull_2.obj",
+    "hull_3.obj",
+    "hull_4.obj",
+    "hull_5.obj",
+    "hull_6.obj",
+    "hull_7.obj",
+    "hull_8.obj",
+    "hull_9.obj",
+    "hull_10.obj",
+    "hull_11.obj",
+    "hull_12.obj",
+    "hull_13.obj",
+    "hull_14.obj",
+    "hull_15.obj",
+    "hull_16.obj",
+    "hull_17.obj",
+    "hull_18.obj",
+    "hull_19.obj",
+    "hull_20.obj"
+  ],
+  "license": "CC0-1.0",
+  "source": "https://quaternius.com/packs/ultimatenature.html",
+  "frame": "z-up"
+}

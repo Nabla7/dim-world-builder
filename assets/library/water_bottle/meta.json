@@ -1,0 +1,37 @@
+{
+  "id": "water_bottle",
+  "name": "Water Bottle",
+  "category": "kitchen",
+  "size": [
+    0.0745,
+    0.0745,
+    0.25
+  ],
+  "base": "",
+  "visuals": [
+    {
+      "file": "visual_0.obj",
+      "rgba": [
+        0.457,
+        0.603,
+        0.742,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_1.obj",
+      "rgba": [
+        0.371,
+        0.371,
+        0.371,
+        1.0
+      ]
+    }
+  ],
+  "hulls": [
+    "hull_0.obj"
+  ],
+  "license": "CC0-1.0",
+  "source": "https://quaternius.com/packs/survivalpack.html",
+  "frame": "z-up"
+}

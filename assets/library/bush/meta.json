@@ -1,0 +1,35 @@
+{
+  "id": "bush",
+  "name": "Bush",
+  "category": "nature",
+  "size": [
+    1.0698,
+    1.361,
+    1.0
+  ],
+  "base": "",
+  "visuals": [
+    {
+      "file": "visual_0.obj",
+      "rgba": [
+        0.295,
+        0.383,
+        0.24,
+        1.0
+      ]
+    }
+  ],
+  "hulls": [
+    "hull_0.obj",
+    "hull_1.obj",
+    "hull_2.obj",
+    "hull_3.obj",
+    "hull_4.obj",
+    "hull_5.obj",
+    "hull_6.obj",
+    "hull_7.obj"
+  ],
+  "license": "CC0-1.0",
+  "source": "https://quaternius.com/packs/ultimatenature.html",
+  "frame": "z-up"
+}

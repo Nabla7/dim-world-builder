@@ -39,11 +39,12 @@ function primitive(
   scale: Vec3,
   color: PrimitiveParams["color"],
   icon: string,
+  group = "Shapes",
 ): PaletteEntry {
   return {
     key: `shape:${shape}`,
     title,
-    group: "Shapes",
+    group,
     icon,
     make: (floor, at) =>
       makeItem("primitive", { shape, color }, { name: title, floor, position: snap(at), scale }),
@@ -51,18 +52,20 @@ function primitive(
 }
 
 export const BUILT_IN: PaletteEntry[] = [
+  // geometric solids: sized freely with the scale gizmo or the inspector
   primitive("box", "Box", [1, 1, 1], PAINT.wood, "cube"),
   primitive("cylinder", "Cylinder", [0.6, 0.6, 1.2], PAINT.blue, "record"),
-  primitive("sphere", "Ball", [0.6, 0.6, 0.6], PAINT.red, "target"),
+  primitive("sphere", "Sphere", [0.6, 0.6, 0.6], PAINT.red, "target"),
   primitive("cone", "Cone", [0.35, 0.35, 0.5], PAINT.orange, "arrow-up"),
-  primitive("ramp", "Ramp", [2, 1.2, 0.3], PAINT.slate, "line"),
-  primitive("beanbag", "Beanbag", [0.9, 0.9, 0.6], PAINT.red, "sparkle"),
-  primitive("bowling_pin", "Bowling pin", [0.12, 0.12, 0.38], PAINT.white, "pin"),
-  primitive("pipe", "Pipe", [2, 0.3, 0.3], PAINT.steel, "minus"),
-  primitive("soccer_ball", "Soccer ball", [0.22, 0.22, 0.22], PAINT.white, "record"),
-  primitive("step_stool", "Step stool", [0.5, 0.45, 0.5], PAINT.blue, "grid"),
-  primitive("ladder", "Ladder (lying)", [2.4, 0.45, 0.06], PAINT.yellow, "list"),
-  primitive("bucket", "Bucket", [0.32, 0.32, 0.38], PAINT.black, "fill"),
+  primitive("ramp", "Wedge", [2, 1.2, 0.3], PAINT.slate, "line"),
+  // procedural things a robot meets on the floor (the library has modeled ones too)
+  primitive("beanbag", "Beanbag", [0.9, 0.9, 0.6], PAINT.red, "sparkle", "Clutter"),
+  primitive("bowling_pin", "Bowling pin", [0.12, 0.12, 0.38], PAINT.white, "pin", "Clutter"),
+  primitive("pipe", "Pipe", [2, 0.3, 0.3], PAINT.steel, "minus", "Clutter"),
+  primitive("soccer_ball", "Soccer ball", [0.22, 0.22, 0.22], PAINT.white, "record", "Clutter"),
+  primitive("step_stool", "Step stool", [0.5, 0.45, 0.5], PAINT.blue, "grid", "Clutter"),
+  primitive("ladder", "Ladder (lying)", [2.4, 0.45, 0.06], PAINT.yellow, "list", "Clutter"),
+  primitive("bucket", "Bucket", [0.32, 0.32, 0.38], PAINT.black, "fill", "Clutter"),
   {
     key: "build:room",
     title: "Room",

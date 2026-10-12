@@ -1,0 +1,51 @@
+{
+  "id": "dresser",
+  "name": "Dresser",
+  "category": "furniture",
+  "size": [
+    1.7554,
+    0.7028,
+    0.85
+  ],
+  "base": "",
+  "visuals": [
+    {
+      "file": "visual_0.obj",
+      "rgba": [
+        0.332,
+        0.295,
+        0.23,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_1.obj",
+      "rgba": [
+        0.422,
+        0.371,
+        0.295,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_2.obj",
+      "rgba": [
+        0.23,
+        0.194,
+        0.166,
+        1.0
+      ]
+    }
+  ],
+  "hulls": [
+    "hull_0.obj",
+    "hull_1.obj",
+    "hull_2.obj",
+    "hull_3.obj",
+    "hull_4.obj",
+    "hull_5.obj"
+  ],
+  "license": "CC0-1.0",
+  "source": "https://quaternius.com/packs/houseinterior.html",
+  "frame": "z-up"
+}

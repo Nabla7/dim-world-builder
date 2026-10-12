@@ -1,0 +1,48 @@
+{
+  "id": "trash_can_round",
+  "name": "Round Trash Can",
+  "category": "clutter",
+  "size": [
+    0.4919,
+    0.4919,
+    0.7
+  ],
+  "base": "",
+  "visuals": [
+    {
+      "file": "visual_0.obj",
+      "rgba": [
+        0.406,
+        0.406,
+        0.406,
+        1.0
+      ]
+    }
+  ],
+  "hulls": [
+    "hull_0.obj",
+    "hull_1.obj",
+    "hull_2.obj",
+    "hull_3.obj",
+    "hull_4.obj",
+    "hull_5.obj",
+    "hull_6.obj",
+    "hull_7.obj",
+    "hull_8.obj",
+    "hull_9.obj",
+    "hull_10.obj",
+    "hull_11.obj",
+    "hull_12.obj",
+    "hull_13.obj",
+    "hull_14.obj",
+    "hull_15.obj",
+    "hull_16.obj",
+    "hull_17.obj",
+    "hull_18.obj",
+    "hull_19.obj",
+    "hull_20.obj"
+  ],
+  "license": "CC0-1.0",
+  "source": "https://quaternius.com/packs/houseinterior.html",
+  "frame": "z-up"
+}

@@ -1,0 +1,60 @@
+{
+  "id": "suitcase",
+  "name": "Suitcase",
+  "category": "clutter",
+  "size": [
+    0.6938,
+    0.2392,
+    0.5679
+  ],
+  "base": "",
+  "visuals": [
+    {
+      "file": "visual_0.obj",
+      "rgba": [
+        0.149,
+        0.147,
+        0.088,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_1.obj",
+      "rgba": [
+        0.282,
+        0.263,
+        0.239,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_2.obj",
+      "rgba": [
+        0.33,
+        0.309,
+        0.287,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_3.obj",
+      "rgba": [
+        0.19,
+        0.179,
+        0.12,
+        1.0
+      ]
+    }
+  ],
+  "hulls": [
+    "hull_0.obj",
+    "hull_1.obj",
+    "hull_2.obj",
+    "hull_3.obj",
+    "hull_4.obj",
+    "hull_5.obj"
+  ],
+  "license": "CC0-1.0",
+  "source": "https://polyhaven.com/a/vintage_suitcase",
+  "frame": "z-up"
+}

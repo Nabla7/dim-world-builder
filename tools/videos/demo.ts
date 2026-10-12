@@ -83,7 +83,10 @@ export class Demo {
 
   /** move to an element's center and click it */
   async click(selector: string, pause = 500) {
-    const box = await this.app.locator(selector).first().boundingBox();
+    // the first VISIBLE match (menus and tab strips keep hidden copies of their labels)
+    const target = this.app.locator(`${selector} >> visible=true`).first();
+    await target.scrollIntoViewIfNeeded().catch(() => {});
+    const box = await target.boundingBox();
     if (!box) throw new Error(`no ${selector}`);
     const [ox, oy] = await this.offset();
     await this.moveTo(ox + box.x + box.width / 2, oy + box.y + box.height / 2);
@@ -167,7 +170,8 @@ export class Demo {
 
   /** nudge a slider with the keyboard (visible, exact): focus it, then press ←/→ */
   async slide(label: string, presses: number) {
-    const slider = this.app.locator(`input[type=range][aria-label="${label}"]`).first();
+    const slider = this.app.locator(`input[type=range][aria-label="${label}"] >> visible=true`).first();
+    await slider.scrollIntoViewIfNeeded().catch(() => {});
     const box = await slider.boundingBox();
     if (box) {
       const [ox, oy] = await this.offset();

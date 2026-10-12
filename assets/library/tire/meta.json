@@ -1,0 +1,78 @@
+{
+  "id": "tire",
+  "name": "Tire",
+  "category": "clutter",
+  "size": [
+    0.65,
+    0.1787,
+    0.65
+  ],
+  "base": "",
+  "visuals": [
+    {
+      "file": "visual_0.obj",
+      "rgba": [
+        0.067,
+        0.058,
+        0.05,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_1.obj",
+      "rgba": [
+        0.118,
+        0.107,
+        0.099,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_2.obj",
+      "rgba": [
+        0.03,
+        0.021,
+        0.014,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_3.obj",
+      "rgba": [
+        0.169,
+        0.157,
+        0.148,
+        1.0
+      ]
+    }
+  ],
+  "hulls": [
+    "hull_0.obj",
+    "hull_1.obj",
+    "hull_2.obj",
+    "hull_3.obj",
+    "hull_4.obj",
+    "hull_5.obj",
+    "hull_6.obj",
+    "hull_7.obj",
+    "hull_8.obj",
+    "hull_9.obj",
+    "hull_10.obj",
+    "hull_11.obj",
+    "hull_12.obj",
+    "hull_13.obj",
+    "hull_14.obj",
+    "hull_15.obj",
+    "hull_16.obj",
+    "hull_17.obj",
+    "hull_18.obj",
+    "hull_19.obj",
+    "hull_20.obj",
+    "hull_21.obj",
+    "hull_22.obj",
+    "hull_23.obj"
+  ],
+  "license": "CC0-1.0",
+  "source": "https://polyhaven.com/a/old_tyre",
+  "frame": "z-up"
+}

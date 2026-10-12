@@ -1,0 +1,96 @@
+{
+  "id": "statue",
+  "name": "Statue",
+  "category": "decor",
+  "size": [
+    1.5285,
+    1.6178,
+    1.8
+  ],
+  "base": "",
+  "visuals": [
+    {
+      "file": "visual_0.obj",
+      "rgba": [
+        0.099,
+        0.082,
+        0.042,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_1.obj",
+      "rgba": [
+        0.187,
+        0.163,
+        0.103,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_2.obj",
+      "rgba": [
+        0.287,
+        0.255,
+        0.185,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_3.obj",
+      "rgba": [
+        0.381,
+        0.347,
+        0.298,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_4.obj",
+      "rgba": [
+        0.511,
+        0.473,
+        0.435,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_5.obj",
+      "rgba": [
+        0.654,
+        0.627,
+        0.6,
+        1.0
+      ]
+    }
+  ],
+  "hulls": [
+    "hull_0.obj",
+    "hull_1.obj",
+    "hull_2.obj",
+    "hull_3.obj",
+    "hull_4.obj",
+    "hull_5.obj",
+    "hull_6.obj",
+    "hull_7.obj",
+    "hull_8.obj",
+    "hull_9.obj",
+    "hull_10.obj",
+    "hull_11.obj",
+    "hull_12.obj",
+    "hull_13.obj",
+    "hull_14.obj",
+    "hull_15.obj",
+    "hull_16.obj",
+    "hull_17.obj",
+    "hull_18.obj",
+    "hull_19.obj",
+    "hull_20.obj",
+    "hull_21.obj",
+    "hull_22.obj",
+    "hull_23.obj"
+  ],
+  "license": "CC0-1.0",
+  "source": "https://polyhaven.com/a/gothic_statue",
+  "frame": "z-up"
+}
