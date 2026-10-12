@@ -104,6 +104,10 @@ export interface HillParams {
   resolution: number;
   /** fade to zero height at the edges so the hill meets the ground */
   edgeFade: boolean;
+  /** small bumps a robot's feet feel, on top of the hill's shape: their height, meters (0 or unset: none) */
+  bumps?: number;
+  /** typical distance between those bumps, meters */
+  bumpSize?: number;
   color: Rgb;
 }
 

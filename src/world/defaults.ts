@@ -92,8 +92,11 @@ export const defaultHill = (): HillParams => ({
   frequency: 2,
   octaves: 4,
   seed: 7,
-  resolution: 64,
+  // 10 m at 128 points: 8 cm cells, fine enough to carry the small bumps
+  resolution: 128,
   edgeFade: true,
+  bumps: 0.1,
+  bumpSize: 0.6,
   color: PAINT.grass,
 });
 

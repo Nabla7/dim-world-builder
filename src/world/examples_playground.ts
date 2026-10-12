@@ -202,7 +202,17 @@ export function playground(library: MeshAsset[], seed = 7): Project {
     spiralTurn: 450,
     railing: "both",
   }, { name: "Spiral tower", floor: ground, position: [-12, 10, 0] }));
-  add(makeItem("hill", { ...defaultHill(), sizeX: 14, sizeY: 12, amplitude: 0.5, seed }, {
+  add(makeItem("hill", {
+    ...defaultHill(),
+    sizeX: 14,
+    sizeY: 12,
+    amplitude: 0.7,
+    frequency: 3,
+    bumps: 0.12,
+    bumpSize: 0.55,
+    resolution: 192,
+    seed,
+  }, {
     name: "Hill",
     floor: ground,
     position: [-16, -12, 0],

@@ -676,6 +676,8 @@ export function hillHeights(p: HillParams): { n: number; heights: Float32Array }
   let lo = Infinity;
   let hi = -Infinity;
   const scale = p.frequency / 10;
+  const bumps = Math.max(0, p.bumps ?? 0);
+  const bumpSize = Math.max(0.1, p.bumpSize ?? 0.6);
   for (let row = 0; row < n; row++) {
     for (let col = 0; col < n; col++) {
       const x = (col / (n - 1) - 0.5) * p.sizeX;
@@ -695,13 +697,19 @@ export function hillHeights(p: HillParams): { n: number; heights: Float32Array }
   const heights = new Float32Array(n * n);
   for (let row = 0; row < n; row++) {
     for (let col = 0; col < n; col++) {
-      let h = hi > lo ? (raw[row * n + col] - lo) / (hi - lo) : 0;
+      let h = (hi > lo ? (raw[row * n + col] - lo) / (hi - lo) : 0) * p.amplitude;
+      if (bumps > 0) {
+        // two octaves of value noise at the bump spacing, in 0..bumps
+        const x = (col / (n - 1) - 0.5) * p.sizeX / bumpSize;
+        const y = (row / (n - 1) - 0.5) * p.sizeY / bumpSize;
+        h += bumps * fbm(x + 5000, y + 5000, 2, 0.35, p.seed + 7919);
+      }
       if (p.edgeFade) {
         const edge = Math.min(col, row, n - 1 - col, n - 1 - row) / ((n - 1) * 0.15);
         const fade = Math.min(1, edge);
         h *= fade * fade * (3 - 2 * fade);
       }
-      heights[row * n + col] = h * p.amplitude;
+      heights[row * n + col] = h;
     }
   }
   return { n, heights };
@@ -709,7 +717,7 @@ export function hillHeights(p: HillParams): { n: number; heights: Float32Array }
 
 export function hillShapes(p: HillParams): Shape[] {
   const { n, heights } = hillHeights(p);
-  const top = Math.max(p.amplitude, 1e-3);
+  const top = Math.max(p.amplitude + Math.max(0, p.bumps ?? 0), 1e-3);
   return [{
     type: "hfield",
     pos: [0, 0, 0],

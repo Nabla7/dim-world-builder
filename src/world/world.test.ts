@@ -59,7 +59,7 @@ describe("stairs", () => {
 
 describe("hills", () => {
   it("spans exactly 0..amplitude and meets the ground at the edges", () => {
-    const hill = { ...defaultHill(), amplitude: 0.8, resolution: 32, edgeFade: true };
+    const hill = { ...defaultHill(), amplitude: 0.8, bumps: 0, resolution: 32, edgeFade: true };
     const { n, heights } = hillHeights(hill);
     expect(Math.max(...heights)).toBeLessThanOrEqual(0.8 + 1e-6);
     expect(Math.max(...heights)).toBeGreaterThan(0.3);
@@ -73,6 +73,25 @@ describe("hills", () => {
     const top = shape.hfield!.size[2];
     // last computed row (+y) is the first written row
     expect(shape.hfield!.elevation[0] * top).toBeCloseTo(heights[(n - 1) * n], 5);
+  });
+  it("adds small bumps a robot feels, still walkable", () => {
+    const smooth = { ...defaultHill(), bumps: 0 };
+    const bumpy = defaultHill();
+    const a = hillHeights(smooth);
+    const b = hillHeights(bumpy);
+    const cell = bumpy.sizeX / (b.n - 1);
+    let biggest = 0;
+    let steepest = 0;
+    for (let i = 0; i < b.heights.length; i++) {
+      biggest = Math.max(biggest, b.heights[i] - a.heights[i]);
+      if (i % b.n < b.n - 1) {
+        steepest = Math.max(steepest, Math.abs(b.heights[i + 1] - b.heights[i]) / cell);
+      }
+    }
+    expect(biggest).toBeGreaterThan(0.05);
+    expect(biggest).toBeLessThanOrEqual(bumpy.bumps! + 1e-6);
+    // slope in degrees, cell to cell
+    expect((Math.atan(steepest) * 180) / Math.PI).toBeLessThan(35);
   });
   it("is the same for the same seed", () => {
     expect(hillHeights(defaultHill()).heights).toEqual(hillHeights(defaultHill()).heights);

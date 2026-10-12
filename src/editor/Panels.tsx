@@ -472,7 +472,7 @@ function HillEditor({ item }: { item: Extract<Item, { kind: "hill" }> }) {
   return (
     <>
       <Range
-        label="Bump height"
+        label="Hill height"
         value={p.amplitude}
         min={0.05}
         max={3}
@@ -489,7 +489,7 @@ function HillEditor({ item }: { item: Extract<Item, { kind: "hill" }> }) {
         onChange={(roughness) => set({ roughness })}
       />
       <Range
-        label="Bumpiness"
+        label="Hills per 10 m"
         value={p.frequency}
         min={0.5}
         max={10}
@@ -503,6 +503,24 @@ function HillEditor({ item }: { item: Extract<Item, { kind: "hill" }> }) {
         max={7}
         step={1}
         onChange={(octaves) => set({ octaves })}
+      />
+      <Range
+        label="Small bumps"
+        value={p.bumps ?? 0}
+        min={0}
+        max={0.4}
+        step={0.01}
+        unit="m"
+        onChange={(bumps) => set({ bumps })}
+      />
+      <Range
+        label="Bump spacing"
+        value={p.bumpSize ?? 0.6}
+        min={0.2}
+        max={3}
+        step={0.05}
+        unit="m"
+        onChange={(bumpSize) => set({ bumpSize })}
       />
       <Range
         label="Size X"
@@ -526,7 +544,7 @@ function HillEditor({ item }: { item: Extract<Item, { kind: "hill" }> }) {
         label="Resolution"
         value={p.resolution}
         min={16}
-        max={192}
+        max={256}
         step={8}
         onChange={(resolution) => set({ resolution })}
       />
