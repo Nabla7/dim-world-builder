@@ -118,6 +118,7 @@ describe("export", () => {
     expect(json.movers).toHaveLength(1);
     expect(scene.xml).toContain('mocap="true"');
     expect(scene.xml).toContain("<hfield name=");
+    expect(scene.xml).toContain('type="skybox"');
   });
 });
 

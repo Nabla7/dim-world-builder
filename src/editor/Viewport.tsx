@@ -18,6 +18,7 @@ import { useSubscription } from "../ui.ts";
 import { buildWorld, type World } from "../world/geometry.ts";
 import type { Item, MeshAsset, Project, Quat, Vec3 } from "../world/types.ts";
 import { bodyObject, disposeObject, ghost } from "./three_world.ts";
+import { fadeGrid, gridFocus, skyDome, SKY, SUN_DIRECTION, windTime } from "./nature.ts";
 import {
   addItem,
   addNavPoint,
@@ -47,6 +48,7 @@ export function Viewport({ assets }: { assets: Record<string, MeshAsset> }) {
       cameraPosition={[-9, -12, 10]}
       cameraTarget={[2, 0, 0]}
       gridSize={120}
+      grid={mode !== "view"}
       onViewer={(viewer) => {
         const track = () => {
           const t = viewer.controls.target;
@@ -160,21 +162,33 @@ function Lighting() {
   const mode = useEditor((s) => s.mode);
   useLayer(({ viewer }) => {
     const root = new THREE.Group();
-    viewer.renderer.shadowMap.enabled = true;
-    viewer.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    const renderer = viewer.renderer;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     // Neutral keeps greens green (ACES pulls foliage toward gray-olive)
-    viewer.renderer.toneMapping = THREE.NeutralToneMapping;
-    viewer.renderer.toneMappingExposure = 0.95;
-    // physical light (white sun, cool sky, warm bounce): the world's look, not the page's skin
-    const sky = new THREE.HemisphereLight(
-      new THREE.Color(0.85, 0.9, 1),
-      new THREE.Color(0.45, 0.42, 0.38),
-      1.25,
-    );
-    sky.up.set(0, 0, 1);
-    sky.position.set(0, 0, 50);
-    const sun = new THREE.DirectionalLight(new THREE.Color(1, 0.97, 0.92), 1.6);
-    sun.position.set(-18, -24, 40);
+    renderer.toneMapping = THREE.NeutralToneMapping;
+    renderer.toneMappingExposure = 1.0;
+    // the world's look, not the page's skin: a sky, its light on everything, a warm sun, haze toward the horizon
+    const sky = skyDome();
+    const scene = viewer.scene;
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    const skyScene = new THREE.Scene();
+    skyScene.add(skyDome());
+    const environment = pmrem.fromScene(skyScene, 0.04).texture;
+    const before = {
+      environment: scene.environment,
+      environmentIntensity: scene.environmentIntensity,
+      fog: scene.fog,
+    };
+    scene.environment = environment;
+    scene.environmentIntensity = 0.55;
+    scene.fog = new THREE.Fog(SKY.horizon.clone(), mode === "view" ? 45 : 70, mode === "view" ? 220 : 320);
+    // fill: blue from above, a green-brown bounce from the ground
+    const fill = new THREE.HemisphereLight(new THREE.Color(0.62, 0.75, 0.95), new THREE.Color(0.42, 0.4, 0.3), 0.55);
+    fill.up.set(0, 0, 1);
+    fill.position.set(0, 0, 50);
+    const sun = new THREE.DirectionalLight(SKY.sun.clone(), 2.6);
+    sun.position.copy(SUN_DIRECTION).multiplyScalar(60);
     sun.castShadow = true;
     sun.shadow.mapSize.set(4096, 4096);
     const extent = 40;
@@ -183,13 +197,14 @@ function Lighting() {
       right: extent,
       top: extent,
       bottom: -extent,
-      far: 150,
+      far: 160,
     });
-    sun.shadow.bias = -0.0005;
-    sun.shadow.normalBias = 0.02;
+    sun.shadow.bias = -0.0004;
+    sun.shadow.normalBias = 0.03;
+    sun.shadow.radius = 3;
     // editing: only shadows over the grid; viewing: a concrete ground with a soft checker, like the simulation's
     const ground = new THREE.Mesh(
-      new THREE.PlaneGeometry(400, 400),
+      new THREE.PlaneGeometry(800, 800),
       mode === "view"
         ? new THREE.MeshStandardMaterial({ map: checker(), roughness: 0.95 })
         : new THREE.ShadowMaterial({ opacity: 0.25 }),
@@ -197,8 +212,29 @@ function Lighting() {
     ground.receiveShadow = true;
     ground.position.z = -0.001;
     ground.userData.ground = true;
-    root.add(sky, sun, sun.target, ground);
-    return { root, dispose: () => disposeObject(root) };
+    root.add(sky, fill, sun, sun.target, ground);
+    // the sky stays centered on the camera
+    const off = viewer.onFrame(({ camera }: { camera: THREE.Camera }) => {
+      sky.position.copy(camera.position);
+      gridFocus.value = Math.max(8, camera.position.distanceTo(viewer.controls.target));
+      // the viewer remakes its grid on a theme change: fade each new one
+      for (const child of scene.children) {
+        if ((child as THREE.GridHelper).isLineSegments && child.type === "GridHelper") fadeGrid(child);
+      }
+    });
+    return {
+      root,
+      dispose: () => {
+        off?.();
+        scene.environment = before.environment;
+        scene.environmentIntensity = before.environmentIntensity;
+        scene.fog = before.fog;
+        environment.dispose();
+        pmrem.dispose();
+        disposeObject(skyScene);
+        disposeObject(root);
+      },
+    };
   }, [mode]);
   return null;
 }
@@ -209,29 +245,42 @@ function checker(): THREE.CanvasTexture {
   canvas.width = canvas.height = 64;
   const ctx = canvas.getContext("2d")!;
   const tone = (v: number) => new THREE.Color(v, v * 1.02, v * 1.05).getStyle();
-  ctx.fillStyle = tone(0.34);
+  ctx.fillStyle = tone(0.36);
   ctx.fillRect(0, 0, 64, 64);
-  ctx.fillStyle = tone(0.3);
+  ctx.fillStyle = tone(0.335);
   ctx.fillRect(0, 0, 32, 32);
   ctx.fillRect(32, 32, 32, 32);
   const texture = new THREE.CanvasTexture(canvas);
   texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
   texture.repeat.set(200, 200);
   texture.magFilter = THREE.NearestFilter;
-  texture.anisotropy = 8;
+  texture.minFilter = THREE.LinearMipmapLinearFilter; // far away it blends to one gray instead of shimmering
+  texture.anisotropy = 16;
   texture.colorSpace = THREE.SRGBColorSpace;
   return texture;
+}
+
+/** whether any grass is in the world (it animates, so the view keeps drawing) */
+function hasGrass(root: THREE.Object3D): boolean {
+  let found = false;
+  root.traverse((object) => {
+    if (object.userData.grass) found = true;
+  });
+  return found;
 }
 
 interface WorldLayerState {
   root: THREE.Group;
   objects: Map<string, THREE.Group>;
+  /** grass is drawn: the wind animates it */
+  grass: boolean;
 }
 
 /** every item as three.js objects, rebuilt when the project changes; ghosts the floors not being edited */
 function WorldLayer({ assets }: { assets: Record<string, MeshAsset> }) {
   const project = useEditor((s) => s.project);
   const showCollision = useEditor((s) => s.showCollision);
+  const grass = useEditor((s) => s.grass);
   const mode = useEditor((s) => s.mode);
   const world = useMemo(() => buildWorld(project, assets), [project, assets]);
   const worldRef = useRef<World>(world);
@@ -248,12 +297,17 @@ function WorldLayer({ assets }: { assets: Record<string, MeshAsset> }) {
     const root = new THREE.Group();
     root.name = "world";
     view.worldRoot = root;
-    const state: WorldLayerState = { root, objects: new Map() };
+    const state: WorldLayerState = { root, objects: new Map(), grass: false };
     return {
       root,
       state,
       viewer,
       update: () => {
+        // grass sways: advance the wind and keep drawing while any is on screen
+        if (state.grass) {
+          windTime.value = performance.now() / 1000;
+          viewer.requestRender();
+        }
         // viewer mode: movers ride their live TF (world -> <body>) from the running simulation
         if (getState().mode !== "view" || !tf) return;
         for (const body of worldRef.current.bodies) {
@@ -286,7 +340,7 @@ function WorldLayer({ assets }: { assets: Record<string, MeshAsset> }) {
       disposeObject(object);
     }
     objects.clear();
-    const style = { collisionColor: themeColor("var(--danger)"), showCollision };
+    const style = { collisionColor: themeColor("var(--danger)"), showCollision, grass };
     for (const body of world.bodies) {
       const object = bodyObject(body, assets, style, () => live.viewer.requestRender());
       const editable = mode === "view" || body.floor === project.activeFloor;
@@ -296,6 +350,7 @@ function WorldLayer({ assets }: { assets: Record<string, MeshAsset> }) {
       objects.set(body.itemId, object);
       root.add(object);
     }
+    live.state.grass = hasGrass(root);
     // a different world was opened: frame all of it (once; an empty world is never framed later)
     const justOpened = framed.current !== opened;
     framed.current = opened;
@@ -320,7 +375,7 @@ function WorldLayer({ assets }: { assets: Record<string, MeshAsset> }) {
       setTimeout(frame, 400);
     }
     live.viewer.requestRender();
-  }, [world, assets, showCollision, mode, project.activeFloor, layer]);
+  }, [world, assets, showCollision, grass, mode, project.activeFloor, layer]);
   return <Picker objects={pickable} />;
 }
 

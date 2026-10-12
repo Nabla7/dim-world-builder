@@ -40,6 +40,7 @@ import {
   setGizmo,
   setMode,
   setNavTool,
+  setGrass,
   setShowCollision,
   setSnap,
   undo,
@@ -60,6 +61,7 @@ export function App() {
   const gizmo = useEditor((s) => s.gizmo);
   const snap = useEditor((s) => s.snap);
   const showCollision = useEditor((s) => s.showCollision);
+  const grass = useEditor((s) => s.grass);
   const project = useEditor((s) => s.project);
   const navTool = useEditor((s) => s.navTool);
   const revision = useEditor((s) => s.revision);
@@ -211,6 +213,7 @@ export function App() {
                   label="Collision"
                   data-testid="show-collision"
                 />
+                <Toggle size="sm" value={grass} onChange={setGrass} label="Grass" data-testid="show-grass" />
                 {navTool === "tag" && (
                   <Button
                     size="sm"
@@ -592,6 +595,7 @@ function ExportDialog({ open, onClose }: { open: boolean; onClose: () => void })
 /** viewer mode: how to start a run, and what's on */
 function ViewerOverlay() {
   const showCollision = useEditor((s) => s.showCollision);
+  const grass = useEditor((s) => s.grass);
   const name = useEditor((s) => s.project.name);
   return (
     <div
@@ -624,6 +628,7 @@ function ViewerOverlay() {
         onChange={setShowCollision}
         label="Show the robot's lidar"
       />
+      <Toggle size="sm" value={grass} onChange={setGrass} label="Grass" />
     </div>
   );
 }

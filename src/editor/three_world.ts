@@ -1,6 +1,7 @@
 // World bodies -> three.js objects (Z up, like the viewer and MuJoCo). The same shapes the exporter writes.
 
 import * as THREE from "three";
+import { grassOn } from "./nature.ts";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import type { Body, Shape, WorldLight } from "../world/geometry.ts";
@@ -48,6 +49,8 @@ export interface WorldStyle {
   /** the overlay color for collision-only geometry */
   collisionColor: THREE.Color;
   showCollision: boolean;
+  /** instanced grass blades on hills (visual only) */
+  grass?: boolean;
 }
 
 function material(shape: Shape): THREE.MeshStandardMaterial {
@@ -105,12 +108,8 @@ function hash(x: number, y: number): number {
   return v - Math.floor(v);
 }
 
-/**
- * A height field drawn low-poly: every few samples (GROUND_FACET apart, always the edges), flat-shaded triangles, each
- * its own shade of the field's color (lighter on crests). The samples it keeps sit at their exact heights; physics and
- * lidar use the full field.
- */
-function lowPolyGround(shape: Shape): THREE.BufferGeometry {
+/** the samples a low-poly hill keeps (rows and columns of the field) and where each sits */
+function lowPolyGrid(shape: Shape) {
   const h = shape.hfield!;
   const [sx, sy, top] = h.size;
   const step = Math.max(1, Math.round(GROUND_FACET / ((2 * sx) / (h.ncol - 1))));
@@ -128,6 +127,50 @@ function lowPolyGround(shape: Shape): THREE.BufferGeometry {
     sy - (row / (h.nrow - 1)) * 2 * sy,
     h.elevation[row * h.ncol + col] * top,
   ];
+  return { rows, cols, point, top };
+}
+
+/** the drawn (low-poly) surface's height at (x, y) in the field's frame: grass roots sit exactly on the facets */
+export function lowPolyHeightAt(shape: Shape): (x: number, y: number) => number {
+  const { rows, cols, point } = lowPolyGrid(shape);
+  const xs = cols.map((c) => point(0, c)[0]);
+  const ys = rows.map((r) => point(r, 0)[1]); // descending: row 0 is +y
+  const find = (values: number[], v: number, descending: boolean) => {
+    for (let i = 0; i + 1 < values.length; i++) {
+      const [a, b] = descending ? [values[i + 1], values[i]] : [values[i], values[i + 1]];
+      if (v >= a && v <= b) return i;
+    }
+    return Math.max(0, values.length - 2);
+  };
+  const plane = (a: number[], b: number[], c: number[], x: number, y: number) => {
+    const det = (b[1] - c[1]) * (a[0] - c[0]) + (c[0] - b[0]) * (a[1] - c[1]);
+    const wa = ((b[1] - c[1]) * (x - c[0]) + (c[0] - b[0]) * (y - c[1])) / det;
+    const wb = ((c[1] - a[1]) * (x - c[0]) + (a[0] - c[0]) * (y - c[1])) / det;
+    return { z: wa * a[2] + wb * b[2] + (1 - wa - wb) * c[2], inside: wa >= -1e-6 && wb >= -1e-6 && wa + wb <= 1 + 1e-6 };
+  };
+  return (x, y) => {
+    const c = find(xs, x, false);
+    const r = find(ys, y, true);
+    const p00 = point(rows[r], cols[c]);
+    const p01 = point(rows[r], cols[c + 1]);
+    const p10 = point(rows[r + 1], cols[c]);
+    const p11 = point(rows[r + 1], cols[c + 1]);
+    // the same two triangles lowPolyGround draws for this cell
+    const [first, second] = (r + c) % 2 === 0
+      ? [[p00, p10, p11], [p00, p11, p01]]
+      : [[p00, p10, p01], [p01, p10, p11]];
+    const one = plane(first[0], first[1], first[2], x, y);
+    return one.inside ? one.z : plane(second[0], second[1], second[2], x, y).z;
+  };
+}
+
+/**
+ * A height field drawn low-poly: every few samples (GROUND_FACET apart, always the edges), flat-shaded triangles, each
+ * its own shade of the field's color (lighter on crests). The samples it keeps sit at their exact heights; physics and
+ * lidar use the full field.
+ */
+function lowPolyGround(shape: Shape): THREE.BufferGeometry {
+  const { rows, cols, point, top } = lowPolyGrid(shape);
   const base = new THREE.Color().setRGB(shape.rgba[0], shape.rgba[1], shape.rgba[2], THREE.SRGBColorSpace);
   const hsl = base.getHSL({ h: 0, s: 0, l: 0 }, THREE.SRGBColorSpace);
   const positions: number[] = [];
@@ -210,6 +253,9 @@ function livelier<M extends THREE.Material | THREE.Material[]>(material: M): M {
         standard.color.setHSL(hsl.h, Math.min(1, hsl.s * 1.3), Math.min(0.75, hsl.l * 1.12), THREE.SRGBColorSpace);
         standard.vertexColors = true;
         standard.userData.foliage = true;
+        // light through the leaves: a little of their own color, so the shaded side isn't a dark hole
+        standard.emissive = standard.color.clone().multiplyScalar(0.18);
+        standard.roughness = 0.9;
       }
     }
     livelyCache.set(source, made);
@@ -338,6 +384,16 @@ export function bodyObject(
     mesh.receiveShadow = true;
     place(mesh, shape);
     group.add(mesh);
+    if (style.grass && shape.type === "hfield" && shape.role !== "collision") {
+      const [r, g, b] = shape.rgba;
+      const blades = grassOn(
+        [shape.hfield!.size[0], shape.hfield!.size[1]],
+        lowPolyHeightAt(shape),
+        new THREE.Color().setRGB(r, g, b, THREE.SRGBColorSpace),
+      );
+      place(blades, shape);
+      group.add(blades);
+    }
   }
   for (const light of body.lights ?? []) group.add(threeLight(light));
   return group;

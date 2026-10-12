@@ -169,6 +169,8 @@ export function toScene(world: World, name: string): SceneFiles {
     <global offwidth="1920" offheight="1080"/>
   </visual>
   <asset>
+    <!-- a sky for cameras (visual only: rays and lidar hit geoms, never the skybox) -->
+    <texture name="sky" type="skybox" builtin="gradient" rgb1="0.42 0.6 0.86" rgb2="0.86 0.9 0.95" width="512" height="3072"/>
     <texture name="ground_grid" type="2d" builtin="checker" rgb1="0.32 0.34 0.36" rgb2="0.28 0.3 0.32" width="512" height="512" mark="edge" markrgb="0.4 0.42 0.44"/>
     <material name="ground" texture="ground_grid" texrepeat="1 1" texuniform="true" reflectance="0.05"/>
 ${assets.join("\n")}
