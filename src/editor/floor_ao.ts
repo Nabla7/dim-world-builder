@@ -22,6 +22,12 @@ export interface FloorAO {
 const open = new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1);
 open.needsUpdate = true;
 
+/** back to open sky (fancy rendering's floor occlusion off) */
+export function clearFloorAO(into: FloorAO) {
+  if (into.map.value !== open) into.map.value.dispose();
+  into.map.value = open;
+}
+
 /** the uniforms a floor's slab material reads; open sky until a bake fills them */
 export function floorAO(): FloorAO {
   return { map: { value: open }, bounds: { value: new THREE.Vector4(0, 0, 1, 1) } };

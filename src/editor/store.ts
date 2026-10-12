@@ -18,6 +18,38 @@ import { NAV_GOAL, NAV_MAPPING, withAnnotations } from "../world/annotations.ts"
 export type Gizmo = "translate" | "rotate" | "scale";
 export type Mode = "edit" | "view";
 
+export interface Fancy {
+  on: boolean;
+  grass: boolean;
+  /** soft, wide sun shadows (VSM); off: cheap hard ones */
+  shadows: boolean;
+  /** baked floor ambient occlusion */
+  occlusion: boolean;
+  /** wood grain, weave, brushed metal, concrete and other surface shaders */
+  detail: boolean;
+  sky: boolean;
+  /** the viewer chose (so a software renderer doesn't override it) */
+  chosen?: boolean;
+}
+
+const FANCY_KEY = "dim-world-builder.fancy";
+
+function loadFancy(): Fancy {
+  const all: Fancy = {
+    on: true,
+    grass: true,
+    shadows: true,
+    occlusion: true,
+    detail: true,
+    sky: true,
+  };
+  try {
+    return { ...all, ...JSON.parse(localStorage.getItem(FANCY_KEY) ?? "{}") };
+  } catch {
+    return all;
+  }
+}
+
 export interface EditorState {
   project: Project;
   /** the item the inspector and the gizmo are on (the last one clicked) */
@@ -28,8 +60,8 @@ export interface EditorState {
   mode: Mode;
   snap: boolean;
   showCollision: boolean;
-  /** instanced grass on hills (visual only; off for heavy scenes) */
-  grass: boolean;
+  /** the costly eye candy (grass, soft shadows, floor occlusion, surface detail, sky), each switchable; per viewer */
+  fancy: Fancy;
   /** play the moving objects along their paths in the editor, as the simulation will */
   previewMotion: boolean;
   /** the item whose mover path clicks on the ground extend */
@@ -58,7 +90,7 @@ let state: EditorState = {
   mode: "edit",
   snap: true,
   showCollision: false,
-  grass: true,
+  fancy: loadFancy(),
   previewMotion: false,
   drawingPath: null,
   navTool: null,
@@ -221,7 +253,27 @@ export const setGizmo = (gizmo: Gizmo) => set({ gizmo });
 export const setMode = (mode: Mode) => set({ mode, drawingPath: null });
 export const setSnap = (snap: boolean) => set({ snap });
 export const setShowCollision = (showCollision: boolean) => set({ showCollision });
-export const setGrass = (grass: boolean) => set({ grass });
+export const setFancy = (change: Partial<Fancy>) => {
+  const fancy = { ...state.fancy, ...change, chosen: true };
+  try {
+    localStorage.setItem(FANCY_KEY, JSON.stringify(fancy));
+  } catch {
+    // private window: this session only
+  }
+  set({ fancy });
+};
+
+/** whether a fancy feature is drawn: the switch on, and that feature on */
+export const fancyOn = (f: Fancy, feature: Exclude<keyof Fancy, "on" | "chosen">) =>
+  f.on && f[feature];
+
+/** a software (CPU) WebGL renderer turns fancy rendering off by default (the viewer's first frame calls this) */
+export function noticeRenderer(name: string) {
+  if (state.fancy.chosen) return;
+  if (/swiftshader|llvmpipe|softpipe|software|basic render|mesa offscreen|lavapipe/i.test(name)) {
+    set({ fancy: { ...state.fancy, on: false } });
+  }
+}
 export const setPreviewMotion = (previewMotion: boolean) => set({ previewMotion });
 export const setDrawingPath = (drawingPath: string | null) => set({ drawingPath, navTool: null });
 

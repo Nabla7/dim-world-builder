@@ -143,8 +143,9 @@ function detailTexture(kind: Detail): THREE.DataTexture {
  *   (triplanar), since the kits' models have no texture coordinates to put a texture on.
  */
 function surfaceLook<M extends THREE.Material>(material: M, detail: Detail | null = null): M {
-  const look = detail ? DETAIL_LOOK[detail] : null;
   material.onBeforeCompile = (shader) => {
+    // read as it compiles: fancy rendering's surface detail off leaves only the contact shade
+    const look = detail && fancyLook.detail ? DETAIL_LOOK[detail] : null;
     shader.uniforms.uFloorLevels = floorLevels;
     let vertexLines = "vWorldZ = (modelMatrix * vec4(transformed, 1.0)).z;";
     let fragmentHead = "varying float vWorldZ;\nuniform vec4 uFloorLevels;";
@@ -178,7 +179,7 @@ function surfaceLook<M extends THREE.Material>(material: M, detail: Detail | nul
       .replace("#include <common>", `#include <common>\n${fragmentHead}`)
       .replace("#include <color_fragment>", `#include <color_fragment>${fragmentBody}`);
   };
-  material.customProgramCacheKey = () => `surfaceLook:${detail ?? ""}`;
+  material.customProgramCacheKey = () => `surfaceLook:${fancyLook.detail ? detail ?? "" : ""}`;
   return material;
 }
 
@@ -278,7 +279,10 @@ function slabLook(
         uniform sampler2D uDetail;
         float slabUp() { return step(0.9, abs(normalize(cross(dFdx(vWorldPos), dFdy(vWorldPos))).z)); }`,
       )
-      .replace("#include <color_fragment>", `#include <color_fragment>\n${FINISH_GLSL[finish]}`)
+      .replace(
+        "#include <color_fragment>",
+        `#include <color_fragment>\n${FINISH_GLSL[fancyLook.detail ? finish : "plain"]}`,
+      )
       .replace(
         "#include <aomap_fragment>",
         `#include <aomap_fragment>
@@ -289,7 +293,7 @@ function slabLook(
         reflectedLight.directDiffuse *= mix(1.0, floorOcclusion, 0.5);`,
       );
   };
-  material.customProgramCacheKey = () => `slabLook:${finish}`;
+  material.customProgramCacheKey = () => `slabLook:${fancyLook.detail ? finish : "plain"}`;
   return material;
 }
 
@@ -472,6 +476,12 @@ function lowPolyGround(shape: Shape): THREE.BufferGeometry {
 }
 
 const livelyCache = new Map<THREE.Material, THREE.Material>();
+
+/** fancy rendering's surface detail: the surface shaders read this when they compile */
+export const fancyLook = { detail: true };
+
+/** the library's shared materials, to recompile when the look changes */
+export const livelyMaterials = () => livelyCache.values();
 
 /** foliage darker underneath and lighter on top (a cheap stand-in for light through leaves), once per geometry */
 function shadeCanopy(geometry: THREE.BufferGeometry) {

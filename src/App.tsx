@@ -3,6 +3,7 @@ import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter.js";
 import * as api from "./api.ts";
 import {
   Button,
+  Checkbox,
   CodeBlock,
   Field,
   IconButton,
@@ -49,8 +50,8 @@ import {
   select,
   setActiveFloor,
   setDrawingPath,
+  setFancy,
   setGizmo,
-  setGrass,
   setMode,
   setNavTool,
   setPreviewMotion,
@@ -75,7 +76,6 @@ export function App() {
   const gizmo = useEditor((s) => s.gizmo);
   const snap = useEditor((s) => s.snap);
   const showCollision = useEditor((s) => s.showCollision);
-  const grass = useEditor((s) => s.grass);
   const previewMotion = useEditor((s) => s.previewMotion);
   const project = useEditor((s) => s.project);
   const navTool = useEditor((s) => s.navTool);
@@ -242,13 +242,7 @@ export function App() {
                   label="Collision"
                   data-testid="show-collision"
                 />
-                <Toggle
-                  size="sm"
-                  value={grass}
-                  onChange={setGrass}
-                  label="Grass"
-                  data-testid="show-grass"
-                />
+                <FancyToggle />
                 <Toggle
                   size="sm"
                   value={previewMotion}
@@ -449,6 +443,69 @@ class PanelBoundary extends Component<{ children: ReactNode }, { error: Error | 
       </div>
     );
   }
+}
+
+const FANCY_PARTS = [
+  ["grass", "Grass (and wind)"],
+  ["shadows", "Soft shadows"],
+  ["occlusion", "Floor shading under furniture"],
+  ["detail", "Surface detail (wood, fabric, metal, floors)"],
+  ["sky", "Sky and haze"],
+] as const;
+
+/** one switch for the costly eye candy, and a chevron that opens a checkbox per part */
+function FancyToggle() {
+  const fancy = useEditor((s) => s.fancy);
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 2 }}>
+      <Toggle
+        size="sm"
+        value={fancy.on}
+        onChange={(on: boolean) => setFancy({ on })}
+        label="Fancy rendering"
+        data-testid="fancy"
+      />
+      <IconButton
+        icon={open ? "chevron-up" : "chevron-down"}
+        label="Choose what fancy rendering draws"
+        size="sm"
+        variant="ghost"
+        data-testid="fancy-parts"
+        onClick={() => setOpen(!open)}
+      />
+      {open && (
+        <div
+          style={{
+            position: "absolute",
+            top: "calc(100% + 6px)",
+            left: 0,
+            zIndex: 20,
+            display: "flex",
+            flexDirection: "column",
+            gap: 6,
+            padding: 10,
+            width: 260,
+            borderRadius: "var(--radius)",
+            background: "var(--raised)",
+            border: "1px solid var(--border)",
+            boxShadow: "var(--shadow-lg)",
+          }}
+        >
+          {FANCY_PARTS.map(([key, label]) => (
+            <Checkbox
+              key={key}
+              value={fancy[key]}
+              disabled={!fancy.on}
+              onChange={(on: boolean) => setFancy({ [key]: on })}
+              label={label}
+              data-testid={`fancy-${key}`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function ProjectMenu() {
@@ -731,7 +788,6 @@ function ExportDialog({ open, onClose }: { open: boolean; onClose: () => void })
 /** viewer mode: how to start a run, and what's on */
 function ViewerOverlay() {
   const showCollision = useEditor((s) => s.showCollision);
-  const grass = useEditor((s) => s.grass);
   const name = useEditor((s) => s.project.name);
   return (
     <div
@@ -764,7 +820,7 @@ function ViewerOverlay() {
         onChange={setShowCollision}
         label="Show the robot's lidar"
       />
-      <Toggle size="sm" value={grass} onChange={setGrass} label="Grass" />
+      <FancyToggle />
     </div>
   );
 }

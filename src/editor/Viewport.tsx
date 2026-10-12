@@ -20,13 +20,23 @@ import { buildWorld, type World } from "../world/geometry.ts";
 import { moverPose } from "../world/movers.ts";
 import { NAV_GOAL } from "../world/annotations.ts";
 import type { Item, MeshAsset, Project, Quat, Vec3 } from "../world/types.ts";
-import { bodyObject, disposeObject, floorLevels, ghost, slabAO } from "./three_world.ts";
-import { bakeFloorAO, type FloorAO, floorAO } from "./floor_ao.ts";
+import {
+  bodyObject,
+  disposeObject,
+  fancyLook,
+  floorLevels,
+  ghost,
+  livelyMaterials,
+  slabAO,
+} from "./three_world.ts";
+import { bakeFloorAO, clearFloorAO, type FloorAO, floorAO } from "./floor_ao.ts";
 import { fadeGrid, gridFocus, SKY, skyDome, SUN_DIRECTION, windTime } from "./nature.ts";
 import {
   addItem,
   addLabelPoint,
+  fancyOn,
   getState,
+  noticeRenderer,
   openMenu,
   select,
   setDrawingPath,
@@ -190,16 +200,26 @@ function exposeForAutomation(viewer: {
   });
 }
 
+/** the GPU behind a renderer, e.g. "ANGLE (Apple, Apple M2, ...)" or "llvmpipe (LLVM 20)" */
+function rendererName(renderer: THREE.WebGLRenderer): string {
+  const gl = renderer.getContext();
+  const info = gl.getExtension("WEBGL_debug_renderer_info");
+  return String(gl.getParameter(info ? info.UNMASKED_RENDERER_WEBGL : gl.RENDERER) ?? "");
+}
+
 /** sun + sky light with soft shadows, so the world reads as solid shapes, not flat colors */
 function Lighting() {
   const mode = useEditor((s) => s.mode);
+  const softShadows = useEditor((s) => fancyOn(s.fancy, "shadows"));
+  const skyOn = useEditor((s) => fancyOn(s.fancy, "sky"));
   useLayer(({ viewer }) => {
+    noticeRenderer(rendererName(viewer.renderer));
     const root = new THREE.Group();
     const renderer = viewer.renderer;
     renderer.shadowMap.enabled = true;
     // variance shadow maps blur the map itself (a smooth, wide penumbra: a hazy, diffuse sun); PCF's 17 taps band when
     // spread that wide, and PCFSoft ignores the radius
-    renderer.shadowMap.type = THREE.VSMShadowMap;
+    renderer.shadowMap.type = softShadows ? THREE.VSMShadowMap : THREE.PCFShadowMap;
     // Neutral keeps greens green (ACES pulls foliage toward gray-olive)
     renderer.toneMapping = THREE.NeutralToneMapping;
     renderer.toneMappingExposure = 1.0;
@@ -215,13 +235,13 @@ function Lighting() {
       environmentIntensity: scene.environmentIntensity,
       fog: scene.fog,
     };
-    scene.environment = environment;
+    // without the sky: no dome, no image-based light, no haze (the hemisphere fill and sun still light the world)
+    scene.environment = skyOn ? environment : null;
     scene.environmentIntensity = 0.7;
-    scene.fog = new THREE.Fog(
-      SKY.horizon.clone(),
-      mode === "view" ? 45 : 70,
-      mode === "view" ? 220 : 320,
-    );
+    scene.fog = skyOn
+      ? new THREE.Fog(SKY.horizon.clone(), mode === "view" ? 45 : 70, mode === "view" ? 220 : 320)
+      : null;
+    sky.visible = skyOn;
     // fill: blue from above, a green-brown bounce from the ground
     const fill = new THREE.HemisphereLight(
       new THREE.Color(0.62, 0.75, 0.95),
@@ -245,7 +265,7 @@ function Lighting() {
     });
     sun.shadow.bias = -0.0004;
     sun.shadow.normalBias = 0.03;
-    sun.shadow.radius = 12;
+    sun.shadow.radius = softShadows ? 12 : 1;
     sun.shadow.blurSamples = 16;
     // editing: only shadows over the grid; viewing: a concrete ground with a soft checker, like the simulation's
     const ground = new THREE.Mesh(
@@ -289,7 +309,7 @@ function Lighting() {
         disposeObject(root);
       },
     };
-  }, [mode]);
+  }, [mode, softShadows, skyOn]);
   return null;
 }
 
@@ -334,7 +354,9 @@ interface WorldLayerState {
 function WorldLayer({ assets }: { assets: Record<string, MeshAsset> }) {
   const project = useEditor((s) => s.project);
   const showCollision = useEditor((s) => s.showCollision);
-  const grass = useEditor((s) => s.grass);
+  const grass = useEditor((s) => fancyOn(s.fancy, "grass"));
+  const occlusion = useEditor((s) => fancyOn(s.fancy, "occlusion"));
+  const detail = useEditor((s) => fancyOn(s.fancy, "detail"));
   const mode = useEditor((s) => s.mode);
   const world = useMemo(() => buildWorld(project, assets), [project, assets]);
   const worldRef = useRef<World>(world);
@@ -431,6 +453,11 @@ function WorldLayer({ assets }: { assets: Record<string, MeshAsset> }) {
     floorLevels.value.set(
       ...([...levels, 1e6, 1e6, 1e6, 1e6].slice(0, 4) as [number, number, number, number]),
     );
+    if (fancyLook.detail !== detail) {
+      fancyLook.detail = detail;
+      // the shared library materials recompile with or without their surface shaders
+      for (const material of livelyMaterials()) material.needsUpdate = true;
+    }
     const style = { collisionColor: themeColor("var(--danger)"), showCollision, grass };
     for (const body of world.bodies) {
       const object = bodyObject(body, assets, style, () => {
@@ -497,6 +524,10 @@ function WorldLayer({ assets }: { assets: Record<string, MeshAsset> }) {
             object.visible = body.floor === floor.id && !body.mocap &&
               !["slab", "hill", "hole", "light"].includes(body.kind);
           }
+          if (!occlusion) {
+            clearFloorAO(shared);
+            continue;
+          }
           bakeFloorAO(live.viewer.renderer, root, floor.elevation, {
             x0: floor.slab.center[0] - floor.slab.sizeX / 2,
             y0: floor.slab.center[1] - floor.slab.sizeY / 2,
@@ -537,7 +568,7 @@ function WorldLayer({ assets }: { assets: Record<string, MeshAsset> }) {
     }
     bake();
     live.viewer.requestRender();
-  }, [world, assets, showCollision, grass, mode, project.activeFloor, layer]);
+  }, [world, assets, showCollision, grass, occlusion, detail, mode, project.activeFloor, layer]);
   // switching floors (or moving one) lifts the camera with it, so the floor being edited stays in view
   const elevation = project.floors.find((f) => f.id === project.activeFloor)?.elevation ?? 0;
   useEffect(() => {

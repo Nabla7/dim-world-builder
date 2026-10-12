@@ -376,7 +376,7 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
     await demo.app.selectOption("[data-testid=open-world]", { label: "Example: nav test course" });
     await demo.page.waitForTimeout(1500);
     await demo.say("Nav test: a trajectory that evaluates any navigation stack", 800);
-    await demo.clickText("Nav test");
+    await demo.clickText("Labels");
     await demo.say(
       "This world already has one: a mapping walk (dashed) and two goals (flags)",
       2500,
@@ -563,7 +563,7 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
       await demo.lookAt(target, from);
       await demo.say(caption, 3500);
     }
-    await demo.clickText("Nav test");
+    await demo.clickText("Labels");
     await demo.lookAt([2, 0, 0], [-10, -18, 18]);
     await demo.say("Its nav test: a mapping walk (dashed), then three goals (flags)", 4000);
   },
