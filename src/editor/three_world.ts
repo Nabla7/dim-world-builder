@@ -181,6 +181,41 @@ function surfaceLook<M extends THREE.Material>(material: M, detail: Detail | nul
   return material;
 }
 
+/**
+ * Sealed concrete for a floor slab's top, in world meters so it lines up across slabs: broad mottling, a fine
+ * aggregate speckle, saw-cut control joints every 3.6 m, and a little sheen. Only faces that look up get it.
+ */
+function concreteLook(material: THREE.MeshStandardMaterial): THREE.MeshStandardMaterial {
+  material.roughness = 0.6;
+  material.onBeforeCompile = (shader) => {
+    shader.uniforms.uDetail = { value: detailTexture("stone") };
+    shader.vertexShader = shader.vertexShader
+      .replace("#include <common>", "#include <common>\nvarying vec3 vWorldPos;")
+      .replace(
+        "#include <worldpos_vertex>",
+        "#include <worldpos_vertex>\nvWorldPos = (modelMatrix * vec4(transformed, 1.0)).xyz;",
+      );
+    shader.fragmentShader = shader.fragmentShader
+      .replace(
+        "#include <common>",
+        "#include <common>\nvarying vec3 vWorldPos;\nuniform sampler2D uDetail;",
+      )
+      .replace(
+        "#include <color_fragment>",
+        `#include <color_fragment>
+        float up = step(0.9, abs(normalize(cross(dFdx(vWorldPos), dFdy(vWorldPos))).z));
+        vec2 xy = vWorldPos.xy;
+        float mottle = texture2D(uDetail, xy / 5.3).r - 0.5;
+        float speckle = texture2D(uDetail, xy / 0.41 + 0.37).r - 0.5;
+        vec2 toJoint = abs(fract(xy / 3.6 + 0.5) - 0.5) * 3.6;
+        float joint = 1.0 - smoothstep(0.006, 0.016, min(toJoint.x, toJoint.y));
+        diffuseColor.rgb *= 1.0 + up * (mottle * 0.22 + speckle * 0.1 - joint * 0.28);`,
+      );
+  };
+  material.customProgramCacheKey = () => "concreteLook";
+  return material;
+}
+
 function material(shape: Shape, shaded = true): THREE.MeshStandardMaterial {
   const [r, g, b, a] = shape.rgba;
   if (shape.type === "hfield") {
@@ -200,6 +235,7 @@ function material(shape: Shape, shaded = true): THREE.MeshStandardMaterial {
     opacity: a,
     flatShading: shape.type === "mesh",
   });
+  if (shape.finish === "concrete") return concreteLook(made);
   return shaded ? surfaceLook(made) : made;
 }
 

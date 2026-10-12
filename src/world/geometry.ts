@@ -43,6 +43,8 @@ export interface Shape {
   meshFile?: { asset: string; file: string; scale: Vec3 };
   /** an image on the shape's +x face (AprilTags): a path under the app's assets, e.g. apriltags/tag36h11_00003.png */
   texture?: string;
+  /** a surface look the views draw on top of rgba (a floor slab's concrete) */
+  finish?: "concrete";
   hfield?: {
     nrow: number;
     ncol: number;
@@ -1111,7 +1113,9 @@ export function floorSlab(floor: Floor, holes: Item[], elevation: number): Body 
     pos: [0, 0, elevation],
     quat: IDENTITY,
     mocap: false,
-    shapes,
+    shapes: slab.finish === "concrete"
+      ? shapes.map((shape) => ({ ...shape, finish: "concrete" as const }))
+      : shapes,
   };
 }
 

@@ -21,6 +21,8 @@ export interface Floor {
     center: [number, number];
     /** its top's color (default a dark gray) */
     color?: Rgb;
+    /** how its top looks in the views: plain color (default) or sealed concrete (mottling, control joints) */
+    finish?: "plain" | "concrete";
   };
 }
 

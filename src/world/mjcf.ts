@@ -86,6 +86,8 @@ export function toScene(world: World, name: string): SceneFiles {
       parts.push(`material="${textureMaterial(shape.texture)}"`);
     } else if (shape.type === "hfield") {
       parts.push(`material="${grassMaterial(shape.rgba)}"`);
+    } else if (shape.finish === "concrete") {
+      parts.push(`material="${concreteMaterial(shape.rgba)}"`);
     } else {
       parts.push(`rgba="${vec(shape.rgba)}"`);
     }
@@ -95,6 +97,27 @@ export function toScene(world: World, name: string): SceneFiles {
       parts.push(`group="${HIDDEN_GROUP}"`);
     }
     return `      <geom ${parts.join(" ")}/>`;
+  }
+
+  /** a concrete slab's color with a fine darker aggregate speckle (MuJoCo's built-in random marks), a little glossy */
+  const concreteMaterials = new Map<string, string>();
+  function concreteMaterial(rgba: readonly number[]): string {
+    const key = vec(rgba.slice(0, 3));
+    let material = concreteMaterials.get(key);
+    if (!material) {
+      material = `concrete_${concreteMaterials.size}`;
+      concreteMaterials.set(key, material);
+      const darker = rgba.slice(0, 3).map((c) => c * 0.82);
+      assets.push(
+        `    <texture name="${material}" type="2d" builtin="flat" width="256" height="256" rgb1="${key}" mark="random" random="0.08" markrgb="${
+          vec(darker)
+        }"/>`,
+      );
+      assets.push(
+        `    <material name="${material}" texture="${material}" texrepeat="1 1" texuniform="true" specular="0.2" shininess="0.4" reflectance="0.04"/>`,
+      );
+    }
+    return material;
   }
 
   /** a hill's color, speckled lighter and darker (MuJoCo's built-in random marks) so the sim camera sees texture */
