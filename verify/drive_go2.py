@@ -300,7 +300,7 @@ def main() -> int:
 
                 tap.subscribe(on)
                 taps.append(tap)
-            samples = course.wait(90.0, None)
+            samples = course.wait(180.0, None)
             for tap in taps:
                 tap.stop()
             print(f"nav diagnostics: messages {counts}, largest commanded turn {turn['max_wz']:.2f} rad/s", flush=True)
