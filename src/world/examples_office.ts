@@ -207,8 +207,8 @@ export function office555(): Project {
   // the stairwell's north wall
   wall(-0.45, 11.1, 3.45, 11.1, ground, west, [], "Stairwell wall");
 
-  // the lab (x -0.45..9.55, y -3.7..5.15): open toward the stairwell at its north-west, a door south
-  wall(-0.45, 5.15, 9.55, 5.15, ground, west, [[2.05, 3.75]], "Lab wall");
+  // the lab (x -0.45..9.55, y -3.7..5.15): open to the stairwell along its north-west 3.75 m (the corner stairs' foot), a door south
+  wall(3.3, 5.15, 9.55, 5.15, ground, west, [], "Lab wall");
   wall(9.55, 5.15, 9.55, -7.1, ground, west, [], "Lab wall");
   wall(1.8, -3.65, 5.3, -3.65, ground, 3, [], "Lab wall");
   wall(6.35, -3.85, 9.55, -4.85, ground, 3, [], "Lab wall");
@@ -409,7 +409,7 @@ export function office555(): Project {
   add(mesh("sofa", ground, 0.15, 1.6, -Math.PI / 2));
   for (
     const [x, y, a] of [
-      [1.45, 4.55, 10],
+      [2.4, 4.3, 10],
       [1.4, 3.0, -20],
       [1.6, 1.0, 30],
       [1.25, -0.2, -35],
