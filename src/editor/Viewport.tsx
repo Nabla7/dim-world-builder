@@ -18,13 +18,14 @@ import {
 import { useSubscription } from "../ui.ts";
 import { buildWorld, type World } from "../world/geometry.ts";
 import { moverPose } from "../world/movers.ts";
+import { NAV_GOAL } from "../world/annotations.ts";
 import type { Item, MeshAsset, Project, Quat, Vec3 } from "../world/types.ts";
 import { bodyObject, disposeObject, floorLevels, ghost, slabAO } from "./three_world.ts";
 import { bakeFloorAO, type FloorAO, floorAO } from "./floor_ao.ts";
 import { fadeGrid, gridFocus, SKY, skyDome, SUN_DIRECTION, windTime } from "./nature.ts";
 import {
   addItem,
-  addNavPoint,
+  addLabelPoint,
   getState,
   openMenu,
   select,
@@ -612,7 +613,7 @@ function Picker({ objects }: { objects: () => Map<string, THREE.Group> | undefin
         const floor = state.project.floors.find((f) => f.id === state.project.activeFloor);
         const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -(floor?.elevation ?? 0));
         const hit = raycaster.ray.intersectPlane(plane, new THREE.Vector3());
-        if (hit) addNavPoint([Math.round(hit.x * 10) / 10, Math.round(hit.y * 10) / 10, 0]);
+        if (hit) addLabelPoint([Math.round(hit.x * 10) / 10, Math.round(hit.y * 10) / 10, 0]);
         return;
       }
       if (state.drawingPath) {
@@ -1132,6 +1133,8 @@ function FloorMarkers() {
 function NavOverlay() {
   const project = useEditor((s) => s.project);
   const tool = useEditor((s) => s.navTool);
+  const selectedLabel = useEditor((s) => s.selectedLabel);
+  const labelTarget = useEditor((s) => s.labelTarget);
   useLayer(() => {
     const root = new THREE.Group();
     const lift = (floor: string) => project.floors.find((f) => f.id === floor)?.elevation ?? 0;
@@ -1151,43 +1154,28 @@ function NavOverlay() {
       );
       root.add(arrow);
     }
-    const nav = project.nav;
-    if (nav) {
-      const pathColor = themeColor(tool === "path" ? "var(--warn)" : "var(--primary)");
-      const points = nav.mappingPath.map((p) =>
-        new THREE.Vector3(p[0], p[1], p[2] + lift(nav.floor) + 0.04)
+    // the labels: paths dashed, areas outlined (closed, with a faint fill), points as a pin; goals as a flag with
+    // their reach ring; the selected one in the accent color
+    for (const label of project.annotations ?? []) {
+      const up = lift(label.floor) + 0.04;
+      const chosen = label.id === selectedLabel || label.id === labelTarget;
+      const color = themeColor(
+        chosen ? "var(--warn)" : label.tags.includes(NAV_GOAL) ? "var(--ok)" : "var(--primary)",
       );
-      if (points.length > 1) {
-        const line = new THREE.Line(
-          new THREE.BufferGeometry().setFromPoints(points),
-          new THREE.LineDashedMaterial({ color: pathColor, dashSize: 0.25, gapSize: 0.15 }),
-        );
-        line.computeLineDistances();
-        root.add(line);
-      }
-      for (const p of points) {
-        const dot = new THREE.Mesh(
-          new THREE.SphereGeometry(0.07, 12, 6),
-          new THREE.MeshBasicMaterial({ color: pathColor }),
-        );
-        dot.position.copy(p);
-        root.add(dot);
-      }
-      const goalColor = themeColor("var(--ok)");
-      for (const goal of nav.goals) {
-        const base = new THREE.Vector3(
-          goal.position[0],
-          goal.position[1],
-          goal.position[2] + lift(goal.floor),
-        );
+      const at = (p: Vec3) => new THREE.Vector3(p[0], p[1], p[2] + up);
+      let anchor: THREE.Vector3 | null = null;
+      if (label.kind === "point" && label.position) {
+        const base = at(label.position);
+        anchor = base.clone().setZ(base.z + 1.05);
+        const tolerance = Number(label.props?.tolerance ?? 0.25);
         const ring = new THREE.Mesh(
-          new THREE.RingGeometry(goal.tolerance * 0.92, goal.tolerance, 48),
-          new THREE.MeshBasicMaterial({ color: goalColor, side: THREE.DoubleSide }),
+          new THREE.RingGeometry(tolerance * 0.9, tolerance, 48),
+          new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide }),
         );
-        ring.position.copy(base).setZ(base.z + 0.03);
+        ring.position.copy(base);
         const pole = new THREE.Mesh(
           new THREE.CylinderGeometry(0.02, 0.02, 1, 8).rotateX(Math.PI / 2),
-          new THREE.MeshBasicMaterial({ color: goalColor }),
+          new THREE.MeshBasicMaterial({ color }),
         );
         pole.position.copy(base).setZ(base.z + 0.5);
         const flag = new THREE.Mesh(
@@ -1196,14 +1184,71 @@ function NavOverlay() {
             new THREE.Vector3(0.35, 0, 0.88),
             new THREE.Vector3(0, 0, 0.76),
           ]),
-          new THREE.MeshBasicMaterial({ color: goalColor, side: THREE.DoubleSide }),
+          new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide }),
         );
         flag.position.copy(base);
         root.add(ring, pole, flag);
+      } else if (label.points?.length) {
+        const points = label.points.map(at);
+        anchor = points[0].clone().setZ(points[0].z + 0.3);
+        const outline = label.kind === "area" && points.length > 2
+          ? [...points, points[0]]
+          : points;
+        if (outline.length > 1) {
+          const line = new THREE.Line(
+            new THREE.BufferGeometry().setFromPoints(outline),
+            label.kind === "path"
+              ? new THREE.LineDashedMaterial({ color, dashSize: 0.25, gapSize: 0.15 })
+              : new THREE.LineBasicMaterial({ color }),
+          );
+          line.computeLineDistances();
+          root.add(line);
+        }
+        if (label.kind === "area" && points.length > 2) {
+          const shape = new THREE.Shape(points.map((p) => new THREE.Vector2(p.x, p.y)));
+          const fill = new THREE.Mesh(
+            new THREE.ShapeGeometry(shape),
+            new THREE.MeshBasicMaterial({
+              color,
+              transparent: true,
+              opacity: 0.12,
+              depthWrite: false,
+              side: THREE.DoubleSide,
+            }),
+          );
+          fill.position.z = points[0].z;
+          root.add(fill);
+        }
+        for (const p of points) {
+          const dot = new THREE.Mesh(
+            new THREE.SphereGeometry(0.07, 12, 6),
+            new THREE.MeshBasicMaterial({ color }),
+          );
+          dot.position.copy(p);
+          root.add(dot);
+        }
+      }
+      if (anchor) {
+        const tag = document.createElement("div");
+        tag.textContent = label.label;
+        tag.style.cssText =
+          `font: 500 11px system-ui; padding: 1px 5px; border-radius: 4px; pointer-events: none;
+          color: white; background: ${chosen ? "var(--warn, #c80)" : "rgba(40,44,52,.75)"}`;
+        const text = new CSS2DObject(tag);
+        text.position.copy(anchor);
+        root.add(text);
       }
     }
-    return { root, dispose: () => disposeObject(root) };
-  }, [project, tool]);
+    return {
+      root,
+      dispose: () => {
+        root.traverse((o) => {
+          if (o instanceof CSS2DObject) o.element.remove();
+        });
+        disposeObject(root);
+      },
+    };
+  }, [project, tool, selectedLabel, labelTarget]);
   return null;
 }
 

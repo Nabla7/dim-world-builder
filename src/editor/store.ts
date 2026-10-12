@@ -3,8 +3,17 @@
 
 import { useSyncExternalStore } from "react";
 import { emptyProject } from "../world/defaults.ts";
-import type { CameraView, Floor, Item, MoverPath, NavPlan, Project, Vec3 } from "../world/types.ts";
+import type {
+  Annotation,
+  CameraView,
+  Floor,
+  Item,
+  MoverPath,
+  Project,
+  Vec3,
+} from "../world/types.ts";
 import { keyedProject, slug, withKeys, withViewKeys } from "../world/keys.ts";
+import { NAV_GOAL, NAV_MAPPING, withAnnotations } from "../world/annotations.ts";
 
 export type Gizmo = "translate" | "rotate" | "scale";
 export type Mode = "edit" | "view";
@@ -25,8 +34,14 @@ export interface EditorState {
   previewMotion: boolean;
   /** the item whose mover path clicks on the ground extend */
   drawingPath: string | null;
-  /** clicks on the ground extend the nav test's mapping path, or add a goal */
-  navTool: "path" | "goal" | "tag" | null;
+  /** clicks place a labeled point, extend a labeled path or area, or stick an AprilTag on a wall */
+  navTool: "point" | "path" | "area" | "tag" | null;
+  /** the path or area the clicks extend (null: the next click starts a new one) */
+  labelTarget: string | null;
+  /** the tags a new label gets (a nav test preset: nav:mapping, nav:goal) */
+  labelTags: string[];
+  /** the label open in the Labels tab */
+  selectedLabel: string | null;
   past: Project[];
   future: Project[];
   /** the last time the project changed, for autosave */
@@ -47,6 +62,9 @@ let state: EditorState = {
   previewMotion: false,
   drawingPath: null,
   navTool: null,
+  labelTarget: null,
+  labelTags: [],
+  selectedLabel: null,
   past: [],
   future: [],
   revision: 0,
@@ -116,7 +134,7 @@ export function redo() {
 
 export function loadProject(loaded: Project) {
   coalesceKey = null;
-  const project = keyedProject(loaded);
+  const project = withAnnotations(keyedProject(loaded));
   set({
     project,
     selected: null,
@@ -191,8 +209,14 @@ export function removeSelection() {
   edit((p) => ({ ...p, items: p.items.filter((i) => !gone.has(i.id)) }));
   set({ selected: null, drawingPath: null });
 }
-export const setNavTool = (navTool: "path" | "goal" | "tag" | null) =>
-  set({ navTool, drawingPath: null, selected: navTool ? null : state.selected });
+export const setNavTool = (navTool: EditorState["navTool"], labelTags: string[] = []) =>
+  set({
+    navTool,
+    labelTags,
+    labelTarget: null,
+    drawingPath: null,
+    selected: navTool ? null : state.selected,
+  });
 export const setGizmo = (gizmo: Gizmo) => set({ gizmo });
 export const setMode = (mode: Mode) => set({ mode, drawingPath: null });
 export const setSnap = (snap: boolean) => set({ snap });
@@ -322,16 +346,69 @@ export function renameProject(name: string) {
   edit((p) => ({ ...p, name }), "name");
 }
 
-// ── the navigation test ──
+// ── labels (annotations) ──
 
-function navPlan(p: Project): NavPlan {
-  return p.nav ??
-    {
-      startSpawn: p.spawns[0]?.name ?? "default",
-      floor: p.activeFloor,
-      mappingPath: [],
-      goals: [],
-    };
+/** the path or area further clicks extend */
+export const setLabelTarget = (id: string | null) => set({ labelTarget: id });
+
+export function selectLabel(id: string | null) {
+  set({ selectedLabel: id });
+}
+
+export function updateLabel(id: string, change: (a: Annotation) => Annotation, coalesce?: string) {
+  edit((p) => ({
+    ...p,
+    annotations: (p.annotations ?? []).map((a) => (a.id === id ? change(a) : a)),
+  }), coalesce);
+}
+
+export function removeLabel(id: string) {
+  edit((p) => ({ ...p, annotations: (p.annotations ?? []).filter((a) => a.id !== id) }));
+  if (state.selectedLabel === id) set({ selectedLabel: null });
+  if (state.labelTarget === id) set({ labelTarget: null });
+}
+
+/** a click on the floor while a label tool is on: a new point, or the next corner of the path or area being drawn */
+export function addLabelPoint(point: Vec3) {
+  const tool = state.navTool;
+  if (tool !== "point" && tool !== "path" && tool !== "area") return;
+  const floor = state.project.activeFloor;
+  const tags = state.labelTags;
+  const existing = state.project.annotations ?? [];
+  const extending = existing.find((a) => a.id === state.labelTarget);
+  if (extending && tool !== "point") {
+    updateLabel(extending.id, (a) => ({ ...a, points: [...(a.points ?? []), point] }));
+    return;
+  }
+  const goal = tags.includes(NAV_GOAL);
+  const same = existing.filter((a) => a.kind === tool && (goal ? a.tags.includes(NAV_GOAL) : true));
+  const name = goal
+    ? "Goal"
+    : tags.includes(NAV_MAPPING)
+    ? "Mapping walk"
+    : { point: "Point", path: "Path", area: "Area" }[tool];
+  const label: Annotation = {
+    id: crypto.randomUUID().slice(0, 8),
+    kind: tool,
+    label: `${name} ${same.length + 1}`,
+    tags,
+    floor,
+    ...(tool === "point" ? { position: point, yaw: 0 } : { points: [point] }),
+    ...(tool === "area" ? { height: 2 } : {}),
+    ...(goal ? { props: { tolerance: 0.5, timeout: 120, order: same.length } } : {}),
+    ...(tags.includes(NAV_MAPPING)
+      ? {
+        props: {
+          start_spawn: (state.project.spawns[0]?.name ?? "default").toLowerCase().replace(
+            /[^a-z0-9]+/g,
+            "_",
+          ),
+        },
+      }
+      : {}),
+  };
+  edit((p) => ({ ...p, annotations: [...(p.annotations ?? []), label] }));
+  set({ selectedLabel: label.id, labelTarget: tool === "point" ? null : label.id });
 }
 
 /** remembers a camera view; its key comes from the name (unique among the world's views); returns the key */
@@ -368,35 +445,6 @@ export function updateView(key: string, camera: Omit<CameraView, "key" | "name">
 
 export function removeView(key: string) {
   edit((p) => ({ ...p, views: (p.views ?? []).filter((v) => v.key !== key) }));
-}
-
-export function updateNav(change: (nav: NavPlan) => NavPlan, coalesce?: string) {
-  edit((p) => ({ ...p, nav: change(navPlan(p)) }), coalesce);
-}
-
-/** a click on the ground while a nav tool is on */
-export function addNavPoint(point: Vec3) {
-  const tool = state.navTool;
-  const floor = state.project.activeFloor;
-  if (tool === "path") {
-    updateNav((nav) => ({
-      ...nav,
-      floor: nav.mappingPath.length ? nav.floor : floor,
-      mappingPath: [...nav.mappingPath, point],
-    }));
-  } else if (tool === "goal") {
-    updateNav((nav) => ({
-      ...nav,
-      goals: [...nav.goals, {
-        id: crypto.randomUUID().slice(0, 8),
-        name: `Goal ${nav.goals.length + 1}`,
-        floor,
-        position: point,
-        tolerance: 0.5,
-        timeout: 120,
-      }],
-    }));
-  }
 }
 
 // ── a right-click menu on an item ──

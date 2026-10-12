@@ -14,7 +14,6 @@ import {
   NumberInput,
   SearchInput,
   Segmented,
-  Select,
   Slider,
   Text,
   TextInput,
@@ -25,8 +24,10 @@ import {
 import { defaultGrate, PAINT } from "../world/defaults.ts";
 import { openingPreset } from "../world/geometry.ts";
 import { climbing, floorAbove, openingAbove } from "../world/stairs_fit.ts";
+import { NAV_GOAL, NAV_MAPPING } from "../world/annotations.ts";
 import { slug } from "../world/keys.ts";
 import type {
+  Annotation,
   AprilTagParams,
   CameraView,
   DoorOpening,
@@ -54,18 +55,21 @@ import {
   getState,
   removeFloor,
   removeItem,
+  removeLabel,
   removeView,
   renameKey,
   renameView,
   saveView,
   select,
+  selectLabel,
   setActiveFloor,
   setDrawingPath,
+  setLabelTarget,
   setMover,
   setNavTool,
   updateFloor,
   updateItem,
-  updateNav,
+  updateLabel,
   updateView,
   useEditor,
 } from "./store.ts";
@@ -1378,141 +1382,183 @@ export function Inspector({ assets }: { assets: MeshAsset[] }) {
   );
 }
 
-// ── Nav test ──
+// ── Labels (annotations) ──
 
-export function NavPanel() {
-  const project = useEditor((s) => s.project);
+const NO_LABELS: Annotation[] = [];
+const KIND_ICON = { point: "pin", path: "line", area: "grid" } as const;
+
+/**
+ * Labeled points, paths and areas on the floor being edited (exported as scene.json annotations): add one, click it
+ * out on the floor, then name and tag it. A nav test is a preset: a path tagged nav:mapping, goals tagged nav:goal.
+ */
+export function LabelsPanel() {
+  const labels = useEditor((s) => s.project.annotations) ?? NO_LABELS;
+  const active = useEditor((s) => s.project.activeFloor);
   const tool = useEditor((s) => s.navTool);
-  const nav = project.nav ??
-    {
-      startSpawn: project.spawns[0]?.name ?? "default",
-      floor: project.activeFloor,
-      mappingPath: [],
-      goals: [],
-    };
-  const toggle = (which: "path" | "goal") => setNavTool(tool === which ? null : which);
+  const tags = useEditor((s) => s.labelTags);
+  const selected = useEditor((s) => s.selectedLabel);
+  const onFloor = labels.filter((a) => a.floor === active);
+  const drawing = tool === "point" || tool === "path" || tool === "area";
+  const start = (kind: "point" | "path" | "area", preset: string[] = []) => {
+    const same = tool === kind && preset.join() === tags.join();
+    setNavTool(same ? null : kind, preset);
+  };
+  const open = labels.find((a) => a.id === selected);
   return (
-    <div style={section} data-testid="nav-panel">
+    <div style={section} data-testid="labels-panel">
       <Text small muted>
-        A navigation test for any robot and nav stack: the robot is first driven along the mapping
-        path (to build its map), then sent to each goal in turn. Exported as scene.json annotations;
-        verify/nav_eval.py runs and scores it.
+        Labeled points, paths and areas for tests and tools to read (scene.json annotations). Add
+        one, then click on the floor; Esc or Done when finished.
       </Text>
-      <Field label="Start at">
-        <Select
-          value={nav.startSpawn}
-          options={project.spawns.map((s) => s.name)}
-          onChange={(startSpawn: string) => updateNav((n) => ({ ...n, startSpawn }))}
-        />
-      </Field>
-      <p style={heading}>Mapping path</p>
+      <ButtonGroup>
+        {(["point", "path", "area"] as const).map((kind) => (
+          <Button
+            key={kind}
+            size="sm"
+            icon={KIND_ICON[kind]}
+            variant={tool === kind && tags.length === 0 ? "primary" : "default"}
+            data-testid={`label-add-${kind}`}
+            onClick={() => start(kind)}
+          >
+            {kind[0].toUpperCase() + kind.slice(1)}
+          </Button>
+        ))}
+      </ButtonGroup>
+      <p style={heading}>Nav test preset</p>
       <ButtonGroup>
         <Button
           size="sm"
           icon="line"
-          pressed={tool === "path"}
-          onClick={() => toggle("path")}
+          variant={tool === "path" && tags.includes(NAV_MAPPING) ? "primary" : "default"}
           data-testid="nav-draw-path"
+          onClick={() => start("path", [NAV_MAPPING])}
         >
-          {tool === "path" ? "Done drawing" : "Draw the path"}
+          Mapping walk
         </Button>
         <Button
           size="sm"
-          icon="eraser"
-          onClick={() => updateNav((n) => ({ ...n, mappingPath: [] }))}
+          icon="target"
+          variant={tool === "point" && tags.includes(NAV_GOAL) ? "primary" : "default"}
+          data-testid="nav-add-goal"
+          onClick={() => start("point", [NAV_GOAL])}
         >
-          Clear
+          Goals
         </Button>
       </ButtonGroup>
-      {tool === "path" && (
-        <Text small tone="warn">
-          Click on the ground, point after point, where the robot should walk.
-        </Text>
+      {drawing && (
+        <Button size="sm" icon="check" variant="primary" onClick={() => setNavTool(null)}>
+          Done {tool === "point" ? "placing points" : `drawing the ${tool}`}
+        </Button>
       )}
-      <Text small muted>
-        {nav.mappingPath.length} points, {nav.mappingPath.slice(1).reduce(
-          (sum, p, i) =>
-            sum + Math.hypot(p[0] - nav.mappingPath[i][0], p[1] - nav.mappingPath[i][1]),
-          0,
-        ).toFixed(1)} m
-      </Text>
-      <p style={heading}>Goals</p>
-      <Button
-        size="sm"
-        icon="target"
-        pressed={tool === "goal"}
-        onClick={() => toggle("goal")}
-        data-testid="nav-add-goal"
-      >
-        {tool === "goal" ? "Done placing goals" : "Place goals"}
-      </Button>
-      {tool === "goal" && <Text small tone="warn">Click on the ground to place each goal.</Text>}
       <List divided>
-        {nav.goals.map((goal) => (
+        {onFloor.map((a) => (
           <ListRow
-            key={goal.id}
-            icon="target"
-            title={goal.name}
-            subtitle={`${goal.position[0].toFixed(1)}, ${
-              goal.position[1].toFixed(1)
-            } · within ${goal.tolerance} m · ${goal.timeout} s`}
-            actions={
-              <IconButton
-                icon="close"
-                size="sm"
-                variant="ghost"
-                label={`Remove ${goal.name}`}
-                onClick={() =>
-                  updateNav((n) => ({ ...n, goals: n.goals.filter((g) => g.id !== goal.id) }))}
-              />
-            }
+            key={a.id}
+            icon={KIND_ICON[a.kind]}
+            title={a.label}
+            subtitle={[a.kind, ...a.tags].join(" · ")}
+            selected={a.id === selected}
+            data-testid={`label-${a.id}`}
+            onClick={() => selectLabel(a.id === selected ? null : a.id)}
           />
         ))}
       </List>
-      {nav.goals.length > 0 && (
+      {onFloor.length === 0 && <Text small muted>No labels on this floor yet.</Text>}
+      {open && <LabelEditor label={open} />}
+    </div>
+  );
+}
+
+function LabelEditor({ label }: { label: Annotation }) {
+  const [tagText, setTagText] = useState(label.tags.join(", "));
+  useEffect(() => setTagText(label.tags.join(", ")), [label.id, label.tags.join()]);
+  const set = (change: Partial<Annotation>) =>
+    updateLabel(label.id, (a) => ({ ...a, ...change }), `label-${label.id}`);
+  const goal = label.tags.includes(NAV_GOAL);
+  const prop = (key: string, fallback: number) => Number(label.props?.[key] ?? fallback);
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <p style={heading}>{label.kind}</p>
+      <Field label="Label">
+        <TextInput
+          value={label.label}
+          onChange={(text: string) => set({ label: text })}
+          data-testid="label-name"
+        />
+      </Field>
+      <Field label="Tags (comma separated)">
+        <TextInput
+          value={tagText}
+          mono
+          onChange={setTagText}
+          onBlur={() => set({ tags: tagText.split(",").map((t) => t.trim()).filter(Boolean) })}
+          onEnter={() => set({ tags: tagText.split(",").map((t) => t.trim()).filter(Boolean) })}
+          data-testid="label-tags"
+        />
+      </Field>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+        {[NAV_MAPPING, NAV_GOAL].filter((t) => !label.tags.includes(t)).map((t) => (
+          <Button
+            key={t}
+            size="sm"
+            variant="ghost"
+            onClick={() => set({ tags: [...label.tags, t] })}
+          >
+            + {t}
+          </Button>
+        ))}
+      </div>
+      {label.kind === "area" && (
+        <Range
+          label="Height"
+          value={label.height ?? 2}
+          min={0.1}
+          max={10}
+          step={0.1}
+          unit="m"
+          onChange={(height) => set({ height })}
+        />
+      )}
+      {label.kind !== "point" && (
+        <Text small muted>
+          {label.points?.length ?? 0} points.{" "}
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              setNavTool(label.kind as "path" | "area", label.tags);
+              setLabelTarget(label.id);
+            }}
+          >
+            Add more
+          </Button>
+        </Text>
+      )}
+      {goal && (
         <>
           <Range
-            label="Goal tolerance"
-            value={nav.goals[0].tolerance}
+            label="Reached within"
+            value={prop("tolerance", 0.5)}
             min={0.1}
-            max={2}
+            max={3}
             step={0.05}
             unit="m"
-            onChange={(tolerance) =>
-              updateNav(
-                (n) => ({ ...n, goals: n.goals.map((g) => ({ ...g, tolerance })) }),
-                "nav-tolerance",
-              )}
+            onChange={(tolerance) => set({ props: { ...label.props, tolerance } })}
           />
           <Range
-            label="Time per goal"
-            value={nav.goals[0].timeout}
+            label="Time limit"
+            value={prop("timeout", 120)}
             min={10}
-            max={600}
+            max={900}
             step={10}
             unit="s"
-            onChange={(timeout) =>
-              updateNav(
-                (n) => ({ ...n, goals: n.goals.map((g) => ({ ...g, timeout })) }),
-                "nav-timeout",
-              )}
+            onChange={(timeout) => set({ props: { ...label.props, timeout } })}
           />
         </>
       )}
-      <p style={heading}>Spawns</p>
-      <List divided>
-        {project.spawns.map((spawn, i) => (
-          <ListRow
-            key={spawn.name}
-            icon="robot"
-            title={spawn.name}
-            subtitle={`${spawn.position[0].toFixed(1)}, ${spawn.position[1].toFixed(1)} · facing ${
-              Math.round((spawn.yaw * 180) / Math.PI)
-            }°`}
-            actions={i === 0 ? <Badge>default</Badge> : undefined}
-          />
-        ))}
-      </List>
+      <Button size="sm" icon="trash" variant="danger" onClick={() => removeLabel(label.id)}>
+        Remove
+      </Button>
     </div>
   );
 }

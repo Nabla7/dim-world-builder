@@ -242,6 +242,27 @@ export interface NavPlan {
   goals: NavGoal[];
 }
 
+/**
+ * A labeled point, path or area on a floor, for tests and tools to read (exported as scene.json `annotations`). A nav
+ * test is a path tagged nav:mapping and points tagged nav:goal; other tests use other tags.
+ */
+export interface Annotation {
+  id: string;
+  kind: "point" | "path" | "area";
+  label: string;
+  tags: string[];
+  floor: string;
+  /** point: floor-relative position and heading (radians) */
+  position?: Vec3;
+  yaw?: number;
+  /** path: the waypoints in order; area: its outline on the floor (floor-relative) */
+  points?: Vec3[];
+  /** area: how tall the region is above its floor */
+  height?: number;
+  /** free-form extras (a nav goal's tolerance, timeout and order; a mapping walk's start spawn) */
+  props?: Record<string, unknown>;
+}
+
 export interface Project {
   format: "dim-world-builder.project.v1";
   name: string;
@@ -250,7 +271,9 @@ export interface Project {
   spawns: Spawn[];
   /** the floor the editor adds to */
   activeFloor: string;
-  /** the navigation test, if one is drawn */
+  /** labeled points, paths and areas */
+  annotations?: Annotation[];
+  /** the old navigation test (projects before annotations); loading turns it into annotations */
   nav?: NavPlan;
   /** remembered camera views, for people and agents to look from again (exported as MuJoCo cameras) */
   views?: CameraView[];

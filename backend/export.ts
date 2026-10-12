@@ -4,6 +4,7 @@
 import { buildWorld } from "../src/world/geometry.ts";
 import { toScene } from "../src/world/mjcf.ts";
 import { keyedProject } from "../src/world/keys.ts";
+import { exportAnnotations, withAnnotations } from "../src/world/annotations.ts";
 import type { MeshAsset, Project } from "../src/world/types.ts";
 
 /** a Python package name: lower snake case, not starting with a digit */
@@ -33,7 +34,7 @@ export async function exportProject(
 ): Promise<ExportResult> {
   const assetsRoot = new URL("../assets", import.meta.url).pathname;
   // every item exports under its readable id ("bed_2")
-  const project = keyedProject(unkeyed);
+  const project = withAnnotations(keyedProject(unkeyed));
   const name = packageName(project.name);
   const dir = `${parentDir.replace(/\/+$/, "")}/${name}`;
   const world = buildWorld(project, assets);
@@ -48,7 +49,7 @@ export async function exportProject(
   // sim2's scene, plus (in extensions, which sim2 ignores) the views and the editor's project
   const sceneJson = {
     ...(scene.sceneJson as Record<string, unknown>),
-    annotations: navAnnotations(project),
+    annotations: exportAnnotations(project),
     extensions: {
       [EXTENSION]: { views: (scene.viewsJson as { views: unknown[] }).views, project },
     },
@@ -95,59 +96,6 @@ export async function exportProject(
     files.push("visual.glb");
   }
   return { dir, name, files, bodies: world.bodies.length, movers: world.movers.length };
-}
-
-/**
- * The drawn nav test as generic scene annotations: the mapping walk is a path tagged nav:mapping, each goal a point
- * tagged nav:goal (props: tolerance, timeout, order). Other tests can use other tags in the same scene.json.
- */
-export function navAnnotations(project: Project) {
-  const plan = navEval(project);
-  const slug = (name: string) =>
-    name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
-  const annotations: Record<string, unknown>[] = [];
-  if (plan.mapping_path.length >= 2) {
-    annotations.push({
-      id: "nav_mapping",
-      kind: "path",
-      label: "Mapping walk",
-      tags: ["nav:mapping"],
-      points: plan.mapping_path,
-      props: { start_spawn: plan.start_spawn },
-    });
-  }
-  const used = new Set<string>();
-  plan.goals.forEach((goal, order) => {
-    let id = `nav_goal_${slug(goal.name) || order + 1}`;
-    while (used.has(id)) id += "_";
-    used.add(id);
-    annotations.push({
-      id,
-      kind: "point",
-      label: goal.name,
-      tags: ["nav:goal"],
-      position: goal.position,
-      props: { tolerance: goal.tolerance, timeout: goal.timeout, order },
-    });
-  });
-  return annotations;
-}
-
-/** one navigation test in world coordinates (floor elevations applied) */
-export function navEval(project: Project) {
-  const lift = (floor: string) => project.floors.find((f) => f.id === floor)?.elevation ?? 0;
-  const spawnKey = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, "_");
-  const nav = project.nav;
-  return {
-    start_spawn: nav ? spawnKey(nav.startSpawn) : "default",
-    mapping_path: nav ? nav.mappingPath.map((p) => [p[0], p[1], p[2] + lift(nav.floor)]) : [],
-    goals: (nav?.goals ?? []).map((g) => ({
-      name: g.name,
-      position: [g.position[0], g.position[1], g.position[2] + lift(g.floor)],
-      tolerance: g.tolerance,
-      timeout: g.timeout,
-    })),
-  };
 }
 
 function readme(name: string, project: Project): string {

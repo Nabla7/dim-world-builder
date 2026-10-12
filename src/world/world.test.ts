@@ -25,6 +25,7 @@ import { keyedProject } from "./keys.ts";
 import { barCenters, grateShapes } from "./geometry.ts";
 import { defaultGrate } from "./defaults.ts";
 import { climbing, openingAbove } from "./stairs_fit.ts";
+import { exportAnnotations, withAnnotations } from "./annotations.ts";
 import { cameraLookAt } from "./geometry.ts";
 
 describe("rooms", () => {
@@ -365,5 +366,27 @@ describe("stairs between floors", () => {
     expect(hole.position[0]).toBeCloseTo(1 + 4.8 / 2, 1);
     expect(hole.params.sizeX).toBeGreaterThanOrEqual(4.8);
     expect(hole.params.sizeY).toBeGreaterThanOrEqual(1.2);
+  });
+});
+
+describe("annotations", () => {
+  it("an old nav test becomes a nav:mapping path and nav:goal points, written in world coordinates", () => {
+    const project = testCourse();
+    expect(project.nav).toBeDefined();
+    const migrated = withAnnotations(project);
+    expect(migrated.nav).toBeUndefined();
+    const path = migrated.annotations!.find((a) => a.tags.includes("nav:mapping"))!;
+    expect(path.kind).toBe("path");
+    expect(path.points!.length).toBe(project.nav!.mappingPath.length);
+    expect(migrated.annotations!.filter((a) => a.tags.includes("nav:goal")).length).toBe(
+      project.nav!.goals.length,
+    );
+    const out = exportAnnotations(project);
+    expect(out[0]).toMatchObject({ id: "nav_mapping", kind: "path", frame: "world" });
+    expect(
+      out.filter((a) => (a.tags as string[]).includes("nav:goal")).every((a) =>
+        Array.isArray(a.position)
+      ),
+    ).toBe(true);
   });
 });

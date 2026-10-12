@@ -26,8 +26,8 @@ import type { MeshAsset } from "./world/types.ts";
 import {
   BuildersPanel,
   Inspector,
+  LabelsPanel,
   LibraryPanel,
-  NavPanel,
   ScenePanel,
   ShapesPanel,
   ViewsPanel,
@@ -177,7 +177,7 @@ export function App() {
                 { value: "shapes", label: "Shapes" },
                 { value: "builders", label: "Builders" },
                 { value: "scene", label: "Scene" },
-                { value: "nav", label: "Nav" },
+                { value: "nav", label: "Labels" },
                 { value: "views", label: "Views" },
               ]}
               style={{ padding: "0 8px" }}
@@ -196,7 +196,7 @@ export function App() {
                 {tab === "shapes" && <ShapesPanel />}
                 {tab === "builders" && <BuildersPanel />}
                 {tab === "scene" && <ScenePanel />}
-                {tab === "nav" && <NavPanel />}
+                {tab === "nav" && <LabelsPanel />}
                 {tab === "views" && <ViewsPanel />}
               </PanelBoundary>
             </div>
