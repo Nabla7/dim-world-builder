@@ -321,6 +321,7 @@ export function bodyObject(
             }
           });
           holder.add(hull);
+          if (group.userData.ghosted) ghost(hull, true);
           onLoaded();
         }).catch(() => {});
       } else if (!loadedVisuals.has(asset.id)) {
@@ -336,6 +337,8 @@ export function bodyObject(
             }
           });
           holder.add(visual);
+          // it arrives after ghost() ran on the body
+          if (group.userData.ghosted) ghost(visual, true);
           onLoaded();
         }).catch(() => {});
       }
@@ -445,21 +448,31 @@ function threeLight(light: WorldLight): THREE.Object3D {
 
 /** dims a body that sits on another floor than the one being edited */
 export function ghost(object: THREE.Object3D, ghosted: boolean) {
+  object.userData.ghosted = ghosted;
   object.traverse((child) => {
     if (child instanceof THREE.Mesh) {
-      const materials = Array.isArray(child.material) ? child.material : [child.material];
-      for (const m of materials) {
-        if (m.userData.baseOpacity === undefined) {
-          m.userData.baseOpacity = m.opacity;
-          m.userData.baseTransparent = m.transparent;
-        }
-        m.transparent = ghosted || m.userData.baseTransparent;
-        m.opacity = ghosted ? 0.18 : m.userData.baseOpacity;
-        m.depthWrite = !ghosted;
-        m.needsUpdate = true;
-      }
+      // instances of one asset share materials, so a ghost swaps in its own copy rather than dimming the shared one
+      const base = child.userData.baseMaterial ?? child.material;
+      child.userData.baseMaterial = base;
+      child.material = ghosted
+        ? (Array.isArray(base) ? base.map(ghostMaterial) : ghostMaterial(base))
+        : base;
     }
   });
+}
+
+const ghostCache = new WeakMap<THREE.Material, THREE.Material>();
+
+function ghostMaterial(base: THREE.Material): THREE.Material {
+  let made = ghostCache.get(base);
+  if (!made) {
+    made = base.clone();
+    made.transparent = true;
+    made.opacity = 0.18 * base.opacity;
+    made.depthWrite = false;
+    ghostCache.set(base, made);
+  }
+  return made;
 }
 
 export function disposeObject(object: THREE.Object3D) {
