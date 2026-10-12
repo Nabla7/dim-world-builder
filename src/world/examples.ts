@@ -111,6 +111,9 @@ export function testCourse(): Project {
     }),
   );
   // the nav test: walk past the room's door so the map sees inside, then go in, then around behind it
+  project.views = [
+    { key: "overview", name: "Overview", eye: [-12, -14, 12], target: [2, 0, 0], fov: 50 },
+  ];
   project.nav = {
     startSpawn: "wall_lane",
     floor: ground,

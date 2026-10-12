@@ -90,6 +90,36 @@ export interface World {
   bodies: Body[];
   spawns: { name: string; pos: Vec3; yaw: number }[];
   movers: WorldMover[];
+  /** the project's remembered views, as fixed world cameras */
+  cameras: WorldCamera[];
+}
+
+export interface WorldCamera {
+  name: string;
+  label: string;
+  pos: Vec3;
+  /** MuJoCo's xyaxes: the camera's right then up direction (it looks down its -z) */
+  xyaxes: [number, number, number, number, number, number];
+  fovy: number;
+}
+
+/** a camera at `eye` looking at `target`, with world +z up */
+export function cameraLookAt(eye: Vec3, target: Vec3): WorldCamera["xyaxes"] {
+  const norm = (v: number[]) => {
+    const l = Math.hypot(...v) || 1;
+    return v.map((x) => x / l);
+  };
+  const cross = (a: number[], b: number[]) => [
+    a[1] * b[2] - a[2] * b[1],
+    a[2] * b[0] - a[0] * b[2],
+    a[0] * b[1] - a[1] * b[0],
+  ];
+  const forward = norm(target.map((t, i) => t - eye[i]));
+  // looking straight up or down: +y stands in for up
+  const up = Math.abs(forward[2]) > 0.999 ? [0, 1, 0] : [0, 0, 1];
+  const right = norm(cross(forward, up));
+  const cameraUp = cross(right, forward);
+  return [...right, ...cameraUp] as WorldCamera["xyaxes"];
 }
 
 const IDENTITY: Quat = [0, 0, 0, 1];
@@ -978,5 +1008,12 @@ export function buildWorld(project: Project, assets: Record<string, MeshAsset>):
     pos: [s.position[0], s.position[1], s.position[2] + (elevation.get(s.floor) ?? 0)] as Vec3,
     yaw: s.yaw,
   }));
-  return { groundZ, bodies, spawns, movers };
+  const cameras = (project.views ?? []).map((view) => ({
+    name: view.key,
+    label: view.name,
+    pos: view.eye,
+    xyaxes: cameraLookAt(view.eye, view.target),
+    fovy: view.fov,
+  }));
+  return { groundZ, bodies, spawns, movers, cameras };
 }

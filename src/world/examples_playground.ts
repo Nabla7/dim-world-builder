@@ -259,6 +259,13 @@ export function playground(library: MeshAsset[], seed = 7): Project {
     { name: "courtyard", floor: ground, position: [6, 6.5, 0], yaw: Math.PI },
     { name: "office", floor: "upper", position: [0, 0, 0], yaw: 0 },
   ];
+  // remembered views for agents and tests: each exports as a MuJoCo camera named by its key
+  project.views = [
+    { key: "overview", name: "Overview", eye: [-22, -26, 20], target: [0, 0, 0], fov: 50 },
+    { key: "lab_inside", name: "Inside the lab", eye: [-4.2, -3.2, 2.2], target: [1, 1.5, 0.6], fov: 60 },
+    { key: "corridor", name: "Down the corridor", eye: [-3.5, 12, 1.8], target: [10, 12, 0.6], fov: 55 },
+    { key: "hill", name: "The hill", eye: [-16, -22, 4], target: [-16, -12, 0.3], fov: 55 },
+  ];
   project.nav = {
     startSpawn: "start",
     floor: ground,

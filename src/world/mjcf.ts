@@ -24,6 +24,8 @@ export interface SceneFiles {
   xml: string;
   sceneJson: unknown;
   moversJson: unknown;
+  /** views.json: the remembered camera views (dim-world-builder.views.v1), each a <camera> in scene.xml */
+  viewsJson: unknown;
   /** asset id -> files under that asset's folder that scene.xml references */
   meshFiles: Map<string, Set<string>>;
   /** images (AprilTags) scene.xml references under textures/, as paths under the app's assets/ */
@@ -162,6 +164,11 @@ ${assets.join("\n")}
     world.groundZ ? ` pos="0 0 ${num(world.groundZ)}"` : ""
   }/>
 ${bodies.join("\n")}
+${
+    world.cameras.map((c) =>
+      `    <camera name="${attr(c.name)}" pos="${vec(c.pos)}" xyaxes="${vec(c.xyaxes)}" fovy="${num(c.fovy)}"/>`
+    ).join("\n")
+  }
   </worldbody>
 </mujoco>
 `;
@@ -196,5 +203,9 @@ ${bodies.join("\n")}
       heading: m.heading,
     })),
   };
-  return { xml, sceneJson, moversJson, meshFiles, textureFiles };
+  const viewsJson = {
+    format: "dim-world-builder.views.v1",
+    views: world.cameras.map((c) => ({ camera: c.name, name: c.label, pos: c.pos, xyaxes: c.xyaxes, fovy: c.fovy })),
+  };
+  return { xml, sceneJson, moversJson, viewsJson, meshFiles, textureFiles };
 }

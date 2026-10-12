@@ -2,7 +2,8 @@
 
 Publish anything on `scene_data_request` (a std_msgs.String; its text is echoed back as `request`) and it answers on
 `scene_data` with one std_msgs.String holding JSON (format dimos.scene_data.v1): every body's world pose, its geoms
-(primitives, meshes, height fields), lights, and the mesh / height-field / texture data they use, read from the compiled
+(primitives, meshes, height fields), lights, cameras (the world's remembered views), and the mesh / height-field /
+texture data they use, read from the compiled
 scene.xml beside this file. Collision-only geoms (scene.json's hidden_geom_groups) are left out. Bodies that move (the
 scripted movers) carry `mocap: true`; their live poses are on the TF tree under the body's name.
 
@@ -165,6 +166,21 @@ def scene_data(scene_dir: Path = SCENE_DIR) -> dict[str, Any]:
                 "lights": lights,
             }
         )
+    # fixed cameras (the world's remembered views) and any others in the model, posed in the world
+    cameras = []
+    for c in range(model.ncam):
+        quat = np.zeros(4)
+        mujoco.mju_mat2Quat(quat, data.cam_xmat[c])
+        cameras.append(
+            {
+                "name": name(mujoco.mjtObj.mjOBJ_CAMERA, c),
+                "body": name(mujoco.mjtObj.mjOBJ_BODY, int(model.cam_bodyid[c])),
+                "pos": _floats(data.cam_xpos[c]),
+                # MuJoCo cameras look down their -z with +y up
+                "quat": _xyzw(quat),
+                "fovy": float(model.cam_fovy[c]),
+            }
+        )
     headlight = model.vis.headlight
     return {
         "format": FORMAT,
@@ -174,6 +190,7 @@ def scene_data(scene_dir: Path = SCENE_DIR) -> dict[str, Any]:
         "meshes": meshes,
         "hfields": hfields,
         "textures": textures,
+        "cameras": cameras,
         "ambient": _floats(np.asarray(headlight.ambient)),
         "spawns": scene_json.get("spawns", {}),
     }

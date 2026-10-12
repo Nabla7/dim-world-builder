@@ -1,7 +1,7 @@
 // Every item's readable id ("bed_2"): the entity name in the exported scene.json, so tasks and nav goals can name
 // things ("within 0.3 m of bed_2"). Unique within a world; the editor lets you rename it.
 
-import type { Item, Project } from "./types.ts";
+import type { CameraView, Item, Project } from "./types.ts";
 
 /** lower snake case, starting with a letter */
 export function slug(text: string): string {
@@ -39,7 +39,23 @@ export function withKeys(items: Item[], existing: Item[] = []): Item[] {
   });
 }
 
+/** every view gets a unique readable key (from its name when it has none); unchanged views keep their object */
+export function withViewKeys(views: CameraView[]): CameraView[] {
+  const used = new Set<string>();
+  return views.map((view) => {
+    const base = slug(view.key || view.name || "view").replace(/^item_/, "view_");
+    let key = base;
+    for (let n = 2; used.has(key); n++) key = `${base}_${n}`;
+    used.add(key);
+    return key === view.key ? view : { ...view, key };
+  });
+}
+
 export function keyedProject(project: Project): Project {
   const items = withKeys(project.items);
-  return items.every((item, i) => item === project.items[i]) ? project : { ...project, items };
+  const views = project.views ? withViewKeys(project.views) : undefined;
+  const sameItems = items.every((item, i) => item === project.items[i]);
+  const sameViews = !views || views.every((view, i) => view === project.views![i]);
+  if (sameItems && sameViews) return project;
+  return { ...project, items, ...(views ? { views } : {}) };
 }

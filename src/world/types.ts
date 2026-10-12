@@ -210,6 +210,19 @@ export interface Project {
   activeFloor: string;
   /** the navigation test, if one is drawn */
   nav?: NavPlan;
+  /** remembered camera views, for people and agents to look from again (exported as MuJoCo cameras) */
+  views?: CameraView[];
+}
+
+/** a remembered camera: where it looks from and at; `key` is its readable id and its MuJoCo camera's name */
+export interface CameraView {
+  key: string;
+  name: string;
+  /** world coordinates, meters */
+  eye: Vec3;
+  target: Vec3;
+  /** vertical field of view, degrees */
+  fov: number;
 }
 
 /** A mesh the page and the exporter both know: a library asset or a cooked import. */

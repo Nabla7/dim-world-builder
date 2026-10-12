@@ -12,6 +12,8 @@ import {
 import { toScene } from "./mjcf.ts";
 import { defaultHill, defaultLight, defaultRoom, defaultStairs, emptyProject, makeItem } from "./defaults.ts";
 import { testCourse } from "./examples.ts";
+import { keyedProject } from "./keys.ts";
+import { cameraLookAt } from "./geometry.ts";
 
 describe("rooms", () => {
   it("leaves a gap the door's width in its wall", () => {
@@ -183,3 +185,28 @@ it("a light item exports as a MuJoCo light on its body, with no geoms", () => {
   expect(lamp).toMatch(/castshadow="true"/)
   expect(lamp).not.toMatch(/<geom/)
 })
+
+describe("remembered views", () => {
+  it("export as fixed MuJoCo cameras named by key, looking at their target", () => {
+    const project = emptyProject("views");
+    project.views = [{ key: "front", name: "Front", eye: [0, -5, 2], target: [0, 0, 2], fov: 45 }];
+    const { xml, viewsJson } = toScene(buildWorld(project, {}), "views");
+    // looking down +y: right is +x, up is +z
+    expect(xml).toContain('<camera name="front" pos="0 -5 2" xyaxes="1 0 0 0 0 1" fovy="45"/>');
+    expect((viewsJson as { views: { camera: string }[] }).views.map((v) => v.camera)).toEqual(["front"]);
+  });
+  it("looks straight down without a degenerate frame", () => {
+    const axes = cameraLookAt([0, 0, 10], [0, 0, 0]);
+    expect(axes.every(Number.isFinite)).toBe(true);
+    expect(Math.hypot(axes[0], axes[1], axes[2])).toBeCloseTo(1);
+  });
+  it("get unique readable keys", () => {
+    const project = emptyProject("views");
+    project.views = [
+      { key: "", name: "Kitchen view", eye: [0, 0, 1], target: [1, 0, 1], fov: 50 },
+      { key: "", name: "Kitchen view", eye: [0, 0, 1], target: [1, 0, 1], fov: 50 },
+      { key: "", name: "2nd floor", eye: [0, 0, 1], target: [1, 0, 1], fov: 50 },
+    ];
+    expect(keyedProject(project).views!.map((v) => v.key)).toEqual(["kitchen_view", "kitchen_view_2", "view_2nd_floor"]);
+  });
+});
