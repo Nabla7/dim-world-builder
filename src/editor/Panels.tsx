@@ -31,6 +31,7 @@ import type {
   AprilTagParams,
   CameraView,
   DoorOpening,
+  Floor,
   FloorFinish,
   GrateParams,
   HillParams,
@@ -245,124 +246,133 @@ export function FloorsPanel() {
       {floors.filter((f) => f.id === active).map((floor) => (
         <div key={floor.id} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <p style={heading}>Selected floor</p>
-          <Field label="Name">
-            <TextInput
-              value={floor.name}
-              onChange={(name: string) =>
-                updateFloor(floor.id, { name })}
-            />
-          </Field>
-          <Field label="Height above the ground (its items move with it)">
-            <NumberInput
-              value={floor.elevation}
-              step={0.1}
-              precision={2}
-              unit="m"
-              data-testid="floor-elevation"
-              onChange={(elevation: number) =>
-                updateFloor(floor.id, { elevation })}
-            />
-          </Field>
-          <Toggle
-            value={Boolean(floor.slab)}
-            onChange={(on: boolean) =>
-              updateFloor(floor.id, {
-                slab: on
-                  ? {
-                    thickness: floor.elevation > 0 ? 0.2 : 0.3,
-                    sizeX: 10,
-                    sizeY: 10,
-                    center: [Math.round(view.center[0]), Math.round(view.center[1])],
-                  }
-                  : undefined,
-              })}
-            label="Solid slab (what its items stand on; holes cut into it)"
-          />
-          {!floor.slab && (
-            <Text small muted data-testid="no-slab-note">
-              FYI: the floor will be an invisible plane for placing objects (outlined in the editor,
-              not in the exported scene).
-            </Text>
-          )}
-          {floor.slab && (
-            <>
-              <Field label="Floor finish">
-                <Segmented
-                  size="sm"
-                  value={floor.slab.finish ?? "plain"}
-                  items={[
-                    { value: "plain", label: "Plain" },
-                    { value: "concrete", label: "Concrete" },
-                    { value: "wood", label: "Wood" },
-                    { value: "tile", label: "Tile" },
-                    { value: "carpet", label: "Carpet" },
-                  ]}
-                  data-testid="floor-finish"
-                  onChange={(finish: string) =>
-                    updateFloor(floor.id, {
-                      slab: { ...floor.slab!, finish: finish as FloorFinish },
-                    })}
-                />
-              </Field>
-              <Field label="Floor color">
-                <Swatches
-                  value={floor.slab.color ?? [0.26, 0.27, 0.29]}
-                  onChange={(color) => updateFloor(floor.id, { slab: { ...floor.slab!, color } })}
-                />
-              </Field>
-              <Range
-                label="Slab thickness"
-                value={floor.slab.thickness}
-                min={0.05}
-                max={5}
-                step={0.05}
-                unit="m"
-                onChange={(thickness) =>
-                  updateFloor(floor.id, { slab: { ...floor.slab!, thickness } })}
-              />
-              <Field label="Slab size (m)">
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-                  {(["sizeX", "sizeY"] as const).map((key) => (
-                    <NumberInput
-                      key={key}
-                      size="sm"
-                      value={floor.slab![key]}
-                      step={0.5}
-                      precision={1}
-                      unit={key === "sizeX" ? "x" : "y"}
-                      aria-label={`Slab size ${key === "sizeX" ? "x" : "y"} (m)`}
-                      onChange={(v: number) =>
-                        updateFloor(floor.id, {
-                          slab: { ...floor.slab!, [key]: Math.max(0.5, v) },
-                        })}
-                    />
-                  ))}
-                </div>
-              </Field>
-              <Field label="Slab center (m)">
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-                  {[0, 1].map((axis) => (
-                    <NumberInput
-                      key={axis}
-                      size="sm"
-                      value={floor.slab!.center[axis]}
-                      step={0.5}
-                      precision={1}
-                      unit={axis ? "y" : "x"}
-                      aria-label={`Slab center ${axis ? "y" : "x"} (m)`}
-                      onChange={(v: number) => {
-                        const center = [...floor.slab!.center] as [number, number];
-                        center[axis] = v;
-                        updateFloor(floor.id, { slab: { ...floor.slab!, center } });
-                      }}
-                    />
-                  ))}
-                </div>
-              </Field>
-            </>
-          )}
+          <FloorEditor floor={floor} />
         </div>
       ))}
+    </div>
+  );
+}
+
+/** a floor's settings: name, height, slab (finish, color, thickness, size, center); in the Floors panel and, when a
+ * floor is picked and nothing is selected, in the inspector */
+export function FloorEditor({ floor }: { floor: Floor }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }} data-testid="floor-editor">
+      <Field label="Name">
+        <TextInput
+          value={floor.name}
+          onChange={(name: string) =>
+            updateFloor(floor.id, { name })}
+        />
+      </Field>
+      <Field label="Height above the ground (its items move with it)">
+        <NumberInput
+          value={floor.elevation}
+          step={0.1}
+          precision={2}
+          unit="m"
+          data-testid="floor-elevation"
+          onChange={(elevation: number) =>
+            updateFloor(floor.id, { elevation })}
+        />
+      </Field>
+      <Toggle
+        value={Boolean(floor.slab)}
+        onChange={(on: boolean) =>
+          updateFloor(floor.id, {
+            slab: on
+              ? {
+                thickness: floor.elevation > 0 ? 0.2 : 0.3,
+                sizeX: 10,
+                sizeY: 10,
+                center: [Math.round(view.center[0]), Math.round(view.center[1])],
+              }
+              : undefined,
+          })}
+        label="Solid slab (what its items stand on; holes cut into it)"
+      />
+      {!floor.slab && (
+        <Text small muted data-testid="no-slab-note">
+          FYI: the floor will be an invisible plane for placing objects (outlined in the editor, not
+          in the exported scene).
+        </Text>
+      )}
+      {floor.slab && (
+        <>
+          <Field label="Floor finish">
+            <Segmented
+              size="sm"
+              value={floor.slab.finish ?? "plain"}
+              items={[
+                { value: "plain", label: "Plain" },
+                { value: "concrete", label: "Concrete" },
+                { value: "wood", label: "Wood" },
+                { value: "tile", label: "Tile" },
+                { value: "carpet", label: "Carpet" },
+              ]}
+              data-testid="floor-finish"
+              onChange={(finish: string) =>
+                updateFloor(floor.id, {
+                  slab: { ...floor.slab!, finish: finish as FloorFinish },
+                })}
+            />
+          </Field>
+          <Field label="Floor color">
+            <Swatches
+              value={floor.slab.color ?? [0.26, 0.27, 0.29]}
+              onChange={(color) => updateFloor(floor.id, { slab: { ...floor.slab!, color } })}
+            />
+          </Field>
+          <Range
+            label="Slab thickness"
+            value={floor.slab.thickness}
+            min={0.05}
+            max={5}
+            step={0.05}
+            unit="m"
+            onChange={(thickness) => updateFloor(floor.id, { slab: { ...floor.slab!, thickness } })}
+          />
+          <Field label="Slab size (m)">
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+              {(["sizeX", "sizeY"] as const).map((key) => (
+                <NumberInput
+                  key={key}
+                  size="sm"
+                  value={floor.slab![key]}
+                  step={0.5}
+                  precision={1}
+                  unit={key === "sizeX" ? "x" : "y"}
+                  aria-label={`Slab size ${key === "sizeX" ? "x" : "y"} (m)`}
+                  onChange={(v: number) =>
+                    updateFloor(floor.id, {
+                      slab: { ...floor.slab!, [key]: Math.max(0.5, v) },
+                    })}
+                />
+              ))}
+            </div>
+          </Field>
+          <Field label="Slab center (m)">
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+              {[0, 1].map((axis) => (
+                <NumberInput
+                  key={axis}
+                  size="sm"
+                  value={floor.slab!.center[axis]}
+                  step={0.5}
+                  precision={1}
+                  unit={axis ? "y" : "x"}
+                  aria-label={`Slab center ${axis ? "y" : "x"} (m)`}
+                  onChange={(v: number) => {
+                    const center = [...floor.slab!.center] as [number, number];
+                    center[axis] = v;
+                    updateFloor(floor.id, { slab: { ...floor.slab!, center } });
+                  }}
+                />
+              ))}
+            </div>
+          </Field>
+        </>
+      )}
     </div>
   );
 }
@@ -1303,6 +1313,9 @@ export function Inspector({ assets }: { assets: MeshAsset[] }) {
   const item = useEditor((s) => s.project.items.find((i) => i.id === s.selected) ?? null);
   const floor = useEditor((s) => s.project.floors.find((f) => f.id === item?.floor));
   const activeFloor = useEditor((s) => s.project.activeFloor);
+  const pickedFloor = useEditor((s) =>
+    s.project.floors.find((f) => f.id === s.project.activeFloor)
+  );
   if (!selected || !item) {
     return (
       <div style={section}>
@@ -1310,6 +1323,12 @@ export function Inspector({ assets }: { assets: MeshAsset[] }) {
           Select something to edit it. W / E / R: move, rotate, scale · Delete: remove · Ctrl+D:
           duplicate · Ctrl+Z: undo.
         </Text>
+        {pickedFloor && (
+          <>
+            <p style={heading}>Floor: {pickedFloor.name}</p>
+            <FloorEditor floor={pickedFloor} />
+          </>
+        )}
       </div>
     );
   }

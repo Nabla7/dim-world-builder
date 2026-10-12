@@ -413,7 +413,11 @@ function FloorPicker() {
           size="sm"
           variant={floor.id === active ? "primary" : "ghost"}
           data-testid={`floor-pick-${floor.id}`}
-          onClick={() => setActiveFloor(floor.id)}
+          onClick={() => {
+            setActiveFloor(floor.id);
+            // nothing selected, so the inspector shows the floor's settings
+            select(null);
+          }}
         >
           {floor.name} · {floor.elevation.toFixed(1)} m
         </Button>
