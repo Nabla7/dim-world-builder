@@ -284,9 +284,10 @@ export function App() {
                 font: "12px system-ui",
                 color: "var(--muted, #aaa)",
                 textShadow: "0 1px 2px rgba(0,0,0,.6)",
+                whiteSpace: "nowrap",
               }}
             >
-              drag: pan · shift-drag or right-drag: orbit · wheel: zoom · shift-click: select more
+              drag: pan · shift/right-drag: orbit · wheel: zoom · shift-click: add to selection
             </div>
           )}
         </main>

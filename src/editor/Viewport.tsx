@@ -452,6 +452,7 @@ function WorldLayer({ assets }: { assets: Record<string, MeshAsset> }) {
     view.surfaceAt = (x, y) => {
       const floor = project.floors.find((f) => f.id === project.activeFloor);
       const base = floor?.elevation ?? 0;
+      root.updateMatrixWorld();
       const own = [...objects.values()].filter((o) => o.userData.floor === project.activeFloor);
       const down = new THREE.Raycaster(
         new THREE.Vector3(x, y, base + 1.9),
@@ -592,6 +593,7 @@ function Picker({ objects }: { objects: () => Map<string, THREE.Group> | undefin
         ((e.clientX - rect.left) / rect.width) * 2 - 1,
         -((e.clientY - rect.top) / rect.height) * 2 + 1,
       );
+      viewer.scene.updateMatrixWorld();
       raycaster.setFromCamera(ndc, viewer.camera);
       const state = getState();
       if (state.navTool === "tag") {
@@ -636,6 +638,8 @@ function Picker({ objects }: { objects: () => Map<string, THREE.Group> | undefin
       );
     };
     const itemUnder = (e: MouseEvent): { object: THREE.Object3D; point: THREE.Vector3 } | null => {
+      // the view renders on demand: poses changed since its last frame aren't in the world matrices yet
+      viewer.scene.updateMatrixWorld();
       raycaster.setFromCamera(ndcOf(e), viewer.camera);
       const pickable = [...(objects()?.values() ?? [])].filter((o) => o.userData.pickable);
       const hit = raycaster.intersectObjects(pickable, true)[0];
