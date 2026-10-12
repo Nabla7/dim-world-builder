@@ -408,10 +408,10 @@ export function office555(): Project {
     }),
     mover: { waypoints: path.map(([x, y]) => [x, y, 0] as [number, number, number]), speed, mode, heading: "path" as const },
   });
-  add(person("Walker A", ground, [[21, -8], [26, -8], [26, 10], [21, 10]], PAINT.blue, 1.1, "loop"));
+  add(person("Walker A", ground, [[20.5, -8], [23.5, -8], [23.5, 10], [20.5, 10]], PAINT.blue, 1.1, "loop"));
   add(person("Walker B", ground, [[12, -6], [19, -6]], PAINT.red, 0.9, "pingpong"));
   add(person("Walker C", ground, [[12.5, 12], [22, 12]], PAINT.green, 1.0, "pingpong"));
-  add(person("Walker D", up, [[6.5, -1.2], [6.5, 6.6], [3.0, 6.6], [3.0, -1.2]], PAINT.orange, 0.8, "loop"));
+  add(person("Walker D", up, [[6.5, -1.2], [6.5, 5.6], [3.0, 5.6], [3.0, -1.2]], PAINT.orange, 0.8, "loop"));
   project.items = items;
   project.activeFloor = ground;
   project.spawns = [

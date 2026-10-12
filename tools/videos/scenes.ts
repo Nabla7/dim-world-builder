@@ -332,10 +332,31 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
     await demo.say("Loop, or back and forth", 300);
     await demo.clickText("Back and forth", 1200);
     await demo.clickText("Loop", 1200);
+    await demo.page.keyboard.press("Escape");
+    await demo.say("Play motion: watch it ride the path, exactly as the simulation will move it", 300);
+    await demo.click("[data-testid=preview-motion]", 300);
+    await demo.lookAt([1.5, 1.5, 0], [-4, -5, 5]);
+    await demo.page.waitForTimeout(9000);
     await demo.say(
       "In the simulation it's a kinematic body: it shoves the robot and lidar sees it",
       2500,
     );
+    await demo.click("[data-testid=preview-motion]", 300);
+  },
+
+  async "13_office_people"(demo) {
+    await openWorld(demo, "office_555");
+    await demo.say("The 555 office, rebuilt from its lidar maps with the app's own API", 1200);
+    await demo.lookAt([14, 2, 0], [-2, -22, 30]);
+    await demo.say("Play motion: four people walk their loops (they're scene movers: the robot must avoid them)", 300);
+    await demo.click("[data-testid=preview-motion]", 300);
+    await demo.page.waitForTimeout(7000);
+    await demo.lookAt([22, 2, 0], [14, -12, 9]);
+    await demo.page.waitForTimeout(8000);
+    await demo.say("Floor 2", 300);
+    await demo.lookAt([5, 2.5, 4.7], [-3, -9, 14]);
+    await demo.page.waitForTimeout(7000);
+    await demo.click("[data-testid=preview-motion]", 300);
   },
 
   async "10_nav_test"(demo) {
