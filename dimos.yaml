@@ -15,6 +15,11 @@ zenoh:
               - "dimos/**/sensor_msgs.PointCloud2"
               - "dimos/**/geometry_msgs.PoseStamped"
           permission: allow
+        # dimos-react's app provider listens for this app's own backend events (Desktop's <namespace>/apps/<app>/frontend)
+        - id: own-events
+          messages: [declare_subscriber, put]
+          key_exprs: ["dimos-desktop/*/apps/dim-world-builder/frontend/**"]
+          permission: allow
 caches:
     - url: https://dimos-desktop.cachix.org
       key: "dimos-desktop.cachix.org-1:A4P35aGJGmCan92LWyamtSFXMqaVE+VRFYnrJ8QMTeQ="

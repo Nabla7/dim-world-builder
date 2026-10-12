@@ -209,70 +209,76 @@ def main() -> int:
     parser.add_argument("--video", type=Path)
     parser.add_argument("--report", type=Path)
     parser.add_argument("--skip-nav", action="store_true", help="skip the navigation lane")
+    parser.add_argument("--only", help="comma-separated lanes to run (wall,box,mover,stairs,nav)")
     args = parser.parse_args()
     course = Course(args.scene_dir.resolve())
     scene = course.scene
     try:
         if args.video:
             course.recorder = Recorder(course.sim.describe(), args.video)
-        # wall lane: the room's solid west wall faces x = 2.425; the Go2's nose is ~0.35 m ahead of its base
-        room = entity_named(scene, "Lab room")
-        course.say("wall lane: walk at a solid room wall")
-        course.spawn("wall_lane")
-        course.wait(1.0)
-        course.check(
-            "wall", course.lidar_hits((2.3, -2, 0.05), (2.6, 2, 2.5)) > 50, "lidar sees the wall ahead"
-        )
-        samples = course.wait(9.0, (0.5, 0, 0))
-        xs = [s["xyz"][0] for s in samples]
-        course.check("wall", max(xs) > 1.3, f"walked toward the wall (max x {max(xs):.2f})")
-        course.check("wall", max(xs) < 2.425, f"never crossed the wall plane x=2.425 (max base x {max(xs):.2f})")
-        course.check("wall", course.touched(samples, room), f"contact with {room} recorded")
+        want = lambda lane: not args.only or lane in args.only.split(",")  # noqa: E731
+        if want("wall"):
+            # wall lane: the room's solid west wall faces x = 2.425; the Go2's nose is ~0.35 m ahead of its base
+            room = entity_named(scene, "Lab room")
+            course.say("wall lane: walk at a solid room wall")
+            course.spawn("wall_lane")
+            course.wait(1.0)
+            course.check(
+                "wall", course.lidar_hits((2.3, -2, 0.05), (2.6, 2, 2.5)) > 50, "lidar sees the wall ahead"
+            )
+            samples = course.wait(9.0, (0.5, 0, 0))
+            xs = [s["xyz"][0] for s in samples]
+            course.check("wall", max(xs) > 1.3, f"walked toward the wall (max x {max(xs):.2f})")
+            course.check("wall", max(xs) < 2.425, f"never crossed the wall plane x=2.425 (max base x {max(xs):.2f})")
+            course.check("wall", course.touched(samples, room), f"contact with {room} recorded")
 
-        # box lane: a static crate whose near face is x = 2.0
-        crate = entity_named(scene, "Crate")
-        course.say("box lane: walk at a static crate")
-        course.spawn("box_lane")
-        samples = course.wait(8.0, (0.5, 0, 0))
-        xs = [s["xyz"][0] for s in samples]
-        course.check("box", max(xs) < 2.0, f"stopped by the crate (max base x {max(xs):.2f})")
-        course.check("box", course.touched(samples, crate), f"contact with {crate} recorded")
+        if want("box"):
+            # box lane: a static crate whose near face is x = 2.0
+            crate = entity_named(scene, "Crate")
+            course.say("box lane: walk at a static crate")
+            course.spawn("box_lane")
+            samples = course.wait(8.0, (0.5, 0, 0))
+            xs = [s["xyz"][0] for s in samples]
+            course.check("box", max(xs) < 2.0, f"stopped by the crate (max base x {max(xs):.2f})")
+            course.check("box", course.touched(samples, crate), f"contact with {crate} recorded")
 
-        # mover lane: walk to the cart's track, stand there, let the cart come through
-        cart = entity_named(scene, "Cart")
-        course.say("mover lane: stand on the cart's track and let it come through")
-        course.spawn("mover_lane")
-        course.wait(1.0)
-        course.wait(3.4, (0.5, 0, 0))
-        course.check(
-            "mover", course.lidar_hits((1.0, -14.5, 0.0), (1.8, -9.5, 0.6)) > 20, "lidar sees the cart"
-        )
-        samples = course.wait(14.0)
-        ys = [s["entities"][cart][1] for s in samples]
-        course.check("mover", max(ys) - min(ys) > 1.0, f"the cart moved ({min(ys):.2f}..{max(ys):.2f})")
-        pushed = max(math.dist(s["xyz"][:2], samples[0]["xyz"][:2]) for s in samples)
-        course.check("mover", course.touched(samples, cart), f"contact with {cart} recorded")
-        course.check("mover", pushed > 0.1, f"the cart displaced the Go2 by {pushed:.2f} m")
+        if want("mover"):
+            # mover lane: walk to the cart's track, stand there, let the cart come through
+            cart = entity_named(scene, "Cart")
+            course.say("mover lane: stand on the cart's track and let it come through")
+            course.spawn("mover_lane")
+            course.wait(1.0)
+            course.wait(3.4, (0.5, 0, 0))
+            course.check(
+                "mover", course.lidar_hits((1.0, -14.5, 0.0), (1.8, -9.5, 0.6)) > 20, "lidar sees the cart"
+            )
+            samples = course.wait(14.0)
+            ys = [s["entities"][cart][1] for s in samples]
+            course.check("mover", max(ys) - min(ys) > 1.0, f"the cart moved ({min(ys):.2f}..{max(ys):.2f})")
+            pushed = max(math.dist(s["xyz"][:2], samples[0]["xyz"][:2]) for s in samples)
+            course.check("mover", course.touched(samples, cart), f"contact with {cart} recorded")
+            course.check("mover", pushed > 0.1, f"the cart displaced the Go2 by {pushed:.2f} m")
 
-        # stairs lane: 0.17 m steps starting at x = 1.5
-        stairs = entity_named(scene, "Stairs")
-        course.say("stairs lane: walk at 0.17 m stairs")
-        course.spawn("stairs_lane")
-        course.wait(1.0)
-        course.check(
-            "stairs", course.lidar_hits((1.4, 5.3, 0.0), (3.0, 6.7, 1.1)) > 50, "lidar sees the stairs"
-        )
-        samples = course.wait(8.0, (0.4, 0, 0))
-        top = max(s["xyz"][2] for s in samples)
-        xs = [s["xyz"][0] for s in samples]
-        climbed = top > STAND_HEIGHT + 0.3
-        course.check(
-            "stairs",
-            climbed or (max(xs) < 1.5 + 0.3 and course.touched(samples, stairs)),
-            f"{'climbed' if climbed else 'blocked at'} the stairs (max x {max(xs):.2f}, max z {top:.2f})",
-        )
+        if want("stairs"):
+            # stairs lane: 0.17 m steps starting at x = 1.5
+            stairs = entity_named(scene, "Stairs")
+            course.say("stairs lane: walk at 0.17 m stairs")
+            course.spawn("stairs_lane")
+            course.wait(1.0)
+            course.check(
+                "stairs", course.lidar_hits((1.4, 5.3, 0.0), (3.0, 6.7, 1.1)) > 50, "lidar sees the stairs"
+            )
+            samples = course.wait(8.0, (0.4, 0, 0))
+            top = max(s["xyz"][2] for s in samples)
+            xs = [s["xyz"][0] for s in samples]
+            climbed = top > STAND_HEIGHT + 0.3
+            course.check(
+                "stairs",
+                climbed or (max(xs) < 1.5 + 0.3 and course.touched(samples, stairs)),
+                f"{'climbed' if climbed else 'blocked at'} the stairs (max x {max(xs):.2f}, max z {top:.2f})",
+            )
 
-        if not args.skip_nav:
+        if not args.skip_nav and want("nav"):
             # nav lane: the dimos nav stack (lidar -> voxel map -> costmap -> A*) takes the Go2 into the lab room,
             # whose west wall blocks the straight line, so it has to find the south door
             course.say("nav lane: navigate into the room through its door")
@@ -281,7 +287,23 @@ def main() -> int:
             course.goal.broadcast(
                 None, PoseStamped(position=(*goal, 0.0), orientation=(0, 0, 0, 1), frame_id="world")
             )
+            counts = {"nav_cmd_vel": 0, "tele_cmd_vel": 0, "cmd_vel": 0}
+            turn = {"max_wz": 0.0}
+            taps = []
+            for topic in counts:
+                tap = make_transport(topic, Twist)
+
+                def on(msg: Twist, topic: str = topic) -> None:
+                    counts[topic] += 1
+                    if topic == "cmd_vel":
+                        turn["max_wz"] = max(turn["max_wz"], abs(msg.angular.z))
+
+                tap.subscribe(on)
+                taps.append(tap)
             samples = course.wait(90.0, None)
+            for tap in taps:
+                tap.stop()
+            print(f"nav diagnostics: messages {counts}, largest commanded turn {turn['max_wz']:.2f} rad/s", flush=True)
             reached = [s for s in samples if math.dist(s["xyz"][:2], goal) < 0.7]
             course.check(
                 "nav",
