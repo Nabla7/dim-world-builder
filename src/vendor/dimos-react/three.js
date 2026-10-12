@@ -1,4 +1,4 @@
-import { $t as Slider, A as depthScale, Bn as headerFrameId, C as useStore, Cn as decodeMessage, Dn as parseKey, F as DEFAULT_GRADIENT, Ft as Badge, Gt as IconButton, It as Button, J as ColorSwatch, Ln as decode, Pn as useTopicList, Qn as themeColors, Qt as Select, R as GRADIENTS, S as readLocal, T as DEPTH_COLORMAPS, Ut as Field, V as RAMPS, W as isPalette, an as Toggle, b as Store, bt as EmptyState, jn as useDataSource, l as isDepthTopic, o as cameraInfoFor, q as sampleGradient, qt as NumberInput, rr as cx, s as cameraStreamsFor, sn as Icon, vt as Alert, w as writeLocal, x as localStore, z as PALETTES } from "./chunks/camera-BJcjl0WY.js";
+import { $t as Slider, A as depthScale, Bn as headerFrameId, C as useStore, Cn as decodeMessage, Dn as parseKey, F as DEFAULT_GRADIENT, Ft as Badge, Gt as IconButton, It as Button, J as ColorSwatch, Ln as decode, Pn as useTopicList, Qn as themeColors, Qt as Select, R as GRADIENTS, S as readLocal, T as DEPTH_COLORMAPS, Ut as Field, V as RAMPS, W as isPalette, an as Toggle, b as Store, bt as EmptyState, jn as useDataSource, l as isDepthTopic, o as cameraInfoFor, q as sampleGradient, qt as NumberInput, rr as cx, s as cameraStreamsFor, sn as Icon, vt as Alert, w as writeLocal, x as localStore, z as PALETTES } from "./chunks/camera-q8Vl6GpJ.js";
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { jsx, jsxs } from "react/jsx-runtime";
 import * as THREE from "three";
@@ -738,6 +738,21 @@ function resolveLook(look) {
 var isPoints = (object) => !!object.isPoints;
 var isMesh = (object) => !!object.isMesh;
 var isLineSegments2 = (object) => !!object.isLineSegments2;
+/**
+* `direction` as a unit vector no further than `maxPolar` from +z (the orbit's limit): one below it keeps its heading
+* and sits on the limit (straight down: from the front, -y). Null for a zero or non-finite direction.
+*/
+function limitPolar(direction, maxPolar) {
+	const to = direction.clone().normalize();
+	if (!Number.isFinite(to.x) || to.lengthSq() === 0) return null;
+	if (Math.acos(THREE.MathUtils.clamp(to.z, -1, 1)) > maxPolar) {
+		const flat = new THREE.Vector2(to.x, to.y);
+		if (flat.lengthSq() < 1e-12) flat.set(0, -1);
+		flat.normalize().multiplyScalar(Math.sin(maxPolar));
+		to.set(flat.x, flat.y, Math.cos(maxPolar));
+	}
+	return to;
+}
 /** The canvas renders at the screen's resolution, up to 2× (beyond that the extra pixels cost more than they show). */
 var pixelRatio = () => Math.min(2, globalThis.devicePixelRatio || 1);
 var Viewer = class {
@@ -802,6 +817,8 @@ var Viewer = class {
 	#resetListeners = /* @__PURE__ */ new Set();
 	#onTop = new OnTopPass();
 	#slowSeconds = 0;
+	/** a viewFrom() orbit in progress: unit directions (target → camera), start time, length */
+	#glide = null;
 	/**
 	* @param host the element the canvas fills (give it a size; it is watched for resizes)
 	* @param options `clock`: the clock message
@@ -839,7 +856,10 @@ var Viewer = class {
 		this.controls.screenSpacePanning = false;
 		this.controls.maxPolarAngle = freeOrbit ? Math.PI : Math.PI * .495;
 		this.controls.addEventListener("change", () => this.requestRender());
-		this.controls.addEventListener("start", () => this.#panGate.start());
+		this.controls.addEventListener("start", () => {
+			this.#panGate.start();
+			this.#glide = null;
+		});
 		const sky = new THREE.HemisphereLight(14543103, 2107440, 1.6);
 		const sun = new THREE.DirectionalLight(16777215, 1.2);
 		sun.position.set(5, 3, 10);
@@ -1064,12 +1084,55 @@ var Viewer = class {
 		const height = extent / 2 / Math.tan(halfFov) / fit * 1.1;
 		this.#place(target, new THREE.Vector3(target.x, target.y - height * .002, target.z + height));
 	}
-	/** Puts the camera at `position` looking at `target` now (no leftover damping, no follow glide). */
-	#place(target, position) {
+	/**
+	* Orbits around the current target to look from `direction` (target → camera; need not be unit), keeping the
+	* distance: a view cube's Top / Front / corner views. Glides there (`ms`, default 450; instant with
+	* `animate: false` or prefers-reduced-motion). Without freeOrbit, directions below the horizon stop at it.
+	*/
+	viewFrom(direction, { animate = true, ms = 450 } = {}) {
+		const to = limitPolar(direction, this.controls.maxPolarAngle);
+		if (!to) return;
+		const offset = this.camera.position.clone().sub(this.controls.target);
+		const distance = offset.length() || 10;
+		const from = offset.normalize();
+		if (!animate || this.#reducedMotion?.matches || from.angleTo(to) < 1e-4) {
+			this.#glide = null;
+			this.#place(this.controls.target.clone(), this.controls.target.clone().addScaledVector(to, distance));
+			return;
+		}
+		const turn = from.dot(to) < -.9999 ? new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI) : new THREE.Quaternion().setFromUnitVectors(from, to);
+		this.#glide = {
+			from,
+			turn,
+			start: performance.now(),
+			ms,
+			distance
+		};
+		this.requestRender();
+	}
+	/** One step of a viewFrom() glide (eased), around wherever the target is now (it may be following). */
+	#stepGlide(now) {
+		const glide = this.#glide;
+		if (!glide) return;
+		const t = THREE.MathUtils.clamp((now - glide.start) / glide.ms, 0, 1);
+		const eased = t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+		const direction = glide.from.clone().applyQuaternion(new THREE.Quaternion().slerp(glide.turn, eased)).normalize();
+		this.#clearDamping();
+		this.camera.position.copy(this.controls.target).addScaledVector(direction, glide.distance);
+		this.camera.lookAt(this.controls.target);
+		this.#dirty = true;
+		if (t >= 1) this.#glide = null;
+	}
+	/** Drops OrbitControls' leftover damping, so a placed camera doesn't drift on. */
+	#clearDamping() {
 		const controls = this.controls;
 		controls._sphericalDelta?.set(0, 0, 0);
 		controls._panOffset?.set(0, 0, 0);
 		if (controls._scale !== void 0) controls._scale = 1;
+	}
+	/** Puts the camera at `position` looking at `target` now (no leftover damping, no follow glide). */
+	#place(target, position) {
+		this.#clearDamping();
 		this.controls.target.copy(target);
 		this.camera.position.copy(position);
 		this.camera.lookAt(target);
@@ -1183,6 +1246,7 @@ var Viewer = class {
 			this.#following = false;
 			this.#follow.reset();
 		}
+		this.#stepGlide(now);
 		focusDistance.value = this.camera.position.distanceTo(this.controls.target);
 		this.#beforeControls.copy(this.controls.target);
 		if (this.controls.update()) this.#dirty = true;
@@ -1294,6 +1358,351 @@ var Viewer = class {
 		this.labels.domElement.remove();
 		this.#listeners.clear();
 		this.#resetListeners.clear();
+	}
+};
+//#endregion
+//#region src/three/view_cube.ts
+/** how much of the cube's half-size counts as an edge or corner band (the rest of a face is the face) */
+var EDGE_BAND = .3;
+var FACES = [
+	{
+		normal: [
+			0,
+			0,
+			1
+		],
+		up: [
+			0,
+			1,
+			0
+		],
+		label: "Top"
+	},
+	{
+		normal: [
+			0,
+			0,
+			-1
+		],
+		up: [
+			0,
+			-1,
+			0
+		],
+		label: "Bottom"
+	},
+	{
+		normal: [
+			0,
+			-1,
+			0
+		],
+		up: [
+			0,
+			0,
+			1
+		],
+		label: "Front"
+	},
+	{
+		normal: [
+			0,
+			1,
+			0
+		],
+		up: [
+			0,
+			0,
+			1
+		],
+		label: "Back"
+	},
+	{
+		normal: [
+			1,
+			0,
+			0
+		],
+		up: [
+			0,
+			0,
+			1
+		],
+		label: "Right"
+	},
+	{
+		normal: [
+			-1,
+			0,
+			0
+		],
+		up: [
+			0,
+			0,
+			1
+		],
+		label: "Left"
+	}
+];
+/** The region under a point on the cube's surface (cube-local, half-size 1). */
+function cubeRegion(point, band = EDGE_BAND) {
+	const axis = (value) => value > 1 - band ? 1 : value < -(1 - band) ? -1 : 0;
+	return [
+		axis(point.x),
+		axis(point.y),
+		axis(point.z)
+	];
+}
+/** "Top", "Front Right", "Top Front Left", ... */
+function regionLabel([x, y, z]) {
+	return [
+		z > 0 ? "Top" : z < 0 ? "Bottom" : "",
+		y < 0 ? "Front" : y > 0 ? "Back" : "",
+		x > 0 ? "Right" : x < 0 ? "Left" : ""
+	].filter(Boolean).join(" ");
+}
+/**
+* The direction to look from (target → camera, unit) for a region. Straight above or below gets a hair of -y, so the
+* screen's up stays +y (OrbitControls can't look exactly along its up axis).
+*/
+function regionDirection([x, y, z]) {
+	const direction = new THREE.Vector3(x, y, z);
+	if (x === 0 && y === 0) direction.y = -.002;
+	return direction.normalize();
+}
+/** The highlight box of a region: its center and size, cube-local, a little proud of the surface. */
+function regionBox(region, band = EDGE_BAND) {
+	const proud = .04;
+	const center = new THREE.Vector3();
+	const size = new THREE.Vector3();
+	region.forEach((value, axis) => {
+		if (value === 0) {
+			center.setComponent(axis, 0);
+			size.setComponent(axis, 2 - 2 * band);
+		} else {
+			center.setComponent(axis, value * (1 - band / 2 + proud / 2));
+			size.setComponent(axis, band + proud);
+		}
+	});
+	return {
+		center,
+		size
+	};
+}
+var faceColors = () => {
+	const colors = themeColors();
+	return {
+		face: colors.raised || colors.surface || "#2a2f38",
+		border: colors.border || "#4a505c",
+		text: colors.fg || "#e6e8eb",
+		hover: colors.primary || "#3b82f6",
+		font: colors.sans || "system-ui, sans-serif"
+	};
+};
+function faceTexture(label, colors) {
+	const size = 256;
+	const canvas = document.createElement("canvas");
+	canvas.width = canvas.height = size;
+	const context = canvas.getContext("2d");
+	if (context) {
+		context.fillStyle = colors.face;
+		context.fillRect(0, 0, size, size);
+		context.strokeStyle = colors.border;
+		context.lineWidth = 10;
+		context.strokeRect(5, 5, 246, 246);
+		context.fillStyle = colors.text;
+		context.textAlign = "center";
+		context.textBaseline = "middle";
+		context.font = `600 ${label.length > 5 ? 50 : 58}px ${colors.font}`;
+		context.fillText(label.toUpperCase(), size / 2, 130);
+	}
+	const texture = new THREE.CanvasTexture(canvas);
+	texture.colorSpace = THREE.SRGBColorSpace;
+	texture.anisotropy = 4;
+	return texture;
+}
+var ViewCube = class {
+	canvas;
+	#viewer;
+	#renderer;
+	#scene = new THREE.Scene();
+	#camera = new THREE.OrthographicCamera(-1.85, 1.85, 1.85, -1.85, .1, 50);
+	#cube = new THREE.Group();
+	#pickBox = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), new THREE.MeshBasicMaterial({ visible: false }));
+	#highlight = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({
+		transparent: true,
+		opacity: .55,
+		depthWrite: false
+	}));
+	#edges = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(2, 2, 2)), new THREE.LineBasicMaterial({
+		transparent: true,
+		opacity: .9
+	}));
+	#faces = [];
+	#hover = null;
+	#lastQuaternion = new THREE.Quaternion(NaN, NaN, NaN, NaN);
+	#dirty = true;
+	#raycaster = new THREE.Raycaster();
+	#drag = null;
+	#offFrame;
+	#onTheme = () => this.setTheme();
+	constructor(viewer, parent, { corner = "top-right", size = 96 } = {}) {
+		this.#viewer = viewer;
+		this.#renderer = new THREE.WebGLRenderer({
+			antialias: true,
+			alpha: true
+		});
+		this.#renderer.setPixelRatio(Math.min(2, globalThis.devicePixelRatio || 1));
+		this.#renderer.setSize(size, size);
+		this.#renderer.setClearColor(0, 0);
+		this.canvas = this.#renderer.domElement;
+		this.canvas.className = `dr-scene-viewcube dr-scene-viewcube--${corner}`;
+		this.canvas.setAttribute("role", "img");
+		this.canvas.setAttribute("aria-label", "View cube: click a face, edge or corner to look from there");
+		parent.appendChild(this.canvas);
+		for (const face of FACES) {
+			const normal = new THREE.Vector3(...face.normal);
+			const up = new THREE.Vector3(...face.up);
+			const right = up.clone().cross(normal);
+			const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.MeshBasicMaterial());
+			mesh.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(right, up, normal));
+			mesh.position.copy(normal);
+			mesh.userData.label = face.label;
+			this.#faces.push(mesh);
+			this.#cube.add(mesh);
+		}
+		this.#highlight.visible = false;
+		this.#highlight.renderOrder = 2;
+		this.#cube.add(this.#pickBox, this.#edges, this.#highlight);
+		this.#scene.add(this.#cube);
+		this.setTheme();
+		this.canvas.addEventListener("pointermove", this.#onMove);
+		this.canvas.addEventListener("pointerleave", this.#onLeave);
+		this.canvas.addEventListener("pointerdown", this.#onDown);
+		this.canvas.addEventListener("pointerup", this.#onUp);
+		this.canvas.addEventListener("pointercancel", this.#onCancel);
+		this.canvas.addEventListener("wheel", this.#onWheel, { passive: false });
+		addEventListener("dimos-react-theme", this.#onTheme);
+		this.#offFrame = viewer.onFrame(() => this.#sync());
+		this.#sync();
+	}
+	/** Re-reads the theme's colors (faces, edges, hover). */
+	setTheme() {
+		const colors = faceColors();
+		for (const face of this.#faces) {
+			face.material.map?.dispose();
+			face.material.map = faceTexture(face.userData.label, colors);
+			face.material.needsUpdate = true;
+		}
+		this.#edges.material.color.set(colors.border);
+		this.#highlight.material.color.set(colors.hover);
+		this.#dirty = true;
+		this.#sync();
+	}
+	/** Mirrors the main camera: the cube shows the world's axes the way the view sees them. */
+	#sync() {
+		const camera = this.#viewer.camera;
+		if (!this.#dirty && camera.quaternion.equals(this.#lastQuaternion)) return;
+		this.#lastQuaternion.copy(camera.quaternion);
+		this.#camera.quaternion.copy(camera.quaternion);
+		this.#camera.position.set(0, 0, 10).applyQuaternion(camera.quaternion);
+		this.#camera.updateMatrixWorld();
+		this.#dirty = false;
+		this.#renderer.render(this.#scene, this.#camera);
+	}
+	#regionAt(event) {
+		const rect = this.canvas.getBoundingClientRect();
+		const ndc = new THREE.Vector2((event.clientX - rect.left) / rect.width * 2 - 1, -((event.clientY - rect.top) / rect.height) * 2 + 1);
+		this.#raycaster.setFromCamera(ndc, this.#camera);
+		const hit = this.#raycaster.intersectObject(this.#pickBox, false)[0];
+		return hit ? cubeRegion(this.#pickBox.worldToLocal(hit.point.clone())) : null;
+	}
+	#setHover(region) {
+		if (region && this.#hover && region.every((value, axis) => value === this.#hover[axis]) || !region && !this.#hover) return;
+		this.#hover = region;
+		this.#highlight.visible = !!region;
+		if (region) {
+			const { center, size } = regionBox(region);
+			this.#highlight.position.copy(center);
+			this.#highlight.scale.copy(size);
+		}
+		this.canvas.title = region ? regionLabel(region) : "";
+		this.canvas.style.cursor = region ? "pointer" : "";
+		this.#dirty = true;
+		this.#sync();
+	}
+	#onMove = (event) => {
+		const drag = this.#drag;
+		if (drag && drag.id === event.pointerId) {
+			const dx = event.clientX - drag.x;
+			const dy = event.clientY - drag.y;
+			if (!drag.moved && Math.hypot(dx, dy) < 4) return;
+			drag.moved = true;
+			drag.x = event.clientX;
+			drag.y = event.clientY;
+			this.#orbit(dx, dy);
+			return;
+		}
+		this.#setHover(this.#regionAt(event));
+	};
+	#onLeave = () => {
+		if (!this.#drag) this.#setHover(null);
+	};
+	#onDown = (event) => {
+		if (event.button !== 0) return;
+		event.preventDefault();
+		this.canvas.setPointerCapture?.(event.pointerId);
+		this.#drag = {
+			x: event.clientX,
+			y: event.clientY,
+			moved: false,
+			id: event.pointerId
+		};
+	};
+	#onUp = (event) => {
+		const drag = this.#drag;
+		this.#drag = null;
+		this.canvas.releasePointerCapture?.(event.pointerId);
+		if (!drag || drag.moved) return;
+		const region = this.#regionAt(event);
+		if (region) this.#viewer.viewFrom(regionDirection(region));
+	};
+	#onCancel = () => {
+		this.#drag = null;
+	};
+	#onWheel = (event) => {
+		event.preventDefault();
+		this.#viewer.renderer.domElement.dispatchEvent(new WheelEvent("wheel", event));
+	};
+	/** Dragging the cube orbits the view around its target, like dragging the scene. */
+	#orbit(dx, dy) {
+		const viewer = this.#viewer;
+		const offset = viewer.camera.position.clone().sub(viewer.controls.target);
+		const spherical = new THREE.Spherical().setFromVector3(new THREE.Vector3(offset.x, offset.z, -offset.y));
+		spherical.theta -= dx * .012;
+		spherical.phi = THREE.MathUtils.clamp(spherical.phi - dy * .012, .001, viewer.controls.maxPolarAngle);
+		const turned = new THREE.Vector3().setFromSpherical(spherical);
+		viewer.viewFrom(new THREE.Vector3(turned.x, -turned.z, turned.y).normalize(), { animate: false });
+	}
+	dispose() {
+		this.#offFrame();
+		removeEventListener("dimos-react-theme", this.#onTheme);
+		this.canvas.removeEventListener("pointermove", this.#onMove);
+		this.canvas.removeEventListener("pointerleave", this.#onLeave);
+		this.canvas.removeEventListener("pointerdown", this.#onDown);
+		this.canvas.removeEventListener("pointerup", this.#onUp);
+		this.canvas.removeEventListener("pointercancel", this.#onCancel);
+		this.canvas.removeEventListener("wheel", this.#onWheel);
+		this.#scene.traverse((object) => {
+			const mesh = object;
+			mesh.geometry?.dispose();
+			const material = mesh.material;
+			material?.map?.dispose();
+			material?.dispose();
+		});
+		this.#renderer.dispose();
+		this.#renderer.forceContextLoss?.();
+		this.canvas.remove();
 	}
 };
 //#endregion
@@ -5125,10 +5534,12 @@ function layerContext(scene, setStatus, extra = {}) {
 *   the robot's frame (default `followFrame`): the camera frames it once when it first shows up, and without it in
 *   TF the newest pose from a Pose layer stands in for it. A replay source (memorySource({ clock })) drives the data
 *   clock (fading, staleness, lifetimes) and its seek() resets the layers. `near`, `far`, `fov`, `gridSize`,
-*   `gridDivisions`, `freeOrbit`: the Viewer's options, read once when it mounts.
+*   `gridDivisions`, `freeOrbit`: the Viewer's options, read once when it mounts. `viewCube`: a CAD view cube in a
+*   corner (click a face / edge / corner to look from there, drag it to orbit); default off.
 */
-function Scene3D({ fixedFrame, followFrame = null, follow = true, onFollowChange, robotFrame, viewDistance = 7, grid = true, tf: givenTf, clock, onPick, onViewer, layerOptions, topics, className, style, children, cameraPosition, cameraTarget, near, far, fov, gridSize, gridDivisions, freeOrbit, ...rest }) {
+function Scene3D({ fixedFrame, followFrame = null, follow = true, onFollowChange, robotFrame, viewDistance = 7, grid = true, tf: givenTf, clock, onPick, onViewer, layerOptions, topics, className, style, children, cameraPosition, cameraTarget, near, far, fov, gridSize, gridDivisions, freeOrbit, viewCube = false, ...rest }) {
 	const hostRef = useRef(null);
+	const rootRef = useRef(null);
 	const source = useDataSource();
 	const [viewer, setViewer] = useState(null);
 	const tf = useMemo(() => givenTf ?? new TfTree(), [givenTf]);
@@ -5191,6 +5602,12 @@ function Scene3D({ fixedFrame, followFrame = null, follow = true, onFollowChange
 		if (viewer) onViewer?.(viewer);
 	}, [viewer]);
 	useEffect(() => viewer?.setGrid(grid), [viewer, grid]);
+	const cubeCorner = viewCube === true ? "top-right" : viewCube || null;
+	useEffect(() => {
+		if (!viewer || !cubeCorner || !rootRef.current) return;
+		const cube = new ViewCube(viewer, rootRef.current, { corner: cubeCorner });
+		return () => cube.dispose();
+	}, [viewer, cubeCorner]);
 	useEffect(() => {
 		if (!viewer) return;
 		if (cameraTarget) viewer.controls.target.set(...cameraTarget);
@@ -5363,6 +5780,7 @@ function Scene3D({ fixedFrame, followFrame = null, follow = true, onFollowChange
 	return /* @__PURE__ */ jsxs("div", {
 		className: cx("dr-scene", className),
 		style,
+		ref: rootRef,
 		...rest,
 		children: [/* @__PURE__ */ jsx("div", {
 			className: "dr-scene-host",
@@ -7514,5 +7932,5 @@ function Map2D({ tf, topic = null, overlay = null, path = null, followFrame = DE
 	});
 }
 //#endregion
-export { BoxLayer, CATCH_UP_SECONDS, CLOUD_PRESETS, CUBE_SHADES, Camera3dLayer, CloudLayer, CloudQualitySelect, CloudSettingsEditor, CloudStream, ColorSetting, CubeShadePicker, DEFAULT_DEPTH_LOOK, DEFAULT_GRADIENT, DEFAULT_LOOK, DepthMaterial, DepthRange, FRAME_BUDGET_MS, FatLines, FrameHighlight, FrameHighlighter, FramePicker, GRADIENTS, GradientPicker, GraphLayer, GridLayer, KeyboardFly, LabelPool, LabeledPoints, Layer, LayerManager, LayersPanel, MARKER_TYPE, Map2D, Map2DRenderer, MarkerLayer, ON_TOP_CHANNEL, POINT_STYLES, PanGate, Path, PathLayer, PointCloud, PointLookEditor, Pose, PoseArray, PoseArrayLayer, PoseLayer, RAMPS, ROBOT_KINDS, RangeInput, RenderingSettings, RobotModel, RobotPose, STALE_MS, Scene3D, SceneControls, SceneStats, SmoothFollow, Store, StylePicker, TF_STALE_MS, TfFeed, TfFootnote, TfFrames, TfFramesLayer, TfPanel, TfProvider, TfTree, TopicLayers, Viewer, WORLD_NAMES, allLayerTypes, allOverlayTypes, applyLook, boxesOf, checkTf, chooseMapTopic, chooseOverlay, cloudChanges, cloudOptions, cloudPreset, cloudQualities, cloudQualityOf, cloudRates, colorFor, confirmedIssues, cssColor, defaultSettings, disposeTree, entitiesOf, fitView as fitMapView, focusDistance, followFrameOptions, followOnTop, formatBytes, formatCount, gradientCss, gradientTexture, isGridTopic, isMapTopic, layerTypeById, layerTypeFor, localStore, makePointMaterial, mapCandidates, screenToWorld as mapScreenToWorld, worldToScreen as mapWorldToScreen, zoomAt as mapZoomAt, overlayCandidates, overlayTypeFor, pathPoints, placeInFixedFrame, placeLayer, pointCloud2ToPositions, poseMatrix, poseOf, pushBox, readLocal, registerLayer, registerOverlay, rendering, resolveLook, resolveStyle, rgba, robotModel, sampleGradient, setClipBox, setCloudQuality, setCloudRate, splatBackground, splatFallback, subscribeDecoded, useFixedFrame, useLayer, useLayerManager, useScene, useSceneActions, useSceneFrame, useStore, useTf, useTfFrames, useTfIssues, useViewer, writeLocal };
+export { BoxLayer, CATCH_UP_SECONDS, CLOUD_PRESETS, CUBE_SHADES, Camera3dLayer, CloudLayer, CloudQualitySelect, CloudSettingsEditor, CloudStream, ColorSetting, CubeShadePicker, DEFAULT_DEPTH_LOOK, DEFAULT_GRADIENT, DEFAULT_LOOK, DepthMaterial, DepthRange, FRAME_BUDGET_MS, FatLines, FrameHighlight, FrameHighlighter, FramePicker, GRADIENTS, GradientPicker, GraphLayer, GridLayer, KeyboardFly, LabelPool, LabeledPoints, Layer, LayerManager, LayersPanel, MARKER_TYPE, Map2D, Map2DRenderer, MarkerLayer, ON_TOP_CHANNEL, POINT_STYLES, PanGate, Path, PathLayer, PointCloud, PointLookEditor, Pose, PoseArray, PoseArrayLayer, PoseLayer, RAMPS, ROBOT_KINDS, RangeInput, RenderingSettings, RobotModel, RobotPose, STALE_MS, Scene3D, SceneControls, SceneStats, SmoothFollow, Store, StylePicker, TF_STALE_MS, TfFeed, TfFootnote, TfFrames, TfFramesLayer, TfPanel, TfProvider, TfTree, TopicLayers, ViewCube, Viewer, WORLD_NAMES, allLayerTypes, allOverlayTypes, applyLook, boxesOf, checkTf, chooseMapTopic, chooseOverlay, cloudChanges, cloudOptions, cloudPreset, cloudQualities, cloudQualityOf, cloudRates, colorFor, confirmedIssues, cssColor, cubeRegion, defaultSettings, disposeTree, entitiesOf, fitView as fitMapView, focusDistance, followFrameOptions, followOnTop, formatBytes, formatCount, gradientCss, gradientTexture, isGridTopic, isMapTopic, layerTypeById, layerTypeFor, localStore, makePointMaterial, mapCandidates, screenToWorld as mapScreenToWorld, worldToScreen as mapWorldToScreen, zoomAt as mapZoomAt, overlayCandidates, overlayTypeFor, pathPoints, placeInFixedFrame, placeLayer, pointCloud2ToPositions, poseMatrix, poseOf, pushBox, readLocal, regionDirection, regionLabel, registerLayer, registerOverlay, rendering, resolveLook, resolveStyle, rgba, robotModel, sampleGradient, setClipBox, setCloudQuality, setCloudRate, splatBackground, splatFallback, subscribeDecoded, useFixedFrame, useLayer, useLayerManager, useScene, useSceneActions, useSceneFrame, useStore, useTf, useTfFrames, useTfIssues, useViewer, writeLocal };
 

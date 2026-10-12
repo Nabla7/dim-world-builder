@@ -1,5 +1,6 @@
 import { DependencyList, HTMLAttributes, MutableRefObject, ReactNode } from 'react';
 import { Viewer, FrameInfo } from './viewer.ts';
+import { ViewCubeCorner } from './view_cube.ts';
 import { TfTree } from './tf.ts';
 import { Store } from './store.ts';
 import { RobotPose, LayerContext, LayerStatus, LayerType, Topic } from './layers/registry.ts';
@@ -114,6 +115,8 @@ export interface Scene3DProps extends HTMLAttributes<HTMLDivElement> {
     gridSize?: number;
     gridDivisions?: number;
     freeOrbit?: boolean;
+    /** a CAD view cube in a corner (default off): true = top right, or the corner */
+    viewCube?: boolean | ViewCubeCorner;
 }
 /**
  * The 3D view. Give it a size (style/className); layers go in `children`, and any DOM children (buttons, stats) are
@@ -123,9 +126,10 @@ export interface Scene3DProps extends HTMLAttributes<HTMLDivElement> {
  *   the robot's frame (default `followFrame`): the camera frames it once when it first shows up, and without it in
  *   TF the newest pose from a Pose layer stands in for it. A replay source (memorySource({ clock })) drives the data
  *   clock (fading, staleness, lifetimes) and its seek() resets the layers. `near`, `far`, `fov`, `gridSize`,
- *   `gridDivisions`, `freeOrbit`: the Viewer's options, read once when it mounts.
+ *   `gridDivisions`, `freeOrbit`: the Viewer's options, read once when it mounts. `viewCube`: a CAD view cube in a
+ *   corner (click a face / edge / corner to look from there, drag it to orbit); default off.
  */
-export declare function Scene3D({ fixedFrame, followFrame, follow, onFollowChange, robotFrame, viewDistance, grid, tf: givenTf, clock, onPick, onViewer, layerOptions, topics, className, style, children, cameraPosition, cameraTarget, near, far, fov, gridSize, gridDivisions, freeOrbit, ...rest }: Scene3DProps): import('react').JSX.Element;
+export declare function Scene3D({ fixedFrame, followFrame, follow, onFollowChange, robotFrame, viewDistance, grid, tf: givenTf, clock, onPick, onViewer, layerOptions, topics, className, style, children, cameraPosition, cameraTarget, near, far, fov, gridSize, gridDivisions, freeOrbit, viewCube, ...rest }: Scene3DProps): import('react').JSX.Element;
 /**
  * Feeds the scene's TF tree: every tf2_msgs.TFMessage topic on the bus (or `topics`), and/or `transforms` given as
  * props. A topic named like tf_static is static (exempt from staleness). `transforms`: a decoded TFMessage, an array

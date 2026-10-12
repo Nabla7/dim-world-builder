@@ -49,6 +49,7 @@ export function Viewport({ assets }: { assets: Record<string, MeshAsset> }) {
       cameraTarget={[2, 0, 0]}
       gridSize={120}
       grid={mode !== "view"}
+      viewCube="top-right"
       onViewer={(viewer) => {
         const track = () => {
           const t = viewer.controls.target;

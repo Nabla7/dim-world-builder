@@ -34,6 +34,11 @@ export interface PickResult {
     on: "points" | "mesh" | "ground";
     object?: THREE.Object3D;
 }
+/**
+ * `direction` as a unit vector no further than `maxPolar` from +z (the orbit's limit): one below it keeps its heading
+ * and sits on the limit (straight down: from the front, -y). Null for a zero or non-finite direction.
+ */
+export declare function limitPolar(direction: THREE.Vector3, maxPolar: number): THREE.Vector3 | null;
 export declare class Viewer {
     #private;
     renderer: THREE.WebGLRenderer;
@@ -113,6 +118,15 @@ export declare class Viewer {
     topDownAround(center?: THREE.Vector3 | null): void;
     /** Straight down onto `target` from high enough that `extent` meters fit the shorter side of the view. */
     topDown(target: THREE.Vector3, extent: number): void;
+    /**
+     * Orbits around the current target to look from `direction` (target → camera; need not be unit), keeping the
+     * distance: a view cube's Top / Front / corner views. Glides there (`ms`, default 450; instant with
+     * `animate: false` or prefers-reduced-motion). Without freeOrbit, directions below the horizon stop at it.
+     */
+    viewFrom(direction: THREE.Vector3, { animate, ms }?: {
+        animate?: boolean;
+        ms?: number;
+    }): void;
     /** Stops following until `resumeFollow()`: the camera stays where it is. */
     pauseFollow(): void;
     /** Follows again: the followed point glides back to the middle, angle and zoom kept. */

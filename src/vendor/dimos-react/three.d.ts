@@ -1,5 +1,7 @@
 export { colorFor, FrameHighlight, FramePicker, KeyboardFly, Layer, Path, placeInFixedFrame, PointCloud, pointCloud2ToPositions, Pose, PoseArray, poseMatrix, poseOf, RobotModel, Scene3D, SceneControls, SceneStats, TfFeed, TfFrames, TfProvider, TopicLayers, useFixedFrame, useLayer, useScene, useSceneActions, useSceneFrame, useTf, useTfFrames, useTfIssues, useViewer, } from './three/react.tsx';
 export { LayersPanel, TfFootnote, TfPanel, useLayerManager } from './three/panels.tsx';
+export { cubeRegion, regionDirection, regionLabel, ViewCube } from './three/view_cube.ts';
+export type { CubeRegion, ViewCubeCorner, ViewCubeOptions } from './three/view_cube.ts';
 export { CubeShadePicker, PointLookEditor, RangeInput, RenderingSettings, StylePicker } from './three/look_editor.tsx';
 export { LayerManager } from './three/layers/manager.ts';
 export { allLayerTypes, allOverlayTypes, defaultSettings, followOnTop, layerTypeById, layerTypeFor, overlayTypeFor, placeLayer, registerLayer, registerOverlay, rgba, RobotPose, subscribeDecoded, } from './three/layers/registry.ts';

@@ -2152,6 +2152,22 @@ button.dr-stepper__mark:hover { box-shadow: var(--dr-focus); }
     border-color: var(--ring);
     box-shadow: var(--dr-focus);
 }
+.dr-scene-viewcube {
+    position: absolute;
+    z-index: 3;
+    top: 10px;
+    right: 10px;
+    touch-action: none;
+    filter: drop-shadow(0 1px 3px color-mix(in srgb, var(--bg) 60%, transparent));
+}
+.dr-scene-viewcube--top-left { right: auto; left: 10px; }
+.dr-scene-viewcube--bottom-right { top: auto; bottom: calc(10px + var(--dim-inset-bottom, 0px)); }
+.dr-scene-viewcube--bottom-left {
+    top: auto;
+    right: auto;
+    left: 10px;
+    bottom: calc(10px + var(--dim-inset-bottom, 0px));
+}
 .dr-scene-stats {
     position: absolute;
     z-index: 2;
