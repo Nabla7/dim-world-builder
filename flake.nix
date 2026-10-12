@@ -38,7 +38,7 @@
                     installPhase = "cp -r dist $out";
                 };
                 # the server and what it reads: the shared world model, the asset library, the cooker's locked project
-                server = files pkgs [ ./backend ./src/world ./assets ./cooker/pyproject.toml ./cooker/uv.lock ./cooker/cook.py ];
+                server = files pkgs [ ./backend ./src/world ./assets ./cooker/pyproject.toml ./cooker/uv.lock ./cooker/cook.py ./cooker/render_view.py ];
                 dimosApp = pkgs.writeShellScriptBin "dimos-app-server" (serverLine pkgs server frontend);
                 default = dimosApp;
                 dimosApp-aarch64-linux = linuxApp pkgs "aarch64" server frontend;

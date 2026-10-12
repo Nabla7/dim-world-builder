@@ -19,9 +19,16 @@ export interface PaletteEntry {
 }
 
 /** the ground point the camera orbits and the drawn world, set by the viewport */
-export const view: { center: Vec3; worldRoot: Object3D | null } = {
+/** the editor camera, for the Views panel: where it is, and a smooth move to a remembered view */
+export interface CameraHandle {
+  get(): { eye: Vec3; target: Vec3; fov: number };
+  goTo(eye: Vec3, target: Vec3, fov?: number): void;
+}
+
+export const view: { center: Vec3; worldRoot: Object3D | null; camera: CameraHandle | null } = {
   center: [0, 0, 0],
   worldRoot: null,
+  camera: null,
 };
 
 const snap = (at: Vec3): Vec3 => [Math.round(at[0] * 2) / 2, Math.round(at[1] * 2) / 2, 0];

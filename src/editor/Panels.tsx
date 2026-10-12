@@ -24,8 +24,10 @@ import {
 } from "../ui.ts";
 import { PAINT } from "../world/defaults.ts";
 import { openingPreset } from "../world/geometry.ts";
+import { slug } from "../world/keys.ts";
 import type {
   AprilTagParams,
+  CameraView,
   DoorOpening,
   HillParams,
   HoleParams,
@@ -47,7 +49,10 @@ import {
   duplicateItem,
   removeFloor,
   removeItem,
+  removeView,
   renameKey,
+  renameView,
+  saveView,
   select,
   setActiveFloor,
   setDrawingPath,
@@ -56,6 +61,7 @@ import {
   updateFloor,
   updateItem,
   updateNav,
+  updateView,
   useEditor,
 } from "./store.ts";
 
@@ -1177,5 +1183,93 @@ export function NavPanel() {
         ))}
       </List>
     </div>
+  );
+}
+
+// ── Views ──
+
+/**
+ * Remembered camera views: save where the camera is, glide back to one with a click. Each exports as a MuJoCo camera
+ * named by its id, so a test or an agent can look from exactly there (render_view() in the exported package).
+ */
+export function ViewsPanel() {
+  const views = useEditor((s) => s.project.views ?? []);
+  const [current, setCurrent] = useState<string | null>(null);
+  const chosen = views.find((v) => v.key === current) ?? null;
+  const go = (key: string) => {
+    const saved = views.find((v) => v.key === key);
+    if (!saved) return;
+    setCurrent(key);
+    view.camera?.goTo(saved.eye, saved.target, saved.fov);
+  };
+  return (
+    <div style={section} data-testid="views-panel">
+      <Text small muted>
+        Remembered camera views. Each exports as a MuJoCo camera named by its id, for agents and tests to look from
+        (render_view in the exported package, or GET api/views/image).
+      </Text>
+      <Button
+        icon="camera"
+        data-testid="save-view"
+        onClick={() => {
+          const camera = view.camera?.get();
+          if (camera) setCurrent(saveView(camera));
+        }}
+      >
+        Save this view
+      </Button>
+      {views.length === 0 && <Text small muted>No views yet.</Text>}
+      <List divided>
+        {views.map((v) => (
+          <ListRow
+            key={v.key}
+            icon="eye"
+            title={v.name}
+            subtitle={v.key}
+            selected={v.key === current}
+            onClick={() => go(v.key)}
+            data-testid={`view-${v.key}`}
+          />
+        ))}
+      </List>
+      {chosen && <ViewEditor key={chosen.key} saved={chosen} onRenamed={setCurrent} />}
+    </div>
+  );
+}
+
+function ViewEditor({ saved, onRenamed }: { saved: CameraView; onRenamed: (key: string) => void }) {
+  const [draft, setDraft] = useState(saved.name);
+  const [problem, setProblem] = useState<string | null>(null);
+  const commit = () => {
+    if (draft === saved.name) return;
+    const failed = renameView(saved.key, draft);
+    setProblem(failed);
+    if (!failed) onRenamed(slug(draft).replace(/^item_/, "view_"));
+  };
+  return (
+    <>
+      <Field label="Name">
+        <TextInput value={draft} onChange={setDraft} onCommit={commit} onEnter={commit} data-testid="view-name" />
+      </Field>
+      {problem && <Text small tone="danger">{problem}</Text>}
+      <Text small muted>
+        Id <code>{saved.key}</code> · from {saved.eye.map((v) => v.toFixed(1)).join(", ")} · {saved.fov}° fov
+      </Text>
+      <ButtonGroup>
+        <Button
+          size="sm"
+          icon="refresh"
+          onClick={() => {
+            const camera = view.camera?.get();
+            if (camera) updateView(saved.key, camera);
+          }}
+        >
+          Set to this camera
+        </Button>
+        <Button size="sm" icon="trash" variant="danger" onClick={() => removeView(saved.key)}>
+          Delete
+        </Button>
+      </ButtonGroup>
+    </>
   );
 }

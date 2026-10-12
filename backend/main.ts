@@ -7,6 +7,8 @@
 //   POST /api/export                 public: write a project as a dimos world directory (body: { project, parentDir })
 //   GET  /api/library                public: every placeable mesh asset (library + cooked imports)
 //   GET  /api/projects               public: saved projects
+//   GET|POST /api/views, POST /api/views/remove   public: a saved world's remembered camera views
+//   GET  /api/views/image?name=&view=&width=&height=   public: a PNG of the world from one view (MuJoCo)
 //   GET|PUT /api/internal/projects/<name>   private: load / autosave one project
 //   POST /api/internal/import?name=&height=  private: upload a .glb/.gltf/.obj; cooks it in the background
 //   GET  /api/internal/import/<job>  private: a cook's progress and result
@@ -15,12 +17,12 @@
 //   GET  /files/library/<id>/<file>, /files/imports/<id>/<file>   private: mesh files
 
 import { exportProject, packageName } from "./export.ts";
-import type { Item, MeshAsset, Project } from "../src/world/types.ts";
+import type { Item, MeshAsset, Project, Vec3 } from "../src/world/types.ts";
 import { emptyProject } from "../src/world/defaults.ts";
 import { testCourse } from "../src/world/examples.ts";
 import { clutterYard } from "../src/world/examples_clutter.ts";
 import { playground } from "../src/world/examples_playground.ts";
-import { keyedProject } from "../src/world/keys.ts";
+import { keyedProject, slug } from "../src/world/keys.ts";
 
 const app = JSON.parse(Deno.env.get("DIMOS_APP") ?? "{}") as {
   name?: string;
@@ -285,6 +287,79 @@ async function api(request: Request, url: URL): Promise<Response | null> {
       JSON.stringify(project, null, 2),
     );
     return json(result);
+  }
+  if (route === "GET /api/views") {
+    const project = await readJson<Project | null>(
+      `${projectsDir}/${safeName(url.searchParams.get("name") ?? "")}.json`,
+      null,
+    );
+    return project ? json({ views: keyedProject(project).views ?? [] }) : json({ error: "no such project" }, 404);
+  }
+  if (route === "POST /api/views") {
+    // remember a view (by name; its key comes from the name) in a saved world, replacing one with the same key
+    const { name, view } = await request.json() as {
+      name: string;
+      view: { name: string; eye: Vec3; target: Vec3; fov?: number; key?: string };
+    };
+    const file = `${projectsDir}/${safeName(name ?? "")}.json`;
+    const project = await readJson<Project | null>(file, null);
+    if (!project) return json({ error: `no project ${name}` }, 404);
+    if (!view?.name || !Array.isArray(view.eye) || !Array.isArray(view.target)) {
+      return json({ error: "give { name, view: { name, eye: [x,y,z], target: [x,y,z], fov? } }" }, 400);
+    }
+    const key = view.key || slug(view.name).replace(/^item_/, "view_");
+    const saved = { key, name: view.name, eye: view.eye, target: view.target, fov: view.fov ?? 50 };
+    project.views = [...(project.views ?? []).filter((v) => v.key !== key), saved];
+    await saveProject(project);
+    return json({ saved: key, views: project.views.length });
+  }
+  if (route === "POST /api/views/remove") {
+    const { name, view } = await request.json() as { name: string; view: string };
+    const file = `${projectsDir}/${safeName(name ?? "")}.json`;
+    const project = await readJson<Project | null>(file, null);
+    if (!project) return json({ error: `no project ${name}` }, 404);
+    const before = project.views?.length ?? 0;
+    project.views = (project.views ?? []).filter((v) => v.key !== view);
+    await saveProject(project);
+    return json({ removed: before - project.views.length });
+  }
+  if (route === "GET /api/views/image") {
+    // the world as exported, seen from a remembered view: MuJoCo renders it (the same cameras the sim has)
+    const name = url.searchParams.get("name") ?? "";
+    const key = url.searchParams.get("view") ?? "";
+    const project = await readJson<Project | null>(`${projectsDir}/${safeName(name)}.json`, null);
+    if (!project) return json({ error: `no project ${name}` }, 404);
+    if (!(keyedProject(project).views ?? []).some((v) => v.key === key)) {
+      return json({ error: `no view ${key} (GET api/views lists them)` }, 404);
+    }
+    const size = (param: string, fallback: number) =>
+      Math.max(16, Math.min(1920, Number(url.searchParams.get(param)) || fallback));
+    const parent = `${dataDir}/renders`;
+    const { list, dirs } = await assets();
+    const result = await exportProject(project, Object.fromEntries(list.map((a) => [a.id, a])), dirs, parent);
+    const out = `${parent}/${result.name}_${key}.png`;
+    const output = await new Deno.Command(uvBinary(), {
+      args: [
+        "run",
+        "--frozen",
+        "--project",
+        cookerDir,
+        "python",
+        `${cookerDir}/render_view.py`,
+        `${result.dir}/scene.xml`,
+        key,
+        String(size("width", 960)),
+        String(size("height", 540)),
+        out,
+      ],
+      stdout: "piped",
+      stderr: "piped",
+      env: { UV_PROJECT_ENVIRONMENT: `${dataDir}/cooker-venv` },
+    }).output();
+    if (!output.success) {
+      return json({ error: "render failed", detail: new TextDecoder().decode(output.stderr).slice(-2000) }, 500);
+    }
+    return new Response(await Deno.readFile(out), { headers: { "content-type": "image/png" } });
   }
   if (route === "POST /api/internal/visual") {
     const dir = url.searchParams.get("dir") ?? "";

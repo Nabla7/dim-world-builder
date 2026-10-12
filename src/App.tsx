@@ -23,7 +23,7 @@ import { emptyProject } from "./world/defaults.ts";
 import { testCourse } from "./world/examples.ts";
 import { clutterYard } from "./world/examples_clutter.ts";
 import type { MeshAsset } from "./world/types.ts";
-import { AddPanel, FloorsPanel, Inspector, ItemsPanel, NavPanel } from "./editor/Panels.tsx";
+import { AddPanel, FloorsPanel, Inspector, ItemsPanel, NavPanel, ViewsPanel } from "./editor/Panels.tsx";
 import { Viewport } from "./editor/Viewport.tsx";
 import {
   addItem,
@@ -49,7 +49,7 @@ import {
 import { makeItem } from "./world/defaults.ts";
 import { view } from "./editor/palette.ts";
 
-type Tab = "add" | "floors" | "items" | "nav";
+type Tab = "add" | "floors" | "items" | "nav" | "views";
 
 export function App() {
   const [assets, setAssets] = useState<MeshAsset[]>([]);
@@ -159,6 +159,7 @@ export function App() {
                 { value: "floors", label: "Floors" },
                 { value: "items", label: "Items" },
                 { value: "nav", label: "Nav test" },
+                { value: "views", label: "Views" },
               ]}
               style={{ padding: "0 8px" }}
             />
@@ -170,6 +171,7 @@ export function App() {
               {tab === "floors" && <FloorsPanel />}
               {tab === "items" && <ItemsPanel />}
               {tab === "nav" && <NavPanel />}
+              {tab === "views" && <ViewsPanel />}
             </div>
           </aside>
         )}

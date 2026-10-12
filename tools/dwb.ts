@@ -4,6 +4,7 @@
 //   deno run -A tools/dwb.ts generate --kind playground --name my_playground --seed 3
 //   deno run -A tools/dwb.ts project-items --name my_playground --items '[{"kind":"primitive","params":{"shape":"box","color":[1,0,0]},"position":[2,0,0]}]'
 //   deno run -A tools/dwb.ts export --name my_playground --parentDir ~/dimos_worlds
+//   deno run -A tools/dwb.ts views-image --name my_playground --view overview --out overview.png
 // A value starting with @ is read from that file; JSON values (objects, arrays, numbers) are parsed.
 import { Command } from "jsr:@cliffy/command@1.0.0-rc.7";
 import { parse } from "jsr:@std/yaml@1";
@@ -39,23 +40,25 @@ async function value(raw: string, type: string): Promise<unknown> {
   }
 }
 
-let cli = new Command()
+// the subcommands are built from dimos.yaml at run time, so cliffy's option typing can't follow them
+// deno-lint-ignore no-explicit-any
+type AnyCommand = Command<any, any, any, any, any, any, any, any>;
+
+let cli: AnyCommand = new Command()
   .name("dwb")
   .description("World Builder (dimOS Desktop app) from the shell: one command per public endpoint")
   .globalOption("--url <url:string>", "the app, through Desktop", {
     default: Deno.env.get("DWB_URL") ?? "http://127.0.0.1:5555/apps/dim-world-builder",
-  }) as unknown as Command;
+  })
+  .globalOption("--out <file:string>", "where an image answer is saved (default <view>.png)");
 
 for (const endpoint of contract.provides.endpoints) {
   const params = endpoint.params ?? {};
-  let sub = new Command().description(
+  let sub: AnyCommand = new Command().description(
     `${endpoint.method} ${endpoint.path}: ${endpoint.description}`,
   );
   for (const [name, param] of Object.entries(params)) {
-    sub = sub.option(
-      `--${name} <${name}:string>`,
-      `${param.description} (${param.type})`,
-    ) as Command;
+    sub = sub.option(`--${name} <${name}:string>`, `${param.description} (${param.type})`);
   }
   sub = sub.action(async (options: Record<string, string>) => {
     const values: Record<string, unknown> = {};
@@ -72,6 +75,13 @@ for (const endpoint of contract.provides.endpoints) {
       init.body = JSON.stringify(values);
     }
     const response = await fetch(target, init);
+    if (response.ok && response.headers.get("content-type")?.startsWith("image/")) {
+      // an image (api/views/image): saved to --out, or <view>.png here
+      const file = options.out ?? `${values.view ?? "image"}.png`;
+      await Deno.writeFile(file, new Uint8Array(await response.arrayBuffer()));
+      console.log(file);
+      return;
+    }
     const text = await response.text();
     try {
       console.log(JSON.stringify(JSON.parse(text), null, 2));
@@ -79,8 +89,8 @@ for (const endpoint of contract.provides.endpoints) {
       console.log(text);
     }
     if (!response.ok) Deno.exit(1);
-  }) as Command;
-  cli = cli.command(commandName(endpoint, contract.provides.endpoints), sub) as Command;
+  });
+  cli = cli.command(commandName(endpoint, contract.provides.endpoints), sub);
 }
 
 await cli.parse(Deno.args);

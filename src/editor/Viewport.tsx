@@ -84,6 +84,15 @@ function exposeForAutomation(viewer: {
     const ndc = point.clone().project(viewer.camera);
     return [rect.left + ((ndc.x + 1) / 2) * rect.width, rect.top + ((1 - ndc.y) / 2) * rect.height];
   };
+  const round = (v: THREE.Vector3) => v.toArray().map((x) => Math.round(x * 1000) / 1000) as Vec3;
+  view.camera = {
+    get: () => ({
+      eye: round(viewer.camera.position),
+      target: round(viewer.controls.target),
+      fov: Math.round(viewer.camera.fov * 10) / 10,
+    }),
+    goTo: (eye, target, fov) => glideTo(viewer, new THREE.Vector3(...eye), new THREE.Vector3(...target), fov),
+  };
   Object.assign(globalThis, {
     dimWorldBuilder: {
       /** an item's origin (its base) on screen */
@@ -121,6 +130,13 @@ function exposeForAutomation(viewer: {
           bounds.getCenter(new THREE.Vector3()),
           Math.max(2.5, bounds.getSize(new THREE.Vector3()).length() * 1.6),
         );
+        return true;
+      },
+      /** glide to a remembered view by its key, as clicking it in Views does */
+      goToView(key: string) {
+        const saved = getState().project.views?.find((v) => v.key === key);
+        if (!saved) return false;
+        view.camera?.goTo(saved.eye, saved.target, saved.fov);
         return true;
       },
       lookAt(target: [number, number, number], from: [number, number, number]) {
@@ -439,6 +455,35 @@ function glide(
     const ease = t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
     viewer.controls.target.lerpVectors(fromTarget, target, ease);
     viewer.camera.position.lerpVectors(fromPosition, toPosition, ease);
+    viewer.controls.update();
+    viewer.requestRender();
+    if (t < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+/** ease the camera to an exact eye, target and field of view (about 0.9 s) */
+function glideTo(
+  viewer: {
+    camera: THREE.PerspectiveCamera;
+    controls: { target: THREE.Vector3; update(): void };
+    requestRender(): void;
+  },
+  eye: THREE.Vector3,
+  target: THREE.Vector3,
+  fov = viewer.camera.fov,
+) {
+  const fromTarget = viewer.controls.target.clone();
+  const fromPosition = viewer.camera.position.clone();
+  const fromFov = viewer.camera.fov;
+  const started = performance.now();
+  const step = (now: number) => {
+    const t = Math.min(1, (now - started) / 900);
+    const ease = t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
+    viewer.controls.target.lerpVectors(fromTarget, target, ease);
+    viewer.camera.position.lerpVectors(fromPosition, eye, ease);
+    viewer.camera.fov = fromFov + (fov - fromFov) * ease;
+    viewer.camera.updateProjectionMatrix();
     viewer.controls.update();
     viewer.requestRender();
     if (t < 1) requestAnimationFrame(step);

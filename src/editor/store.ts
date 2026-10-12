@@ -3,8 +3,8 @@
 
 import { useSyncExternalStore } from "react";
 import { emptyProject } from "../world/defaults.ts";
-import type { Floor, Item, MoverPath, NavPlan, Project, Vec3 } from "../world/types.ts";
-import { keyedProject, slug, withKeys } from "../world/keys.ts";
+import type { CameraView, Floor, Item, MoverPath, NavPlan, Project, Vec3 } from "../world/types.ts";
+import { keyedProject, slug, withKeys, withViewKeys } from "../world/keys.ts";
 
 export type Gizmo = "translate" | "rotate" | "scale";
 export type Mode = "edit" | "view";
@@ -221,6 +221,37 @@ function navPlan(p: Project): NavPlan {
       mappingPath: [],
       goals: [],
     };
+}
+
+/** remembers a camera view; its key comes from the name (unique among the world's views); returns the key */
+export function saveView(camera: Omit<CameraView, "key" | "name">, name?: string): string {
+  const views = state.project.views ?? [];
+  let n = views.length + 1;
+  while (views.some((v) => v.name === `View ${n}`)) n++;
+  const [added] = withViewKeys([...views, { key: "", name: name ?? `View ${n}`, ...camera }]).slice(-1);
+  edit((p) => ({ ...p, views: [...(p.views ?? []), added] }));
+  return added.key;
+}
+
+/** renames a view and re-derives its key from the new name, unless that key is taken */
+export function renameView(key: string, name: string): string | null {
+  const wanted = slug(name).replace(/^item_/, "view_");
+  const views = state.project.views ?? [];
+  if (views.some((v) => v.key !== key && v.key === wanted)) return `${wanted} is taken`;
+  edit((p) => ({
+    ...p,
+    views: (p.views ?? []).map((v) => (v.key === key ? { ...v, name, key: wanted } : v)),
+  }), `view-name-${key}`);
+  return null;
+}
+
+/** points a view at where the camera is now */
+export function updateView(key: string, camera: Omit<CameraView, "key" | "name">) {
+  edit((p) => ({ ...p, views: (p.views ?? []).map((v) => (v.key === key ? { ...v, ...camera } : v)) }));
+}
+
+export function removeView(key: string) {
+  edit((p) => ({ ...p, views: (p.views ?? []).filter((v) => v.key !== key) }));
 }
 
 export function updateNav(change: (nav: NavPlan) => NavPlan, coalesce?: string) {
