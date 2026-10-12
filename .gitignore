@@ -8,4 +8,4 @@ dist
 cooker/.venv
 MUJOCO_LOG.TXT
 __pycache__
-videos/
+/videos/
