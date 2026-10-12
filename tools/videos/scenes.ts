@@ -177,10 +177,12 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
     await fresh(demo, "hill_demo");
     await demo.say("Hills: natural bumpiness from fractal noise", 1000);
     await addFromPalette(demo, "build:hill");
-    await demo.say("Bump height", 300);
-    await demo.slide("Bump height", 12);
-    await demo.say("Bumpiness (how many bumps)", 300);
-    await demo.slide("Bumpiness", 10);
+    await demo.say("Hill height", 300);
+    await demo.slide("Hill height", 12);
+    await demo.say("Hills per 10 m", 300);
+    await demo.slide("Hills per 10 m", 10);
+    await demo.say("Small bumps a robot feels", 300);
+    await demo.slide("Small bumps", 8);
     await demo.say("Roughness (fine detail)", 300);
     await demo.slide("Roughness", 6);
     await demo.say("Detail octaves", 300);
@@ -463,7 +465,7 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
     await demo.say("Drain grates: a hole with bars flush with the floor", 800);
     await addFromPalette(demo, "build:grate");
     await demo.lookAt([0, 0, 0], [-2.5, -3, 2.5]);
-    await demo.slide("Gap", 6);
+    await demo.slide("Gap between bars", 6);
     await demo.say("Slats, or a grid; bar width, gap and depth are sliders", 600);
     await demo.clickText("Grid", 1500);
     await demo.slide("Bar width", 4);
