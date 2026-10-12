@@ -10,6 +10,8 @@ import {
   stairsShapes,
 } from "./geometry.ts";
 import { toScene } from "./mjcf.ts";
+import { moverPose } from "./movers.ts";
+import type { Vec3 } from "./types.ts";
 import { defaultHill, defaultLight, defaultRoom, defaultStairs, emptyProject, makeItem } from "./defaults.ts";
 import { testCourse } from "./examples.ts";
 import { keyedProject } from "./keys.ts";
@@ -269,5 +271,21 @@ describe("hill look in the export", () => {
     expect(xml).toMatch(/type="hfield" hfield="[^"]+" material="grass_0"/);
     const shape = world.bodies.flatMap((b) => b.shapes).find((s) => s.type === "hfield")!;
     expect(xml).toContain(`elevation="${shape.hfield!.elevation.map((v) => String(Math.round(v * 1e6) / 1e6)).join(" ")}"`);
+  });
+});
+
+describe("moverPose", () => {
+  const mover = { body: "cart", waypoints: [[0, 0, 0], [4, 0, 0], [4, 3, 0]] as Vec3[], speed: 1, mode: "loop" as const, heading: "path" as const };
+  it("walks the path at its speed and loops back to the start", () => {
+    expect(moverPose(mover, 2)!.position).toEqual([2, 0, 0]);
+    expect(moverPose(mover, 5.5)!.position[1]).toBeCloseTo(1.5);
+    expect(moverPose(mover, 12)!.position).toEqual([0, 0, 0]);
+  });
+  it("faces its direction of travel; pingpong retraces", () => {
+    const q = moverPose(mover, 5)!.quat!;
+    expect(2 * Math.atan2(q[2], q[3])).toBeCloseTo(Math.PI / 2);
+    const back = moverPose({ ...mover, mode: "pingpong" }, 9)!.position;
+    expect(back[0]).toBeCloseTo(4);
+    expect(back[1]).toBeCloseTo(1);
   });
 });

@@ -42,6 +42,7 @@ import {
   setMode,
   setNavTool,
   setGrass,
+  setPreviewMotion,
   setShowCollision,
   setSnap,
   undo,
@@ -63,6 +64,7 @@ export function App() {
   const snap = useEditor((s) => s.snap);
   const showCollision = useEditor((s) => s.showCollision);
   const grass = useEditor((s) => s.grass);
+  const previewMotion = useEditor((s) => s.previewMotion);
   const project = useEditor((s) => s.project);
   const navTool = useEditor((s) => s.navTool);
   const revision = useEditor((s) => s.revision);
@@ -216,6 +218,13 @@ export function App() {
                   data-testid="show-collision"
                 />
                 <Toggle size="sm" value={grass} onChange={setGrass} label="Grass" data-testid="show-grass" />
+                <Toggle
+                  size="sm"
+                  value={previewMotion}
+                  onChange={setPreviewMotion}
+                  label="Play motion"
+                  data-testid="preview-motion"
+                />
                 {navTool === "tag" && (
                   <Button
                     size="sm"

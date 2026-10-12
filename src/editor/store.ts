@@ -18,6 +18,8 @@ export interface EditorState {
   showCollision: boolean;
   /** instanced grass on hills (visual only; off for heavy scenes) */
   grass: boolean;
+  /** play the moving objects along their paths in the editor, as the simulation will */
+  previewMotion: boolean;
   /** the item whose mover path clicks on the ground extend */
   drawingPath: string | null;
   /** clicks on the ground extend the nav test's mapping path, or add a goal */
@@ -38,6 +40,7 @@ let state: EditorState = {
   snap: true,
   showCollision: false,
   grass: true,
+  previewMotion: false,
   drawingPath: null,
   navTool: null,
   past: [],
@@ -125,6 +128,7 @@ export const setMode = (mode: Mode) => set({ mode, drawingPath: null });
 export const setSnap = (snap: boolean) => set({ snap });
 export const setShowCollision = (showCollision: boolean) => set({ showCollision });
 export const setGrass = (grass: boolean) => set({ grass });
+export const setPreviewMotion = (previewMotion: boolean) => set({ previewMotion });
 export const setDrawingPath = (drawingPath: string | null) => set({ drawingPath, navTool: null });
 
 export function selectedItem(): Item | null {

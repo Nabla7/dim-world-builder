@@ -16,6 +16,7 @@ import {
 } from "../three_view.ts";
 import { useSubscription } from "../ui.ts";
 import { buildWorld, type World } from "../world/geometry.ts";
+import { moverPose } from "../world/movers.ts";
 import type { Item, MeshAsset, Project, Quat, Vec3 } from "../world/types.ts";
 import { bodyObject, disposeObject, ghost } from "./three_world.ts";
 import { fadeGrid, gridFocus, skyDome, SKY, SUN_DIRECTION, windTime } from "./nature.ts";
@@ -295,6 +296,8 @@ function WorldLayer({ assets }: { assets: Record<string, MeshAsset> }) {
   worldRef.current = world;
   const tf = useTf();
   const layer = useLayer(({ viewer }) => {
+    let motionStart = performance.now() / 1000;
+    let motionShown = false;
     const root = new THREE.Group();
     root.name = "world";
     view.worldRoot = root;
@@ -309,8 +312,36 @@ function WorldLayer({ assets }: { assets: Record<string, MeshAsset> }) {
           windTime.value = performance.now() / 1000;
           viewer.requestRender();
         }
+        // edit mode with "Play motion": movers ride their paths as the simulation will move them
+        const editing = getState().mode !== "view";
+        if (editing && getState().previewMotion) {
+          const time = performance.now() / 1000 - motionStart;
+          for (const mover of worldRef.current.movers) {
+            const body = worldRef.current.bodies.find((b) => b.name === mover.body);
+            const object = body && state.objects.get(body.itemId);
+            const pose = object && moverPose(mover, time);
+            if (!object || !pose) continue;
+            object.position.set(...pose.position);
+            if (pose.quat) object.quaternion.set(...pose.quat);
+          }
+          motionShown = true;
+          viewer.requestRender();
+          return;
+        }
+        if (motionShown) {
+          // back to where they were authored
+          motionShown = false;
+          motionStart = performance.now() / 1000;
+          for (const body of worldRef.current.bodies) {
+            const object = body.mocap && state.objects.get(body.itemId);
+            if (!object) continue;
+            object.position.set(...body.pos);
+            object.quaternion.set(...body.quat);
+          }
+          viewer.requestRender();
+        }
         // viewer mode: movers ride their live TF (world -> <body>) from the running simulation
-        if (getState().mode !== "view" || !tf) return;
+        if (editing || !tf) return;
         for (const body of worldRef.current.bodies) {
           if (!body.mocap) continue;
           const object = state.objects.get(body.itemId);

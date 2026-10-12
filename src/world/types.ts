@@ -144,7 +144,8 @@ export interface PrimitiveParams {
     | "soccer_ball"
     | "step_stool"
     | "ladder"
-    | "bucket";
+    | "bucket"
+    | "person";
   color: Rgb;
 }
 

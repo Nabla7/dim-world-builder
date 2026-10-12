@@ -66,6 +66,7 @@ export const BUILT_IN: PaletteEntry[] = [
   primitive("step_stool", "Step stool", [0.5, 0.45, 0.5], PAINT.blue, "grid", "Clutter"),
   primitive("ladder", "Ladder (lying)", [2.4, 0.45, 0.06], PAINT.yellow, "list", "Clutter"),
   primitive("bucket", "Bucket", [0.32, 0.32, 0.38], PAINT.black, "fill", "Clutter"),
+  primitive("person", "Person", [0.45, 0.28, 1.72], PAINT.blue, "user", "Clutter"),
   {
     key: "build:room",
     title: "Room",

@@ -387,6 +387,33 @@ function ladderShapes(sx: number, sy: number, sz: number, color: Rgba): Shape[] 
   return shapes;
 }
 
+/** a standing person facing +x (so a mover with heading "path" walks forward): legs, torso, arms, head */
+function personShapes(sx: number, sy: number, sz: number, color: Rgba): Shape[] {
+  const skin: Rgba = [0.86, 0.69, 0.56, 1];
+  const trousers: Rgba = [color[0] * 0.45, color[1] * 0.45, color[2] * 0.5, 1];
+  const leg = sz * 0.46;
+  const legRadius = Math.min(sx, sy) * 0.22;
+  const torsoBottom = leg;
+  const torso = sz * 0.32;
+  const headRadius = sz * 0.065;
+  const shapes: Shape[] = [];
+  for (const side of [1, -1]) {
+    shapes.push(cylinderAlong("z", [0, side * sx * 0.2, leg / 2], legRadius, leg, trousers));
+    shapes.push(cylinderAlong("z", [0, side * (sx / 2 - legRadius * 0.6), torsoBottom + torso * 0.45], legRadius * 0.7, torso * 0.95, color));
+  }
+  shapes.push(box([0, 0, torsoBottom + torso / 2], [sy * 0.9, sx * 0.72, torso], color));
+  shapes.push(cylinderAlong("z", [0, 0, torsoBottom + torso + sz * 0.03], headRadius * 0.45, sz * 0.06, skin));
+  shapes.push({
+    type: "sphere",
+    pos: [0, 0, sz - headRadius],
+    quat: IDENTITY,
+    size: [headRadius],
+    rgba: skin,
+    role: "both",
+  });
+  return shapes;
+}
+
 /** an open-topped bucket / can: tapered walls you can see into, a solid cylinder to collide with */
 function bucketShapes(sx: number, sy: number, sz: number, color: Rgba): Shape[] {
   const r = Math.max(sx, sy) / 2;
@@ -464,6 +491,8 @@ function primitiveShapes(params: PrimitiveParams, scale: Vec3): Shape[] {
       return ladderShapes(sx, sy, sz, color);
     case "bucket":
       return bucketShapes(sx, sy, sz, color);
+    case "person":
+      return personShapes(sx, sy, sz, color);
     case "beanbag":
       return [
         {
@@ -661,6 +690,12 @@ function railings(
   return shapes;
 }
 
+/** a landing at height `top`: a solid block down to the floor, or with open risers a slab you can see and step under */
+function landingBox(p: StairsParams, center: [number, number], size: [number, number], top: number, color: Rgba): Shape {
+  const thick = p.openRisers ? Math.min(0.08, top) : top;
+  return box([center[0], center[1], top - thick / 2], [size[0], size[1], thick], color);
+}
+
 /** stairs; origin at the bottom of the first step's front edge, centered across */
 export function stairsShapes(p: StairsParams): Shape[] {
   const color = rgba(p.color);
@@ -676,11 +711,7 @@ export function stairsShapes(p: StairsParams): Shape[] {
     const offset = p.width + gap;
     const landing = p.width;
     const shapes = flight(p, first, 0, 0, 0, 1, color);
-    shapes.push(box(
-      [run1 + landing / 2, offset / 2, landingZ / 2],
-      [landing, p.width * 2 + gap, landingZ],
-      color,
-    ));
+    shapes.push(landingBox(p, [run1 + landing / 2, offset / 2], [landing, p.width * 2 + gap], landingZ, color));
     shapes.push(...flight(p, second, run1, offset, landingZ, -1, color));
     return shapes;
   }
@@ -692,7 +723,7 @@ export function stairsShapes(p: StairsParams): Shape[] {
     const landingZ = first * p.stepHeight;
     const side = p.turnDirection === "right" ? -1 : 1;
     const shapes = flight(p, first, 0, 0, 0, 1, color);
-    shapes.push(box([run1 + p.width / 2, 0, landingZ / 2], [p.width, p.width, landingZ], color));
+    shapes.push(landingBox(p, [run1 + p.width / 2, 0], [p.width, p.width], landingZ, color));
     shapes.push(...placeShapes(
       flight(p, second, 0, 0, 0, 1, color),
       side * Math.PI / 2,

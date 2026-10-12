@@ -13,33 +13,44 @@ const UPPER_SLAB = 0.3;
 
 type Segment = { x0: number; y0: number; x1: number; y1: number; height: number; floor: string; name: string };
 
-/** walls that end inside another wall's body are shortened to its face, so no two walls overlap */
+/**
+ * Closed joins with no overlap (lidar can't see through, the clip check stays quiet). Where two walls' ends meet (an L
+ * corner) the earlier wall runs on to the corner's outer face and the later one stops at its inner face; a wall ending
+ * against another wall's side (a T) stops at that face.
+ */
 function trimmed(walls: Segment[]): Segment[] {
+  const half = WALL / 2;
+  const ends = (w: Segment): [number, number][] => [[w.x0, w.y0], [w.x1, w.y1]];
   const inside = (w: Segment, x: number, y: number) => {
     const dx = w.x1 - w.x0;
     const dy = w.y1 - w.y0;
     const length = Math.hypot(dx, dy);
     const along = ((x - w.x0) * dx + (y - w.y0) * dy) / length;
     const across = Math.abs((x - w.x0) * dy - (y - w.y0) * dx) / length;
-    return along > -1e-6 && along < length + 1e-6 && across < WALL / 2 + 1e-6;
+    return along > -1e-6 && along < length + 1e-6 && across < half + 1e-6;
   };
-  return walls.map((w) => {
-    let { x0, y0, x1, y1 } = w;
-    const length = Math.hypot(x1 - x0, y1 - y0);
-    const ux = (x1 - x0) / length;
-    const uy = (y1 - y0) / length;
-    const others = walls.filter((o) => o !== w && o.floor === w.floor);
-    const cut = WALL / 2 + 0.01;
-    if (others.some((o) => inside(o, x0, y0))) {
-      x0 += ux * cut;
-      y0 += uy * cut;
-    }
-    if (others.some((o) => inside(o, x1, y1))) {
-      x1 -= ux * cut;
-      y1 -= uy * cut;
-    }
-    return { ...w, x0, y0, x1, y1 };
-  });
+  return walls.map((w, index) => {
+    const length = Math.hypot(w.x1 - w.x0, w.y1 - w.y0);
+    const ux = (w.x1 - w.x0) / length;
+    const uy = (w.y1 - w.y0) / length;
+    const others = walls.map((o, k) => ({ o, k })).filter(({ o }) => o !== w && o.floor === w.floor);
+    /** how far to move this end outward (+) or inward (-) */
+    const shift = (x: number, y: number): number => {
+      const corner = others.find(({ o }) => ends(o).some(([ex, ey]) => Math.hypot(ex - x, ey - y) < half));
+      if (corner) {
+        const { o } = corner;
+        const ol = Math.hypot(o.x1 - o.x0, o.y1 - o.y0);
+        const square = Math.abs(ux * (o.x1 - o.x0) / ol + uy * (o.y1 - o.y0) / ol) < 0.2;
+        // at a slanted join running on would poke through the other wall: meet it at its centerline instead
+        if (!square) return 0;
+        return corner.k > index ? half : -half;
+      }
+      return others.some(({ o }) => inside(o, x, y)) ? -half : 0;
+    };
+    const start = shift(w.x0, w.y0);
+    const end = shift(w.x1, w.y1);
+    return { ...w, x0: w.x0 - ux * start, y0: w.y0 - uy * start, x1: w.x1 + ux * end, y1: w.y1 + uy * end };
+  }).filter((w) => Math.hypot(w.x1 - w.x0, w.y1 - w.y0) > WALL); // a jog no longer than a wall is thick is already closed
 }
 
 function wallItem(w: Segment): Item {
@@ -318,6 +329,7 @@ export function office555(): Project {
     ...defaultStairs(),
     style: "turn",
     turnDirection: "right",
+    openRisers: true,
     steps: 24,
     stepHeight: UPPER_Z / 24,
     stepDepth: 0.22,
@@ -386,6 +398,20 @@ export function office555(): Project {
     }));
   }
 
+  // ── people walking around: kinematic movers (they push the robot, nothing pushes them) ──
+  const person = (name: string, floor: string, path: [number, number][], color: typeof PAINT.blue, speed: number, mode: "loop" | "pingpong") => ({
+    ...makeItem("primitive", { shape: "person", color }, {
+      name,
+      floor,
+      position: [path[0][0], path[0][1], 0],
+      scale: [0.45, 0.28, 1.72],
+    }),
+    mover: { waypoints: path.map(([x, y]) => [x, y, 0] as [number, number, number]), speed, mode, heading: "path" as const },
+  });
+  add(person("Walker A", ground, [[21, -8], [26, -8], [26, 10], [21, 10]], PAINT.blue, 1.1, "loop"));
+  add(person("Walker B", ground, [[12, -6], [19, -6]], PAINT.red, 0.9, "pingpong"));
+  add(person("Walker C", ground, [[12.5, 12], [22, 12]], PAINT.green, 1.0, "pingpong"));
+  add(person("Walker D", up, [[6.5, -1.2], [6.5, 6.6], [3.0, 6.6], [3.0, -1.2]], PAINT.orange, 0.8, "loop"));
   project.items = items;
   project.activeFloor = ground;
   project.spawns = [
