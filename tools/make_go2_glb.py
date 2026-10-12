@@ -28,7 +28,9 @@ def main() -> None:
         w, x, y, z = model.body_quat[body]
         matrix[:3, :3] = trimesh.transformations.quaternion_matrix([w, x, y, z])[:3, :3]
         matrix[:3, 3] = model.body_pos[body] if parent else [0, 0, 0]
-        scene.graph.update(frame_to=name, frame_from=names.get(parent, scene.graph.base_frame), matrix=matrix)
+        scene.graph.update(
+            frame_to=name, frame_from=names.get(parent, scene.graph.base_frame), matrix=matrix
+        )
     for geom in range(model.ngeom):
         if model.geom_type[geom] != mujoco.mjtGeom.mjGEOM_MESH or model.geom_group[geom] != 2:
             continue
@@ -41,12 +43,19 @@ def main() -> None:
         if model.geom_matid[geom] >= 0:
             rgba = model.mat_rgba[model.geom_matid[geom]]
         mesh = trimesh.Trimesh(vertices=vertices, faces=faces, process=False)
-        mesh.visual = trimesh.visual.ColorVisuals(mesh, face_colors=(np.clip(rgba, 0, 1) * 255).astype(np.uint8))
+        mesh.visual = trimesh.visual.ColorVisuals(
+            mesh, face_colors=(np.clip(rgba, 0, 1) * 255).astype(np.uint8)
+        )
         local = np.eye(4)
         w, x, y, z = model.geom_quat[geom]
         local[:3, :3] = trimesh.transformations.quaternion_matrix([w, x, y, z])[:3, :3]
         local[:3, 3] = model.geom_pos[geom]
-        scene.add_geometry(mesh, node_name=f"g{geom}", parent_node_name=names[int(model.geom_bodyid[geom])], transform=local)
+        scene.add_geometry(
+            mesh,
+            node_name=f"g{geom}",
+            parent_node_name=names[int(model.geom_bodyid[geom])],
+            transform=local,
+        )
     (out / "go2.glb").write_bytes(scene.export(file_type="glb"))
     joints = []
     for joint in range(model.njnt):
@@ -54,12 +63,14 @@ def main() -> None:
             continue
         body = int(model.jnt_bodyid[joint])
         w, x, y, z = model.body_quat[body]
-        joints.append({
-            "name": model.joint(joint).name,
-            "body": names[body],
-            "axis": model.jnt_axis[joint].tolist(),
-            "bodyQuat": [float(x), float(y), float(z), float(w)],
-        })
+        joints.append(
+            {
+                "name": model.joint(joint).name,
+                "body": names[body],
+                "axis": model.jnt_axis[joint].tolist(),
+                "bodyQuat": [float(x), float(y), float(z), float(w)],
+            }
+        )
     (out / "rig.json").write_text(json.dumps({"root": names[1], "joints": joints}, indent=2))
     print(out / "go2.glb", len(joints), "joints")
 
