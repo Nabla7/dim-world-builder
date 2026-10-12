@@ -70,7 +70,7 @@ function detailFor(name: string): Detail | null {
 // per detail: meters per texture tile, and how far it swings the color (+-)
 const DETAIL_LOOK: Record<Detail, { tile: number; strength: number }> = {
   wood: { tile: 0.6, strength: 0.32 },
-  fabric: { tile: 0.08, strength: 0.22 },
+  fabric: { tile: 0.16, strength: 0.25 },
   metal: { tile: 0.5, strength: 0.14 },
   stone: { tile: 0.7, strength: 0.3 },
 };
@@ -103,9 +103,11 @@ function detailTexture(kind: Detail): THREE.DataTexture {
       const u = x / n, v = y / n;
       let value = 0;
       if (kind === "wood") {
-        // grain: rings along u, bent by low noise, with fine streaks
-        const ring = Math.sin(2 * Math.PI * (v * 9 + noise(u, v) * 0.9));
-        value = 0.55 * ring * ring - 0.25 + 0.2 * (rows[y] - 0.5);
+        // grain: long, nearly straight lines along u, gently bent, with fine streaks between them
+        const line = Math.sin(
+          2 * Math.PI * (v * 12 + 0.25 * noise(u, v) + 0.08 * Math.sin(2 * Math.PI * u)),
+        );
+        value = 0.45 * line * line * line + 0.3 * (rows[y] - 0.5);
       } else if (kind === "fabric") {
         // a weave: alternating over/under threads plus a little fuzz
         const weave = ((x >> 1) + (y >> 1)) % 2 ? 0.18 : -0.18;
