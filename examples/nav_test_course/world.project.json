@@ -5,7 +5,16 @@
     {
       "id": "ground",
       "name": "Ground floor",
-      "elevation": 0
+      "elevation": 0,
+      "slab": {
+        "thickness": 1.5,
+        "sizeX": 60,
+        "sizeY": 60,
+        "center": [
+          0,
+          0
+        ]
+      }
     },
     {
       "id": "upper",
@@ -15,7 +24,7 @@
   ],
   "items": [
     {
-      "id": "fad9367ac8b0",
+      "id": "2b8bb3529474",
       "kind": "room",
       "params": {
         "width": 6,
@@ -58,7 +67,7 @@
       ]
     },
     {
-      "id": "543d4d7103ac",
+      "id": "ce1051f28340",
       "kind": "room",
       "params": {
         "width": 6,
@@ -101,7 +110,7 @@
       ]
     },
     {
-      "id": "8d94e7b88594",
+      "id": "8212d0ddd6e8",
       "kind": "primitive",
       "params": {
         "shape": "box",
@@ -131,7 +140,7 @@
       ]
     },
     {
-      "id": "c87379ba346e",
+      "id": "ddb24379e4b9",
       "kind": "primitive",
       "params": {
         "shape": "box",
@@ -178,13 +187,18 @@
       }
     },
     {
-      "id": "530064620d34",
+      "id": "7aa627c8dfbe",
       "kind": "stairs",
       "params": {
         "steps": 6,
         "stepHeight": 0.17,
         "stepDepth": 0.3,
         "width": 1.4,
+        "style": "straight",
+        "railing": "none",
+        "railingStyle": "posts",
+        "spiralTurn": 360,
+        "spiralCore": 0.1,
         "color": [
           0.62,
           0.62,
@@ -211,7 +225,7 @@
       ]
     },
     {
-      "id": "6bdc10cf2159",
+      "id": "08224ba8b550",
       "kind": "hill",
       "params": {
         "sizeX": 10,
@@ -249,7 +263,7 @@
       ]
     },
     {
-      "id": "0708b9794acb",
+      "id": "69fcf6a8fea3",
       "kind": "primitive",
       "params": {
         "shape": "cone",
@@ -279,7 +293,7 @@
       ]
     },
     {
-      "id": "a6e1584ec9fa",
+      "id": "cfdbb484ba9d",
       "kind": "primitive",
       "params": {
         "shape": "cone",
@@ -309,7 +323,7 @@
       ]
     },
     {
-      "id": "cb172a352b2f",
+      "id": "cab9218393af",
       "kind": "primitive",
       "params": {
         "shape": "beanbag",
@@ -339,7 +353,7 @@
       ]
     },
     {
-      "id": "1689093e6f83",
+      "id": "9b1322640248",
       "kind": "primitive",
       "params": {
         "shape": "ramp",
@@ -369,7 +383,7 @@
       ]
     },
     {
-      "id": "533952ffa148",
+      "id": "beb099eea77a",
       "kind": "primitive",
       "params": {
         "shape": "cylinder",

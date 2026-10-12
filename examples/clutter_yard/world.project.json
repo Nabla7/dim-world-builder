@@ -5,12 +5,21 @@
     {
       "id": "ground",
       "name": "Ground floor",
-      "elevation": 0
+      "elevation": 0,
+      "slab": {
+        "thickness": 1.5,
+        "sizeX": 60,
+        "sizeY": 60,
+        "center": [
+          0,
+          0
+        ]
+      }
     }
   ],
   "items": [
     {
-      "id": "0d0adccaea6f",
+      "id": "39921085a961",
       "kind": "primitive",
       "params": {
         "shape": "step_stool",
@@ -40,7 +49,7 @@
       ]
     },
     {
-      "id": "be71404c5996",
+      "id": "4d7992cd518d",
       "kind": "primitive",
       "params": {
         "shape": "pipe",
@@ -70,7 +79,7 @@
       ]
     },
     {
-      "id": "034e377d9e98",
+      "id": "5eec6c5afbee",
       "kind": "primitive",
       "params": {
         "shape": "soccer_ball",
@@ -100,7 +109,7 @@
       ]
     },
     {
-      "id": "5318a9ed5e50",
+      "id": "0b054f3547dd",
       "kind": "primitive",
       "params": {
         "shape": "step_stool",
@@ -130,7 +139,7 @@
       ]
     },
     {
-      "id": "e9ce49d62d90",
+      "id": "dfa43e1c5498",
       "kind": "primitive",
       "params": {
         "shape": "step_stool",
@@ -160,7 +169,7 @@
       ]
     },
     {
-      "id": "2ffde96d9f5d",
+      "id": "bccddbdeb8ef",
       "kind": "primitive",
       "params": {
         "shape": "pipe",
@@ -190,7 +199,7 @@
       ]
     },
     {
-      "id": "54b41612ec04",
+      "id": "c7282459d673",
       "kind": "primitive",
       "params": {
         "shape": "cone",
@@ -220,7 +229,7 @@
       ]
     },
     {
-      "id": "92054cc4621b",
+      "id": "c593228d5f03",
       "kind": "primitive",
       "params": {
         "shape": "step_stool",
@@ -250,7 +259,7 @@
       ]
     },
     {
-      "id": "ab15ccadd9b5",
+      "id": "6440bd1340a5",
       "kind": "primitive",
       "params": {
         "shape": "soccer_ball",
@@ -280,7 +289,7 @@
       ]
     },
     {
-      "id": "ed68720eb86f",
+      "id": "77fdd9dfe097",
       "kind": "primitive",
       "params": {
         "shape": "soccer_ball",
@@ -310,7 +319,7 @@
       ]
     },
     {
-      "id": "53545c2173ae",
+      "id": "8d0b8e2bf2d1",
       "kind": "primitive",
       "params": {
         "shape": "cone",
@@ -340,7 +349,7 @@
       ]
     },
     {
-      "id": "255bca010609",
+      "id": "4b78283f6294",
       "kind": "primitive",
       "params": {
         "shape": "bowling_pin",
@@ -370,7 +379,7 @@
       ]
     },
     {
-      "id": "408292835b5b",
+      "id": "f6fe7fe049ee",
       "kind": "primitive",
       "params": {
         "shape": "box",
@@ -400,7 +409,7 @@
       ]
     },
     {
-      "id": "5e791010e2c7",
+      "id": "932befaa9783",
       "kind": "primitive",
       "params": {
         "shape": "cone",
@@ -430,7 +439,7 @@
       ]
     },
     {
-      "id": "c3983f287112",
+      "id": "78aefe4fd435",
       "kind": "primitive",
       "params": {
         "shape": "ladder",
@@ -460,7 +469,7 @@
       ]
     },
     {
-      "id": "343210cf9dbb",
+      "id": "fa1c21afeb19",
       "kind": "primitive",
       "params": {
         "shape": "box",
@@ -490,7 +499,7 @@
       ]
     },
     {
-      "id": "a0324baacb81",
+      "id": "9f8c78cd3340",
       "kind": "primitive",
       "params": {
         "shape": "soccer_ball",
@@ -520,7 +529,7 @@
       ]
     },
     {
-      "id": "3832ffb2485d",
+      "id": "0a3596a5d4bb",
       "kind": "primitive",
       "params": {
         "shape": "cone",
@@ -550,7 +559,7 @@
       ]
     },
     {
-      "id": "7133f3a908f7",
+      "id": "6fd312009dbc",
       "kind": "primitive",
       "params": {
         "shape": "step_stool",
@@ -580,7 +589,7 @@
       ]
     },
     {
-      "id": "019b36897a90",
+      "id": "55a54f59614d",
       "kind": "primitive",
       "params": {
         "shape": "cone",
@@ -610,7 +619,7 @@
       ]
     },
     {
-      "id": "a4e0309168e6",
+      "id": "6764f1f22f5f",
       "kind": "primitive",
       "params": {
         "shape": "cone",
@@ -640,7 +649,7 @@
       ]
     },
     {
-      "id": "953752527fc1",
+      "id": "24c0b99afd09",
       "kind": "primitive",
       "params": {
         "shape": "bowling_pin",
@@ -670,7 +679,7 @@
       ]
     },
     {
-      "id": "48c80ac867c8",
+      "id": "cdc1876a9618",
       "kind": "primitive",
       "params": {
         "shape": "ladder",
@@ -700,13 +709,18 @@
       ]
     },
     {
-      "id": "4dde40da7894",
+      "id": "4c9ac6b88103",
       "kind": "stairs",
       "params": {
         "steps": 5,
         "stepHeight": 0.18,
         "stepDepth": 0.3,
         "width": 1.2,
+        "style": "straight",
+        "railing": "none",
+        "railingStyle": "posts",
+        "spiralTurn": 360,
+        "spiralCore": 0.1,
         "color": [
           0.62,
           0.62,
@@ -735,7 +749,7 @@
       ]
     },
     {
-      "id": "383861ea3e5e",
+      "id": "61b768d6f5d0",
       "kind": "primitive",
       "params": {
         "shape": "pipe",
