@@ -1,0 +1,10 @@
+result
+result-*
+.DS_Store
+/.data
+node_modules
+dist
+/backend/vendor
+cooker/.venv
+MUJOCO_LOG.TXT
+__pycache__

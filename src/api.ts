@@ -1,0 +1,59 @@
+// The app's own server (backend/main.ts), through relative URLs (Desktop serves the page at /apps/<name>/).
+import type { MeshAsset, Project } from "./world/types.ts";
+
+export async function json<T = unknown>(url: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(url, init);
+  const body = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new Error(body?.error ?? `${response.status} ${response.statusText}`);
+  }
+  return body as T;
+}
+
+const send = <T>(method: string, url: string, body: unknown) =>
+  json<T>(url, { method, headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+
+export const library = () => json<MeshAsset[]>("api/library");
+
+export const listProjects = () => json<{ projects: string[] }>("api/projects");
+export const loadProject = (name: string) => json<Project>(`api/internal/projects/${encodeURIComponent(name)}`);
+export const saveProject = (project: Project) =>
+  send<{ saved: string }>("PUT", `api/internal/projects/${encodeURIComponent(project.name)}`, project);
+
+export interface ExportResult {
+  dir: string;
+  name: string;
+  files: string[];
+  bodies: number;
+  movers: number;
+}
+export const exportWorld = (project: Project, parentDir: string) =>
+  send<ExportResult>("POST", "api/export", { project, parentDir });
+
+export const uploadVisual = (dir: string, glb: ArrayBuffer) =>
+  json<{ written: string }>(`api/internal/visual?dir=${encodeURIComponent(dir)}`, { method: "POST", body: glb });
+
+export interface DirListing {
+  path: string;
+  parent: string;
+  home: string;
+  dirs: string[];
+  error?: string;
+}
+export const listDirs = (path: string) => json<DirListing>(`api/internal/dirs?path=${encodeURIComponent(path)}`);
+
+export interface CookJob {
+  id: string;
+  name: string;
+  state: "running" | "done" | "failed";
+  stage: string;
+  progress: number;
+  log: string[];
+  asset?: MeshAsset;
+}
+export function startImport(file: File, name: string, height: number | null) {
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "glb";
+  const query = new URLSearchParams({ name, ext, ...(height ? { height: String(height) } : {}) });
+  return json<{ job: string }>(`api/internal/import?${query}`, { method: "POST", body: file });
+}
+export const importStatus = (job: string) => json<CookJob>(`api/internal/import/${job}`);

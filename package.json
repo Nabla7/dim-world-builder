@@ -1,0 +1,23 @@
+{
+  "name": "dim-world-builder",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "three": "0.180.0"
+  },
+  "devDependencies": {
+    "@dimos/msgs": "npm:@jsr/dimos__msgs@^0.1.4",
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.1.0",
+    "happy-dom": "^20.11.1",
+    "typescript": "~5.9.2",
+    "vite": "^7.1.0",
+    "vitest": "^3.2.4",
+    "@types/three": "0.180.0"
+  }
+}

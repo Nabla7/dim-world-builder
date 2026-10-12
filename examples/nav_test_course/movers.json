@@ -1,0 +1,23 @@
+{
+  "format": "dimos.movers.v1",
+  "movers": [
+    {
+      "body": "cart_39be9b",
+      "waypoints": [
+        [
+          1.4,
+          -14,
+          0
+        ],
+        [
+          1.4,
+          -10,
+          0
+        ]
+      ],
+      "speed": 0.4,
+      "mode": "pingpong",
+      "heading": "fixed"
+    }
+  ]
+}

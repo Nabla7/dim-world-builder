@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<!--
+  A dimOS Desktop app page. Desktop serves it at /apps/<name>/, so every URL is RELATIVE:
+    ../../dimos/...      the dimos gateway's API                        -> /dimos/...
+    ../../api/...        Desktop's own API                              -> /api/...
+    ../../apps/<other>/  another app's public (provides:) endpoints     -> /apps/<other>/...
+    api/...              this app's own server (backend/main.ts)        -> /apps/<name>/api/...
+  Every one of them is declared in dimos.yaml; Desktop refuses an undeclared call (a 403 + a notification),
+  and so is everything it does on zenoh (dimos.yaml `zenoh:`, spec v1.2).
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>World Builder</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

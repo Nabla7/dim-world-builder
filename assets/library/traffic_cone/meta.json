@@ -1,0 +1,39 @@
+{
+  "id": "traffic_cone",
+  "name": "Traffic Cone",
+  "category": "outdoor",
+  "size": [
+    0.56,
+    0.56,
+    0.7
+  ],
+  "base": "",
+  "visuals": [
+    {
+      "file": "visual_0.obj",
+      "rgba": [
+        0.7,
+        0.371,
+        0.187,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_1.obj",
+      "rgba": [
+        0.648,
+        0.648,
+        0.667,
+        1.0
+      ]
+    }
+  ],
+  "hulls": [
+    "hull_0.obj",
+    "hull_1.obj",
+    "hull_2.obj"
+  ],
+  "license": "CC0-1.0",
+  "source": "https://kenney.nl/assets/city-kit-roads",
+  "frame": "z-up"
+}

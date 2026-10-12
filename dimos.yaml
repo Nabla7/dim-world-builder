@@ -1,0 +1,41 @@
+# the app's contract with Desktop: https://github.com/jeff-hykin/dimos-desktop-mirror/blob/main/docs/create-apps/index.md
+title: Example (Deno)
+spec-version: v1.2
+uses:
+    "@dimos-gateway":
+        - GET /runs
+        - GET /msgs.js
+    "@desktop-gateway":
+        - POST /api/notifications
+    "@zenoh-gateway": ">=0.5 <0.6"
+    dim-controller:
+        - GET api/status
+# spec v1.2: what the page may do on zenoh, as zenoh's ACL config (the topic boxes take any topic of these types)
+zenoh:
+    default_permission: deny
+    read:
+        - id: odom
+          messages: [declare_subscriber, put] # subscribe, and receive its samples
+          key_exprs: ["dimos/**/geometry_msgs.PoseStamped"]
+          permission: allow
+    write:
+        - id: drive
+          messages: [put] # the cmd_vel publisher and its deadman
+          key_exprs: ["dimos/**/geometry_msgs.Twist"]
+          permission: allow
+provides:
+    description: "Example (Deno): a showcase dimOS app; it keeps a list of notes"
+    endpoints:
+        - method: GET
+          path: api/hello
+          description: Who this app is, what dimos is running right now, and how many notes it holds
+          role: context
+        - method: POST
+          path: api/notes
+          description: Add a note to the app's list (the person gets a notification)
+          params:
+              text:
+                  type: string
+                  description: the note
+    private:
+        - api/internal/*

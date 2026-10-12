@@ -1,0 +1,77 @@
+{
+  "id": "barrel",
+  "name": "Barrel",
+  "category": "storage",
+  "size": [
+    0.563,
+    0.563,
+    0.88
+  ],
+  "base": "",
+  "visuals": [
+    {
+      "file": "visual_0.obj",
+      "rgba": [
+        0.409,
+        0.066,
+        0.06,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_1.obj",
+      "rgba": [
+        0.344,
+        0.102,
+        0.08,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_2.obj",
+      "rgba": [
+        0.051,
+        0.02,
+        0.016,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_3.obj",
+      "rgba": [
+        0.375,
+        0.313,
+        0.205,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_4.obj",
+      "rgba": [
+        0.633,
+        0.552,
+        0.157,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_5.obj",
+      "rgba": [
+        0.432,
+        0.191,
+        0.176,
+        1.0
+      ]
+    }
+  ],
+  "hulls": [
+    "hull_0.obj",
+    "hull_1.obj",
+    "hull_2.obj",
+    "hull_3.obj",
+    "hull_4.obj"
+  ],
+  "license": "CC0-1.0",
+  "source": "https://polyhaven.com/a/Barrel_01",
+  "frame": "z-up"
+}

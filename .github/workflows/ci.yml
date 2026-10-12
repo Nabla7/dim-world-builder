@@ -1,0 +1,35 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.6.10 # dimos's pin for its cockpit (dimos/utils/deno.py)
+          cache: true
+      - run: deno fmt --check
+      - run: deno lint
+      - name: Deno install (validates deno.lock)
+        run: deno install --frozen
+      - run: deno task check
+      - run: deno task test
+      - run: deno task build
+      - name: dimos.yaml check
+        run: |
+          curl -fsSL -o dimos-desktop https://github.com/jeff-hykin/dimos-desktop-mirror/releases/latest/download/dimos-desktop-x86_64-unknown-linux-gnu
+          chmod +x dimos-desktop
+          ./dimos-desktop app check .
+  nix:
+    strategy:
+      fail-fast: false
+      matrix:
+        # x86_64-linux, aarch64-linux, aarch64-darwin: each has its own node_modules hash in flake.nix
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+      # what Desktop runs on install
+      - run: nix build .#dimosApp --print-build-logs

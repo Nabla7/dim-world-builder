@@ -1,0 +1,33 @@
+{
+  "nodeModulesDir": "auto",
+  "tasks": {
+    "dev": "deno run -A npm:vite",
+    "build": "deno run -A npm:vite build",
+    "test": "deno run -A npm:vitest run",
+    "check": "deno run -A npm:typescript/tsc --noEmit && deno check --config backend/deno.json backend/main.ts",
+    "serve": "deno run -A --watch backend/main.ts --port 8787",
+    "vendor-dimos-react": "deno run -A --no-lock tools/vendor_dimos_react.ts"
+  },
+  "fmt": {
+    "lineWidth": 100,
+    "exclude": [
+      "dist/",
+      "icon.svg",
+      "dimos.yaml",
+      "src/dim-app/",
+      "src/vendor/dimos-react/"
+    ]
+  },
+  "lint": {
+    "exclude": [
+      "dist/",
+      "src/dim-app/",
+      "src/vendor/dimos-react/"
+    ],
+    "rules": {
+      "tags": [
+        "recommended"
+      ]
+    }
+  }
+}

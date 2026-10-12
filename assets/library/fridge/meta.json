@@ -1,0 +1,46 @@
+{
+  "id": "fridge",
+  "name": "Fridge",
+  "category": "appliances",
+  "size": [
+    1.0174,
+    0.7935,
+    1.8
+  ],
+  "base": "",
+  "visuals": [
+    {
+      "file": "visual_0.obj",
+      "rgba": [
+        0.972,
+        0.991,
+        0.981,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_1.obj",
+      "rgba": [
+        0.641,
+        0.713,
+        0.713,
+        1.0
+      ]
+    }
+  ],
+  "hulls": [
+    "hull_0.obj",
+    "hull_1.obj",
+    "hull_2.obj",
+    "hull_3.obj",
+    "hull_4.obj",
+    "hull_5.obj",
+    "hull_6.obj",
+    "hull_7.obj",
+    "hull_8.obj",
+    "hull_9.obj"
+  ],
+  "license": "CC0-1.0",
+  "source": "https://kenney.nl/assets/furniture-kit",
+  "frame": "z-up"
+}

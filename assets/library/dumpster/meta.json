@@ -1,0 +1,83 @@
+{
+  "id": "dumpster",
+  "name": "Dumpster",
+  "category": "outdoor",
+  "size": [
+    1.7069,
+    2.2966,
+    1.3
+  ],
+  "base": "",
+  "visuals": [
+    {
+      "file": "visual_0.obj",
+      "rgba": [
+        0.222,
+        0.233,
+        0.28,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_1.obj",
+      "rgba": [
+        0.137,
+        0.426,
+        0.319,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_2.obj",
+      "rgba": [
+        0.094,
+        0.382,
+        0.297,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_3.obj",
+      "rgba": [
+        0.203,
+        0.492,
+        0.351,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_4.obj",
+      "rgba": [
+        0.584,
+        0.584,
+        0.626,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_5.obj",
+      "rgba": [
+        0.674,
+        0.674,
+        0.684,
+        1.0
+      ]
+    }
+  ],
+  "hulls": [
+    "hull_0.obj",
+    "hull_1.obj",
+    "hull_2.obj",
+    "hull_3.obj",
+    "hull_4.obj",
+    "hull_5.obj",
+    "hull_6.obj",
+    "hull_7.obj",
+    "hull_8.obj",
+    "hull_9.obj",
+    "hull_10.obj"
+  ],
+  "license": "CC0-1.0",
+  "source": "https://kenney.nl/assets/city-kit-roads",
+  "frame": "z-up"
+}

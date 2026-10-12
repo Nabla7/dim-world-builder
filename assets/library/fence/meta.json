@@ -1,0 +1,42 @@
+{
+  "id": "fence",
+  "name": "Wooden Fence",
+  "category": "structure",
+  "size": [
+    0.9662,
+    0.0827,
+    1.0
+  ],
+  "base": "",
+  "visuals": [
+    {
+      "file": "visual_0.obj",
+      "rgba": [
+        0.547,
+        0.318,
+        0.22,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_1.obj",
+      "rgba": [
+        0.6,
+        0.361,
+        0.255,
+        1.0
+      ]
+    }
+  ],
+  "hulls": [
+    "hull_0.obj",
+    "hull_1.obj",
+    "hull_2.obj",
+    "hull_3.obj",
+    "hull_4.obj",
+    "hull_5.obj"
+  ],
+  "license": "CC0-1.0",
+  "source": "https://kenney.nl/assets/survival-kit",
+  "frame": "z-up"
+}

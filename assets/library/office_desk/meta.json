@@ -1,0 +1,57 @@
+{
+  "id": "office_desk",
+  "name": "Metal Office Desk",
+  "category": "furniture",
+  "size": [
+    2.0,
+    0.9472,
+    0.7875
+  ],
+  "base": "",
+  "visuals": [
+    {
+      "file": "visual_0.obj",
+      "rgba": [
+        0.225,
+        0.227,
+        0.234,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_1.obj",
+      "rgba": [
+        0.191,
+        0.192,
+        0.198,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_2.obj",
+      "rgba": [
+        0.449,
+        0.445,
+        0.455,
+        1.0
+      ]
+    }
+  ],
+  "hulls": [
+    "hull_0.obj",
+    "hull_1.obj",
+    "hull_2.obj",
+    "hull_3.obj",
+    "hull_4.obj",
+    "hull_5.obj",
+    "hull_6.obj",
+    "hull_7.obj",
+    "hull_8.obj",
+    "hull_9.obj",
+    "hull_10.obj",
+    "hull_11.obj"
+  ],
+  "license": "CC0-1.0",
+  "source": "https://polyhaven.com/a/metal_office_desk",
+  "frame": "z-up"
+}

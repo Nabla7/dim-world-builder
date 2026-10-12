@@ -1,0 +1,70 @@
+{
+  "id": "cardboard_box",
+  "name": "Cardboard Box",
+  "category": "storage",
+  "size": [
+    0.4,
+    0.8,
+    0.4
+  ],
+  "base": "",
+  "visuals": [
+    {
+      "file": "visual_0.obj",
+      "rgba": [
+        0.562,
+        0.33,
+        0.23,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_1.obj",
+      "rgba": [
+        0.634,
+        0.391,
+        0.277,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_2.obj",
+      "rgba": [
+        0.501,
+        0.28,
+        0.191,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_3.obj",
+      "rgba": [
+        0.572,
+        0.365,
+        0.257,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_4.obj",
+      "rgba": [
+        0.653,
+        0.506,
+        0.402,
+        1.0
+      ]
+    }
+  ],
+  "hulls": [
+    "hull_0.obj",
+    "hull_1.obj",
+    "hull_2.obj",
+    "hull_3.obj",
+    "hull_4.obj",
+    "hull_5.obj",
+    "hull_6.obj"
+  ],
+  "license": "CC0-1.0",
+  "source": "https://kenney.nl/assets/survival-kit",
+  "frame": "z-up"
+}

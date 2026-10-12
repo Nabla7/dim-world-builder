@@ -1,0 +1,158 @@
+{
+  "format": "dimos.scene.v1",
+  "id": "nav_test_course",
+  "entities": {
+    "lab_room_651fdf": {
+      "body": "lab_room_651fdf",
+      "label": "Lab room",
+      "kind": "room",
+      "movable": false
+    },
+    "upper_room_b7931f": {
+      "body": "upper_room_b7931f",
+      "label": "Upper room",
+      "kind": "room",
+      "movable": false
+    },
+    "crate_d8db0e": {
+      "body": "crate_d8db0e",
+      "label": "Crate",
+      "kind": "box",
+      "movable": false
+    },
+    "cart_39be9b": {
+      "body": "cart_39be9b",
+      "label": "Cart",
+      "kind": "box",
+      "movable": false
+    },
+    "stairs_6b1787": {
+      "body": "stairs_6b1787",
+      "label": "Stairs",
+      "kind": "stairs",
+      "movable": false
+    },
+    "hill_ebc61a": {
+      "body": "hill_ebc61a",
+      "label": "Hill",
+      "kind": "hill",
+      "movable": false
+    },
+    "cone_a_b309b9": {
+      "body": "cone_a_b309b9",
+      "label": "Cone A",
+      "kind": "cone",
+      "movable": false
+    },
+    "cone_b_7081e6": {
+      "body": "cone_b_7081e6",
+      "label": "Cone B",
+      "kind": "cone",
+      "movable": false
+    },
+    "beanbag_b8077d": {
+      "body": "beanbag_b8077d",
+      "label": "Beanbag",
+      "kind": "beanbag",
+      "movable": false
+    },
+    "ramp_d86e63": {
+      "body": "ramp_d86e63",
+      "label": "Ramp",
+      "kind": "ramp",
+      "movable": false
+    },
+    "pillar_7eb0ac": {
+      "body": "pillar_7eb0ac",
+      "label": "Pillar",
+      "kind": "cylinder",
+      "movable": false
+    }
+  },
+  "spawns": {
+    "default": {
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "orientation": [
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    "wall_lane": {
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "orientation": [
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    "box_lane": {
+      "position": [
+        0,
+        -6,
+        0
+      ],
+      "orientation": [
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    "mover_lane": {
+      "position": [
+        0,
+        -12,
+        0
+      ],
+      "orientation": [
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    "stairs_lane": {
+      "position": [
+        0,
+        6,
+        0
+      ],
+      "orientation": [
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    "upstairs": {
+      "position": [
+        5.5,
+        0,
+        3
+      ],
+      "orientation": [
+        0,
+        0,
+        0,
+        1
+      ]
+    }
+  },
+  "hidden_geom_groups": [
+    3
+  ],
+  "provenance": {
+    "tool": "dim-world-builder"
+  }
+}

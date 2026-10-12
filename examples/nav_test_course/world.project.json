@@ -1,0 +1,455 @@
+{
+  "format": "dim-world-builder.project.v1",
+  "name": "nav_test_course",
+  "floors": [
+    {
+      "id": "ground",
+      "name": "Ground floor",
+      "elevation": 0
+    },
+    {
+      "id": "upper",
+      "name": "Upper floor",
+      "elevation": 3
+    }
+  ],
+  "items": [
+    {
+      "id": "651fdfb03c9b",
+      "kind": "room",
+      "params": {
+        "width": 6,
+        "depth": 5,
+        "height": 2.8,
+        "wallThickness": 0.15,
+        "floor": false,
+        "ceiling": true,
+        "doors": [
+          {
+            "wall": "south",
+            "offset": 0,
+            "width": 1.2,
+            "height": 2.1
+          }
+        ],
+        "color": [
+          0.82,
+          0.8,
+          0.76
+        ]
+      },
+      "name": "Lab room",
+      "floor": "ground",
+      "position": [
+        5.5,
+        0,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "b7931fe45257",
+      "kind": "room",
+      "params": {
+        "width": 6,
+        "depth": 5,
+        "height": 2.8,
+        "wallThickness": 0.15,
+        "floor": true,
+        "ceiling": false,
+        "doors": [
+          {
+            "wall": "east",
+            "offset": 0,
+            "width": 1,
+            "height": 2.1
+          }
+        ],
+        "color": [
+          0.82,
+          0.8,
+          0.76
+        ]
+      },
+      "name": "Upper room",
+      "floor": "upper",
+      "position": [
+        5.5,
+        0,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "d8db0e9ef3d6",
+      "kind": "primitive",
+      "params": {
+        "shape": "box",
+        "color": [
+          0.6,
+          0.45,
+          0.3
+        ]
+      },
+      "name": "Crate",
+      "floor": "ground",
+      "position": [
+        2.3,
+        -6,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.6,
+        0.8,
+        0.6
+      ]
+    },
+    {
+      "id": "39be9bb26bc1",
+      "kind": "primitive",
+      "params": {
+        "shape": "box",
+        "color": [
+          0.95,
+          0.45,
+          0.1
+        ]
+      },
+      "name": "Cart",
+      "floor": "ground",
+      "position": [
+        1.4,
+        -14,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.6,
+        0.6,
+        0.5
+      ],
+      "mover": {
+        "waypoints": [
+          [
+            1.4,
+            -14,
+            0
+          ],
+          [
+            1.4,
+            -10,
+            0
+          ]
+        ],
+        "speed": 0.4,
+        "mode": "pingpong",
+        "heading": "fixed"
+      }
+    },
+    {
+      "id": "6b17879a5934",
+      "kind": "stairs",
+      "params": {
+        "steps": 6,
+        "stepHeight": 0.17,
+        "stepDepth": 0.3,
+        "width": 1.4,
+        "color": [
+          0.62,
+          0.62,
+          0.6
+        ]
+      },
+      "name": "Stairs",
+      "floor": "ground",
+      "position": [
+        1.5,
+        6,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "ebc61a0cd2cb",
+      "kind": "hill",
+      "params": {
+        "sizeX": 10,
+        "sizeY": 10,
+        "amplitude": 0.35,
+        "roughness": 0.45,
+        "frequency": 2,
+        "octaves": 4,
+        "seed": 7,
+        "resolution": 64,
+        "edgeFade": true,
+        "color": [
+          0.38,
+          0.52,
+          0.3
+        ]
+      },
+      "name": "Hill",
+      "floor": "ground",
+      "position": [
+        -10,
+        0,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "b309b996f806",
+      "kind": "primitive",
+      "params": {
+        "shape": "cone",
+        "color": [
+          0.95,
+          0.45,
+          0.1
+        ]
+      },
+      "name": "Cone A",
+      "floor": "ground",
+      "position": [
+        -2,
+        2,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.35,
+        0.35,
+        0.5
+      ]
+    },
+    {
+      "id": "7081e6d1bab8",
+      "kind": "primitive",
+      "params": {
+        "shape": "cone",
+        "color": [
+          0.95,
+          0.45,
+          0.1
+        ]
+      },
+      "name": "Cone B",
+      "floor": "ground",
+      "position": [
+        -2,
+        -2,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.35,
+        0.35,
+        0.5
+      ]
+    },
+    {
+      "id": "b8077d7407a6",
+      "kind": "primitive",
+      "params": {
+        "shape": "beanbag",
+        "color": [
+          0.75,
+          0.2,
+          0.2
+        ]
+      },
+      "name": "Beanbag",
+      "floor": "ground",
+      "position": [
+        4.5,
+        1.2,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.9,
+        0.9,
+        0.6
+      ]
+    },
+    {
+      "id": "d86e6316473d",
+      "kind": "primitive",
+      "params": {
+        "shape": "ramp",
+        "color": [
+          0.35,
+          0.38,
+          0.42
+        ]
+      },
+      "name": "Ramp",
+      "floor": "ground",
+      "position": [
+        -4,
+        -8,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0.7071067811865475,
+        0.7071067811865476
+      ],
+      "scale": [
+        2,
+        1.2,
+        0.25
+      ]
+    },
+    {
+      "id": "7eb0ac6d26f4",
+      "kind": "primitive",
+      "params": {
+        "shape": "cylinder",
+        "color": [
+          0.25,
+          0.45,
+          0.8
+        ]
+      },
+      "name": "Pillar",
+      "floor": "ground",
+      "position": [
+        6.5,
+        -1,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.4,
+        0.4,
+        2.8
+      ]
+    }
+  ],
+  "spawns": [
+    {
+      "name": "wall_lane",
+      "floor": "ground",
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "yaw": 0
+    },
+    {
+      "name": "box_lane",
+      "floor": "ground",
+      "position": [
+        0,
+        -6,
+        0
+      ],
+      "yaw": 0
+    },
+    {
+      "name": "mover_lane",
+      "floor": "ground",
+      "position": [
+        0,
+        -12,
+        0
+      ],
+      "yaw": 0
+    },
+    {
+      "name": "stairs_lane",
+      "floor": "ground",
+      "position": [
+        0,
+        6,
+        0
+      ],
+      "yaw": 0
+    },
+    {
+      "name": "upstairs",
+      "floor": "upper",
+      "position": [
+        5.5,
+        0,
+        0
+      ],
+      "yaw": 0
+    }
+  ],
+  "activeFloor": "ground"
+}

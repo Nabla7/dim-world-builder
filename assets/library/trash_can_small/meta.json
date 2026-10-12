@@ -1,0 +1,39 @@
+{
+  "id": "trash_can_small",
+  "name": "Small Trash Can",
+  "category": "clutter",
+  "size": [
+    0.2913,
+    0.3283,
+    0.6
+  ],
+  "base": "",
+  "visuals": [
+    {
+      "file": "visual_0.obj",
+      "rgba": [
+        0.876,
+        0.918,
+        0.926,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_1.obj",
+      "rgba": [
+        0.589,
+        0.656,
+        0.656,
+        1.0
+      ]
+    }
+  ],
+  "hulls": [
+    "hull_0.obj",
+    "hull_1.obj",
+    "hull_2.obj"
+  ],
+  "license": "CC0-1.0",
+  "source": "https://kenney.nl/assets/furniture-kit",
+  "frame": "z-up"
+}

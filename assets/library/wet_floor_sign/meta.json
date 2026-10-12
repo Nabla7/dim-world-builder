@@ -1,0 +1,44 @@
+{
+  "id": "wet_floor_sign",
+  "name": "Wet Floor Sign",
+  "category": "clutter",
+  "size": [
+    0.3001,
+    0.3585,
+    0.6295
+  ],
+  "base": "",
+  "visuals": [
+    {
+      "file": "visual_0.obj",
+      "rgba": [
+        0.565,
+        0.524,
+        0.132,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_1.obj",
+      "rgba": [
+        0.538,
+        0.519,
+        0.199,
+        1.0
+      ]
+    }
+  ],
+  "hulls": [
+    "hull_0.obj",
+    "hull_1.obj",
+    "hull_2.obj",
+    "hull_3.obj",
+    "hull_4.obj",
+    "hull_5.obj",
+    "hull_6.obj",
+    "hull_7.obj"
+  ],
+  "license": "CC0-1.0",
+  "source": "https://polyhaven.com/a/WetFloorSign_01",
+  "frame": "z-up"
+}
