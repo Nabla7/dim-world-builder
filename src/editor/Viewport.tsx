@@ -815,8 +815,8 @@ function Gizmo() {
       updateItem(item.id, (current) => {
         let next: Item = {
           ...current,
-          // never below the floor it stands on
-          position: [object.position.x, object.position.y, Math.max(0, object.position.z - lift)]
+          // below the floor is allowed (a sunken pit, a basement step): no snapping back up
+          position: [object.position.x, object.position.y, object.position.z - lift]
             .map((v) => Math.round(v * 1000) / 1000) as Vec3,
           rotation: object.quaternion.toArray() as Quat,
         };

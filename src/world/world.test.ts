@@ -24,6 +24,7 @@ import { testCourse } from "./examples.ts";
 import { keyedProject } from "./keys.ts";
 import { barCenters, grateShapes } from "./geometry.ts";
 import { defaultGrate } from "./defaults.ts";
+import { climbing, openingAbove } from "./stairs_fit.ts";
 import { cameraLookAt } from "./geometry.ts";
 
 describe("rooms", () => {
@@ -336,5 +337,33 @@ describe("moverPose", () => {
     const back = moverPose({ ...mover, mode: "pingpong" }, 9)!.position;
     expect(back[0]).toBeCloseTo(4);
     expect(back[1]).toBeCloseTo(1);
+  });
+});
+
+describe("stairs between floors", () => {
+  it("climb the whole rise in equal steps no taller than 19 cm", () => {
+    const p = climbing({ ...defaultStairs() }, 3);
+    expect(p.steps).toBe(16);
+    expect(p.steps * p.stepHeight).toBeCloseTo(3, 3);
+  });
+  it("cut an opening in the floor above that covers their footprint", () => {
+    const stairs = makeItem("stairs", climbing(defaultStairs(), 3), {
+      name: "Stairs",
+      floor: "ground",
+      position: [1, 2, 0],
+    });
+    const above = {
+      id: "up",
+      name: "Up",
+      elevation: 3,
+      slab: { thickness: 0.2, sizeX: 20, sizeY: 20, center: [0, 0] as [number, number] },
+    };
+    const hole = openingAbove(stairs, above);
+    expect(hole.floor).toBe("up");
+    expect(hole.params.depth).toBe(0.2);
+    // a straight flight runs along +x from its origin: 16 steps of 0.3 m
+    expect(hole.position[0]).toBeCloseTo(1 + 4.8 / 2, 1);
+    expect(hole.params.sizeX).toBeGreaterThanOrEqual(4.8);
+    expect(hole.params.sizeY).toBeGreaterThanOrEqual(1.2);
   });
 });

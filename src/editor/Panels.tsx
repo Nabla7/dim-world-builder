@@ -24,6 +24,7 @@ import {
 } from "../ui.ts";
 import { defaultGrate, PAINT } from "../world/defaults.ts";
 import { openingPreset } from "../world/geometry.ts";
+import { climbing, floorAbove, openingAbove } from "../world/stairs_fit.ts";
 import { slug } from "../world/keys.ts";
 import type {
   AprilTagParams,
@@ -48,6 +49,7 @@ import {
   addItem,
   addItems,
   duplicateItem,
+  getState,
   removeFloor,
   removeItem,
   removeView,
@@ -99,8 +101,16 @@ export function AddPanel({ assets, onImport }: { assets: MeshAsset[]; onImport: 
       view.center[1],
       view.surfaceAt(view.center[0], view.center[1]),
     ];
-    if (entry.makeMany) addItems(entry.makeMany(floor, at));
-    else addItem(entry.make(floor, at));
+    if (entry.makeMany) return addItems(entry.makeMany(floor, at));
+    const item = entry.make(floor, at);
+    // stairs added under another floor climb all the way to it
+    const { floors } = getState().project;
+    const above = item.kind === "stairs" ? floorAbove(floors, floor) : undefined;
+    const here = floors.find((f) => f.id === floor);
+    if (item.kind === "stairs" && above && here) {
+      item.params = climbing(item.params, above.elevation - here.elevation);
+    }
+    addItem(item);
   };
   return (
     <div style={section} data-testid="add-panel">
@@ -402,14 +412,51 @@ function Range({ label, value, min, max, step, unit, onChange }: {
 
 function StairsEditor({ item }: { item: Extract<Item, { kind: "stairs" }> }) {
   const p = item.params;
+  const floors = useEditor((s) => s.project.floors);
+  const items = useEditor((s) => s.project.items);
   const set = (change: Partial<StairsParams>) =>
     updateItem(
       item.id,
       (i) => ({ ...i, params: { ...p, ...change } } as Item),
       `stairs-${item.id}`,
     );
+  const here = floors.find((f) => f.id === item.floor);
+  const above = floorAbove(floors, item.floor);
+  const rise = above && here ? above.elevation - here.elevation - item.position[2] : 0;
+  const climbs = Math.abs(p.steps * p.stepHeight - rise) < 0.01;
+  const opened = above &&
+    items.some((i) =>
+      i.kind === "hole" && i.floor === above.id && i.name === `Opening for ${item.name}`
+    );
   return (
     <>
+      {above && (
+        <>
+          <Text small muted>
+            Climbs {(p.steps * p.stepHeight).toFixed(2)} m; {above.name} is {rise.toFixed(2)} m up.
+          </Text>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            <Button
+              size="sm"
+              icon="arrow-up"
+              disabled={climbs}
+              data-testid="stairs-reach"
+              onClick={() => set(climbing(p, rise))}
+            >
+              Reach {above.name}
+            </Button>
+            <Button
+              size="sm"
+              icon="minus"
+              disabled={Boolean(opened) || !above.slab}
+              data-testid="stairs-opening"
+              onClick={() => addItems([openingAbove(item, above)])}
+            >
+              {opened ? "Opening cut above" : `Cut an opening in ${above.name}`}
+            </Button>
+          </div>
+        </>
+      )}
       <Range
         label="Step height"
         value={p.stepHeight}
