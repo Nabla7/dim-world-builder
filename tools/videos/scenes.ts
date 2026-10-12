@@ -23,6 +23,12 @@ async function fresh(demo: Demo, name: string) {
   await demo.lookAt([2, 0, 0.4], [-2.5, -6.5, 4.5]);
 }
 
+/** open a saved world from the Open menu */
+async function openWorld(demo: Demo, name: string) {
+  await demo.app.selectOption("[data-testid=open-world]", { label: name });
+  await demo.page.waitForTimeout(2500);
+}
+
 async function addFromPalette(demo: Demo, key: string, search?: string) {
   if (search) {
     await demo.app.locator("[data-testid=add-panel] input").first().fill(search);
@@ -192,8 +198,7 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
     await demo.say("The palette: shapes, clutter, builders and a CC0 model library", 800);
     const sidebar = demo.app.locator("[data-testid=sidebar]");
     const box = await sidebar.boundingBox();
-    const [ox, oy] = await demo.offset();
-    await demo.moveTo(ox + (box?.x ?? 0) + 150, oy + (box?.y ?? 0) + 400);
+    await demo.moveTo((box?.x ?? 0) + 150, (box?.y ?? 0) + 400);
     for (let i = 0; i < 26; i++) {
       await demo.page.mouse.wheel(0, 160);
       await demo.page.waitForTimeout(140);
@@ -286,8 +291,7 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
       const row = group.locator("xpath=..");
       const box = await row.locator(`text="${wall}"`).first().boundingBox();
       if (box) {
-        const [ox, oy] = await demo.offset();
-        await demo.moveTo(ox + box.x + box.width / 2, oy + box.y + box.height / 2, 15);
+        await demo.moveTo(box.x + box.width / 2, box.y + box.height / 2, 15);
         await demo.page.mouse.down();
         await demo.page.mouse.up();
         await demo.page.waitForTimeout(600);
@@ -401,49 +405,64 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
   },
 
   async "9_viewer_mode"(demo) {
-    // open the test course, export it from the app, run a simulated Go2 in the export, watch it in Viewer mode
-    await demo.app.selectOption("[data-testid=open-world]", { label: "Example: nav test course" });
-    await demo.page.waitForTimeout(1500);
-    await demo.say("Export the world for dimos", 600);
+    // the playground (made with the CLI: dwb generate --kind playground), exported from the app, then a simulated Go2
+    // driven through its nav test by verify/nav_eval.py while the app watches in Viewer mode
+    await openWorld(demo, "playground");
+    await demo.say("The playground world, generated with the dwb CLI", 1500);
     await demo.click("[data-testid=export]", 800);
     await demo.click("[data-testid=export-go]");
     await demo.app.waitForSelector("[data-testid=export-result]", { timeout: 60000 });
-    const dir = (await demo.app.locator("[data-testid=export-result] b").first().textContent())!
-      .trim();
-    await demo.say(`Exported to ${dir}`, 2500);
+    const dir = (await demo.app.locator("[data-testid=export-result] b").first().textContent())!.trim();
+    await demo.say(`Exported to ${dir}`, 2000);
     await demo.clickText("Done");
     const python = flag("python") ?? `${Deno.env.get("HOME")}/repos/dimos_sim2/.venv/bin/python`;
     const sim = new Deno.Command(python, {
       args: [
-        new URL("../../verify/drive_go2.py", import.meta.url).pathname,
+        new URL("../../verify/nav_eval.py", import.meta.url).pathname,
         dir,
-        "--only",
-        "wall,mover",
+        "--blueprint",
+        "unitree-go2-freewalk",
+        "--report",
+        `${outDir}/playground_nav_eval.json`,
       ],
       env: { PYTHONPATH: "" },
       stdout: "null",
       stderr: "null",
     }).spawn();
     try {
-      await demo.say("A simulated Go2 (dimos sim2) starts in the exported world…", 400);
-      await demo.click("[data-testid=mode] >> text=Viewer", 500);
-      await demo.lookAt([2, -3, 0], [-6, -14, 7]);
-      await demo.say(
-        "Viewer mode: the world lit and shadowed, the robot and moving cart live from the blueprint",
-        9000,
-      );
-      await demo.say("The Go2 walks into the room's wall: it stops there", 12000);
-      await demo.lookAt([1, -12, 0], [-4, -19, 5]);
-      await demo.say("The cart rides its path and shoves the Go2 aside", 4000);
-      await demo.click(
-        "[data-testid=viewer-overlay] [role=switch], [data-testid=viewer-overlay] input[type=checkbox]",
-        500,
-      );
+      await demo.say("nav_eval.py starts a simulated Go2 (dimos sim2) in the export and walks its mapping path…", 400);
+      await demo.click('[data-testid=mode] >> text="Viewer"', 500);
+      await demo.lookAt([-4, -2, 0], [-16, -18, 12]);
+      await demo.say("Viewer mode: the world lit and shadowed; the Go2 and the moving cart and drum live from the sim", 15000);
+      await demo.say("The drum circles the building; the cart rides the corridor", 12000);
+      await demo.click("[data-testid=viewer-overlay] label", 500);
       await demo.say("With the robot's lidar on", 15000);
+      await demo.lookAt([2, 2, 0], [-10, -12, 9]);
+      await demo.say("Walking the mapping path before the goals", 20000);
     } finally {
       sim.kill("SIGINT");
       await sim.status;
     }
+  },
+
+  async "0_playground_tour"(demo) {
+    await openWorld(demo, "playground");
+    await demo.say("A playground made in one command: dwb generate --kind playground", 2500);
+    const shots: [[number, number, number], [number, number, number], string][] = [
+      [[0, 0, 1], [-14, -16, 12], "A two-floor building: a lab downstairs, an office upstairs, stairs up its side"],
+      [[0, 0, 1.5], [-3.5, -2.5, 2.2], "Inside the lab: furniture from the library, AprilTags on the walls, windows"],
+      [[4, 12, 1], [-6, 6, 6], "A corridor with a cart riding through it"],
+      [[-12, 10, 1.5], [-17, 4, 5], "A spiral stair tower"],
+      [[-16, -12, 0], [-24, -22, 9], "A bumpy hill, clutter fields, pits"],
+      [[13, -13, 1], [8, -19, 5], "A switchback with cable railings"],
+    ];
+    for (const [target, from, caption] of shots) {
+      await demo.lookAt(target, from);
+      await demo.say(caption, 3500);
+    }
+    await demo.clickText("Nav test");
+    await demo.lookAt([2, 0, 0], [-10, -18, 18]);
+    await demo.say("Its nav test: a mapping walk (dashed), then three goals (flags)", 4000);
   },
 };
 

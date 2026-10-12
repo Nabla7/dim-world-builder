@@ -1,0 +1,82 @@
+{
+  "id": "vending_machine",
+  "name": "Vending Machine",
+  "category": "furniture",
+  "size": [
+    1.2,
+    1.14,
+    1.8
+  ],
+  "base": "",
+  "visuals": [
+    {
+      "file": "visual_0.obj",
+      "rgba": [
+        0.294,
+        0.309,
+        0.374,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_1.obj",
+      "rgba": [
+        0.636,
+        0.264,
+        0.195,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_2.obj",
+      "rgba": [
+        0.388,
+        0.404,
+        0.482,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_3.obj",
+      "rgba": [
+        0.251,
+        0.267,
+        0.333,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_4.obj",
+      "rgba": [
+        0.582,
+        0.588,
+        0.641,
+        1.0
+      ]
+    }
+  ],
+  "hulls": [
+    "hull_0.obj",
+    "hull_1.obj",
+    "hull_2.obj",
+    "hull_3.obj",
+    "hull_4.obj",
+    "hull_5.obj",
+    "hull_6.obj",
+    "hull_7.obj",
+    "hull_8.obj",
+    "hull_9.obj",
+    "hull_10.obj",
+    "hull_11.obj",
+    "hull_12.obj",
+    "hull_13.obj",
+    "hull_14.obj",
+    "hull_15.obj",
+    "hull_16.obj",
+    "hull_17.obj",
+    "hull_18.obj"
+  ],
+  "license": "CC0-1.0",
+  "source": "https://kenney.nl/assets/mini-arcade",
+  "frame": "z-up"
+}

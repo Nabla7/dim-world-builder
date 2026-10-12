@@ -3,8 +3,8 @@
   "name": "Pile of Books",
   "category": "clutter",
   "size": [
-    0.2896,
-    0.1819,
+    0.2176,
+    0.214,
     0.2
   ],
   "base": "",
@@ -12,36 +12,18 @@
     {
       "file": "visual_0.obj",
       "rgba": [
-        0.802,
-        0.582,
-        0.571,
+        0.561,
+        0.526,
+        0.448,
         1.0
       ]
     },
     {
       "file": "visual_1.obj",
       "rgba": [
-        0.876,
-        0.918,
-        0.926,
-        1.0
-      ]
-    },
-    {
-      "file": "visual_2.obj",
-      "rgba": [
-        0.462,
-        0.916,
-        0.784,
-        1.0
-      ]
-    },
-    {
-      "file": "visual_3.obj",
-      "rgba": [
-        0.988,
-        1.0,
-        1.0,
+        0.332,
+        0.181,
+        0.15,
         1.0
       ]
     }
@@ -52,9 +34,27 @@
     "hull_2.obj",
     "hull_3.obj",
     "hull_4.obj",
-    "hull_5.obj"
+    "hull_5.obj",
+    "hull_6.obj",
+    "hull_7.obj",
+    "hull_8.obj",
+    "hull_9.obj",
+    "hull_10.obj",
+    "hull_11.obj",
+    "hull_12.obj",
+    "hull_13.obj",
+    "hull_14.obj",
+    "hull_15.obj",
+    "hull_16.obj",
+    "hull_17.obj",
+    "hull_18.obj",
+    "hull_19.obj",
+    "hull_20.obj",
+    "hull_21.obj",
+    "hull_22.obj",
+    "hull_23.obj"
   ],
   "license": "CC0-1.0",
-  "source": "https://kenney.nl/assets/furniture-kit",
+  "source": "https://quaternius.com/packs/ultimaterpg.html",
   "frame": "z-up"
 }

@@ -1,0 +1,46 @@
+{
+  "id": "standing_fan",
+  "name": "Standing Fan",
+  "category": "decor",
+  "size": [
+    0.6951,
+    0.5613,
+    1.2
+  ],
+  "base": "",
+  "visuals": [
+    {
+      "file": "visual_0.obj",
+      "rgba": [
+        0.906,
+        0.906,
+        0.906,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_1.obj",
+      "rgba": [
+        0.51,
+        0.51,
+        0.51,
+        1.0
+      ]
+    }
+  ],
+  "hulls": [
+    "hull_0.obj",
+    "hull_1.obj",
+    "hull_2.obj",
+    "hull_3.obj",
+    "hull_4.obj",
+    "hull_5.obj",
+    "hull_6.obj",
+    "hull_7.obj",
+    "hull_8.obj",
+    "hull_9.obj"
+  ],
+  "license": "CC0-1.0",
+  "source": "https://poly.pizza/m/QdOxYDGjhN",
+  "frame": "z-up"
+}

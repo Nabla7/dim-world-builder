@@ -81,15 +81,14 @@ export class Demo {
     await this.page.mouse.move(x, y, { steps });
   }
 
-  /** move to an element's center and click it */
+  /** move to an element's center and click it (a locator's box is already in page coordinates) */
   async click(selector: string, pause = 500) {
     // the first VISIBLE match (menus and tab strips keep hidden copies of their labels)
     const target = this.app.locator(`${selector} >> visible=true`).first();
     await target.scrollIntoViewIfNeeded().catch(() => {});
     const box = await target.boundingBox();
     if (!box) throw new Error(`no ${selector}`);
-    const [ox, oy] = await this.offset();
-    await this.moveTo(ox + box.x + box.width / 2, oy + box.y + box.height / 2);
+    await this.moveTo(box.x + box.width / 2, box.y + box.height / 2);
     await this.page.mouse.down();
     await this.page.mouse.up();
     await this.page.waitForTimeout(pause);
@@ -173,10 +172,7 @@ export class Demo {
     const slider = this.app.locator(`input[type=range][aria-label="${label}"] >> visible=true`).first();
     await slider.scrollIntoViewIfNeeded().catch(() => {});
     const box = await slider.boundingBox();
-    if (box) {
-      const [ox, oy] = await this.offset();
-      await this.moveTo(ox + box.x + box.width / 2, oy + box.y + box.height / 2, 15);
-    }
+    if (box) await this.moveTo(box.x + box.width / 2, box.y + box.height / 2, 15);
     await slider.focus();
     const key = presses > 0 ? "ArrowRight" : "ArrowLeft";
     for (let i = 0; i < Math.abs(presses); i++) {
