@@ -65,6 +65,7 @@ function exposeForAutomation(viewer: {
 }) {
   const toScreen = (point: THREE.Vector3): [number, number] => {
     const rect = viewer.renderer.domElement.getBoundingClientRect();
+    viewer.camera.updateMatrixWorld();
     const ndc = point.clone().project(viewer.camera);
     return [rect.left + ((ndc.x + 1) / 2) * rect.width, rect.top + ((1 - ndc.y) / 2) * rect.height];
   };
@@ -77,10 +78,15 @@ function exposeForAutomation(viewer: {
       },
       worldToScreen: (x: number, y: number, z: number) => toScreen(new THREE.Vector3(x, y, z)),
       lookAt(target: [number, number, number], from: [number, number, number]) {
-        viewer.camera.position.set(...from);
-        viewer.controls.target.set(...target);
-        viewer.controls.update();
-        viewer.requestRender();
+        const place = () => {
+          viewer.camera.position.set(...from);
+          viewer.controls.target.set(...target);
+          viewer.controls.update();
+          viewer.requestRender();
+        };
+        // again after the scene's own camera easing settles
+        place();
+        setTimeout(place, 400);
       },
       state: () => getState(),
     },
