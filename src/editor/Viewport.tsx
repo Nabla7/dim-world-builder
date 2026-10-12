@@ -4,9 +4,9 @@
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { TransformControls } from "three/examples/jsm/controls/TransformControls.js";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import {
   PointCloud,
-  RobotModel,
   Scene3D,
   SceneControls,
   TfFeed,
@@ -14,6 +14,7 @@ import {
   useTf,
   useViewer,
 } from "../three_view.ts";
+import { useSubscription } from "../ui.ts";
 import { buildWorld, type World } from "../world/geometry.ts";
 import type { Item, MeshAsset, Project, Quat, Vec3 } from "../world/types.ts";
 import { bodyObject, disposeObject, ghost } from "./three_world.ts";
@@ -88,6 +89,7 @@ function exposeForAutomation(viewer: {
 
 /** sun + sky light with soft shadows, so the world reads as solid shapes, not flat colors */
 function Lighting() {
+  const mode = useEditor((s) => s.mode);
   useLayer(({ viewer }) => {
     const root = new THREE.Group();
     viewer.renderer.shadowMap.enabled = true;
@@ -116,17 +118,40 @@ function Lighting() {
     });
     sun.shadow.bias = -0.0005;
     sun.shadow.normalBias = 0.02;
+    // editing: only shadows over the grid; viewing: a concrete ground with a soft checker, like the simulation's
     const ground = new THREE.Mesh(
       new THREE.PlaneGeometry(400, 400),
-      new THREE.ShadowMaterial({ opacity: 0.25 }),
+      mode === "view"
+        ? new THREE.MeshStandardMaterial({ map: checker(), roughness: 0.95 })
+        : new THREE.ShadowMaterial({ opacity: 0.25 }),
     );
     ground.receiveShadow = true;
     ground.position.z = -0.001;
     ground.userData.ground = true;
     root.add(sky, sun, sun.target, ground);
     return { root, dispose: () => disposeObject(root) };
-  }, []);
+  }, [mode]);
   return null;
+}
+
+/** a 1 m checker for the viewer's ground, drawn once (two grays of the world's concrete) */
+function checker(): THREE.CanvasTexture {
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = 64;
+  const ctx = canvas.getContext("2d")!;
+  const tone = (v: number) => new THREE.Color(v, v * 1.02, v * 1.05).getStyle();
+  ctx.fillStyle = tone(0.34);
+  ctx.fillRect(0, 0, 64, 64);
+  ctx.fillStyle = tone(0.3);
+  ctx.fillRect(0, 0, 32, 32);
+  ctx.fillRect(32, 32, 32, 32);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(200, 200);
+  texture.magFilter = THREE.NearestFilter;
+  texture.anisotropy = 8;
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
 }
 
 interface WorldLayerState {
@@ -422,12 +447,81 @@ function LiveRobot() {
   return (
     <>
       <TfFeed />
-      <RobotModel kind="dog" frame="go2/base" />
+      <Go2Model />
       {showLidar && (
         <PointCloud topic="dimos/pointcloud/sensor_msgs.PointCloud2" style="voxel" size={0.04} />
       )}
     </>
   );
+}
+
+interface Rig {
+  root: string;
+  joints: { name: string; body: string; axis: Vec3; bodyQuat: Quat }[];
+}
+
+/**
+ * The Go2 (Menagerie's meshes, baked by tools/make_go2_glb.py), posed by TF (world -> go2/base) and its legs by the
+ * connection's motor_states joint angles.
+ */
+function Go2Model() {
+  const tf = useTf();
+  const angles = useRef(new Map<string, number>());
+  useSubscription(
+    "dimos/motor_states/sensor_msgs.JointState",
+    (msg: { name: string[]; position: number[] }) => {
+      msg.name.forEach((name, i) =>
+        angles.current.set(name.replace(/^go2\//, ""), msg.position[i])
+      );
+    },
+    { maxHz: 30 },
+  );
+  useLayer(({ viewer }) => {
+    const root = new THREE.Group();
+    root.visible = false;
+    let rig: Rig | null = null;
+    const nodes = new Map<string, THREE.Object3D>();
+    Promise.all([
+      new GLTFLoader().loadAsync("files/robots/go2/go2.glb"),
+      fetch("files/robots/go2/rig.json").then((r) => r.json() as Promise<Rig>),
+    ]).then(([gltf, loadedRig]) => {
+      rig = loadedRig;
+      gltf.scene.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+          const material = child.material as THREE.MeshStandardMaterial;
+          material.roughness = 0.55;
+        }
+      });
+      for (const joint of rig.joints) {
+        const node = gltf.scene.getObjectByName(joint.body);
+        if (node) nodes.set(joint.name, node);
+      }
+      root.add(gltf.scene);
+      viewer.requestRender();
+    }).catch(() => {});
+    const axis = new THREE.Vector3();
+    const spin = new THREE.Quaternion();
+    return {
+      root,
+      update: () => {
+        const pose = tf?.lookup("go2/base", "world");
+        root.visible = Boolean(pose && rig);
+        if (!pose || !rig) return;
+        pose.decompose(root.position, root.quaternion, new THREE.Vector3());
+        for (const joint of rig.joints) {
+          const node = nodes.get(joint.name);
+          const angle = angles.current.get(joint.name);
+          if (!node || angle === undefined) continue;
+          axis.set(...joint.axis);
+          node.quaternion.set(...joint.bodyQuat).multiply(spin.setFromAxisAngle(axis, angle));
+        }
+      },
+      dispose: () => disposeObject(root),
+    };
+  }, [tf]);
+  return null;
 }
 
 export type { Project };

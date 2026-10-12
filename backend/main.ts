@@ -289,6 +289,9 @@ async function serve(request: Request): Promise<Response> {
     if (path.startsWith("/files/imports/")) {
       return await file(importsDir, path.slice("/files/imports/".length));
     }
+    if (path.startsWith("/files/robots/")) {
+      return await file(`${root}/assets/robots`, path.slice("/files/robots/".length));
+    }
     return await file(frontend, path);
   } catch (error) {
     return json({ error: String(error) }, 500);

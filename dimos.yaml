@@ -14,6 +14,7 @@ zenoh:
               - "dimos/**/tf2_msgs.TFMessage"
               - "dimos/**/sensor_msgs.PointCloud2"
               - "dimos/**/geometry_msgs.PoseStamped"
+              - "dimos/**/sensor_msgs.JointState"
           permission: allow
         # dimos-react's app provider listens for this app's own backend events (Desktop's <namespace>/apps/<app>/frontend)
         - id: own-events
