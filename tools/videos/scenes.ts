@@ -300,6 +300,48 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
     );
   },
 
+  async "10_nav_test"(demo) {
+    await demo.app.selectOption("[data-testid=open-world]", { label: "Example: nav test course" });
+    await demo.page.waitForTimeout(1500);
+    await demo.say("Nav test: a trajectory that evaluates any navigation stack", 800);
+    await demo.clickText("Nav test");
+    await demo.say(
+      "This world already has one: a mapping walk (dashed) and two goals (flags)",
+      2500,
+    );
+    await demo.clickText("Clear");
+    await demo.say("Draw a new mapping path: where the robot walks first, to build its map", 300);
+    await demo.click("[data-testid=nav-draw-path]");
+    for (
+      const [x, y] of [[0, -3.5], [3, -4.2], [5.5, -4], [5.5, -3.1], [8.5, -3.6], [9.5, 0], [
+        8.5,
+        3.6,
+      ]] as const
+    ) {
+      const [sx, sy] = await demo.worldToScreen(x, y, 0);
+      await demo.moveTo(sx, sy, 18);
+      await demo.page.mouse.down();
+      await demo.page.mouse.up();
+      await demo.page.waitForTimeout(350);
+    }
+    await demo.click("[data-testid=nav-draw-path]");
+    await demo.say("Then the goals the nav stack must reach", 300);
+    await demo.click("[data-testid=nav-add-goal]");
+    for (const [x, y] of [[6.5, 1], [-3, 3]] as const) {
+      const [sx, sy] = await demo.worldToScreen(x, y, 0);
+      await demo.moveTo(sx, sy, 18);
+      await demo.page.mouse.down();
+      await demo.page.mouse.up();
+      await demo.page.waitForTimeout(500);
+    }
+    await demo.click("[data-testid=nav-add-goal]");
+    await demo.slide("Goal tolerance", 4);
+    await demo.say(
+      "Exported as nav_eval.json; verify/nav_eval.py runs it on any robot: Twist to walk, PoseStamped goals",
+      4000,
+    );
+  },
+
   async "9_viewer_mode"(demo) {
     // open the test course, export it from the app, run a simulated Go2 in the export, watch it in Viewer mode
     await demo.app.selectOption("[data-testid=open-world]", { label: "Example: nav test course" });

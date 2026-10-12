@@ -308,11 +308,17 @@ def main() -> int:
                 tap.subscribe(on)
                 taps.append(tap)
             costmaps: dict[str, Any] = {}
+            clouds: dict[str, Any] = {}
+            map_tap = make_transport("global_map", PointCloud2)
+            map_tap.subscribe(lambda msg: clouds.__setitem__("global_map", msg))
             for topic in ("global_costmap", "navigation_costmap"):
                 grid_tap = make_transport(topic, OccupancyGrid)
                 grid_tap.subscribe(lambda msg, topic=topic: costmaps.__setitem__(topic, msg))
                 taps.append(grid_tap)
             samples = course.wait(180.0, None)
+            map_tap.stop()
+            if args.dump_costmap and "global_map" in clouds:
+                np.save(f"{args.dump_costmap}_global_map.npy", clouds["global_map"].points_f32())
             if args.dump_costmap:
                 for topic, grid in costmaps.items():
                     o = grid.origin.position

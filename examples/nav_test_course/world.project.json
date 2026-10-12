@@ -15,7 +15,7 @@
   ],
   "items": [
     {
-      "id": "22d9ec3572fb",
+      "id": "fad9367ac8b0",
       "kind": "room",
       "params": {
         "width": 6,
@@ -58,7 +58,7 @@
       ]
     },
     {
-      "id": "d3d645f97c79",
+      "id": "543d4d7103ac",
       "kind": "room",
       "params": {
         "width": 6,
@@ -101,7 +101,7 @@
       ]
     },
     {
-      "id": "4fe0b399bd6e",
+      "id": "8d94e7b88594",
       "kind": "primitive",
       "params": {
         "shape": "box",
@@ -131,7 +131,7 @@
       ]
     },
     {
-      "id": "eeb02f8eb419",
+      "id": "c87379ba346e",
       "kind": "primitive",
       "params": {
         "shape": "box",
@@ -178,7 +178,7 @@
       }
     },
     {
-      "id": "d8c1d92ceaf1",
+      "id": "530064620d34",
       "kind": "stairs",
       "params": {
         "steps": 6,
@@ -211,7 +211,7 @@
       ]
     },
     {
-      "id": "fd895e5fcf26",
+      "id": "6bdc10cf2159",
       "kind": "hill",
       "params": {
         "sizeX": 10,
@@ -249,7 +249,7 @@
       ]
     },
     {
-      "id": "a80ace610213",
+      "id": "0708b9794acb",
       "kind": "primitive",
       "params": {
         "shape": "cone",
@@ -279,7 +279,7 @@
       ]
     },
     {
-      "id": "8843a674eee5",
+      "id": "a6e1584ec9fa",
       "kind": "primitive",
       "params": {
         "shape": "cone",
@@ -309,7 +309,7 @@
       ]
     },
     {
-      "id": "137c772fd402",
+      "id": "cb172a352b2f",
       "kind": "primitive",
       "params": {
         "shape": "beanbag",
@@ -339,7 +339,7 @@
       ]
     },
     {
-      "id": "46ef9ef64bef",
+      "id": "1689093e6f83",
       "kind": "primitive",
       "params": {
         "shape": "ramp",
@@ -369,7 +369,7 @@
       ]
     },
     {
-      "id": "9c82b5a2de3f",
+      "id": "533952ffa148",
       "kind": "primitive",
       "params": {
         "shape": "cylinder",
@@ -451,5 +451,67 @@
       "yaw": 0
     }
   ],
-  "activeFloor": "ground"
+  "activeFloor": "ground",
+  "nav": {
+    "startSpawn": "wall_lane",
+    "floor": "ground",
+    "mappingPath": [
+      [
+        0,
+        -3.5,
+        0
+      ],
+      [
+        5.5,
+        -4,
+        0
+      ],
+      [
+        5.5,
+        -3.2,
+        0
+      ],
+      [
+        9.5,
+        -3.5,
+        0
+      ],
+      [
+        9.5,
+        3.5,
+        0
+      ],
+      [
+        5.5,
+        3.8,
+        0
+      ]
+    ],
+    "goals": [
+      {
+        "id": "room",
+        "name": "Inside the room",
+        "floor": "ground",
+        "position": [
+          5.5,
+          0.5,
+          0
+        ],
+        "tolerance": 0.6,
+        "timeout": 120
+      },
+      {
+        "id": "back",
+        "name": "Behind the stairs",
+        "floor": "ground",
+        "position": [
+          1,
+          4.5,
+          0
+        ],
+        "tolerance": 0.6,
+        "timeout": 120
+      }
+    ]
+  }
 }

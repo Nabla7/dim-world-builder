@@ -110,5 +110,33 @@ export function testCourse(): Project {
       scale: [0.4, 0.4, 2.8],
     }),
   );
+  // the nav test: walk past the room's door so the map sees inside, then go in, then around behind it
+  project.nav = {
+    startSpawn: "wall_lane",
+    floor: ground,
+    mappingPath: [[0, -3.5, 0], [5.5, -4, 0], [5.5, -3.2, 0], [9.5, -3.5, 0], [9.5, 3.5, 0], [
+      5.5,
+      3.8,
+      0,
+    ]],
+    goals: [
+      {
+        id: "room",
+        name: "Inside the room",
+        floor: ground,
+        position: [5.5, 0.5, 0],
+        tolerance: 0.6,
+        timeout: 120,
+      },
+      {
+        id: "back",
+        name: "Behind the stairs",
+        floor: ground,
+        position: [1, 4.5, 0],
+        tolerance: 0.6,
+        timeout: 120,
+      },
+    ],
+  };
   return project;
 }
