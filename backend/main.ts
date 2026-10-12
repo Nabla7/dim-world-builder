@@ -20,6 +20,7 @@ import { emptyProject } from "../src/world/defaults.ts";
 import { testCourse } from "../src/world/examples.ts";
 import { clutterYard } from "../src/world/examples_clutter.ts";
 import { playground } from "../src/world/examples_playground.ts";
+import { keyedProject } from "../src/world/keys.ts";
 
 const app = JSON.parse(Deno.env.get("DIMOS_APP") ?? "{}") as {
   name?: string;
@@ -165,7 +166,8 @@ async function cook(job: CookJob, input: string, targetHeight: number | null) {
 
 const safeName = (name: string) => packageName(decodeURIComponent(name));
 
-async function saveProject(project: Project) {
+async function saveProject(unkeyed: Project) {
+  const project = keyedProject(unkeyed);
   await Deno.mkdir(projectsDir, { recursive: true });
   await Deno.writeTextFile(
     `${projectsDir}/${packageName(project.name)}.json`,

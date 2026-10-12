@@ -1,6 +1,6 @@
 // The side panels: Add (the palette), Floors, Items, and the Inspector for the selected item.
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import * as THREE from "three";
 import {
   Badge,
@@ -46,6 +46,7 @@ import {
   duplicateItem,
   removeFloor,
   removeItem,
+  renameKey,
   select,
   setActiveFloor,
   setDrawingPath,
@@ -860,6 +861,26 @@ function MoverEditor({ item }: { item: Item }) {
   );
 }
 
+function KeyInput({ id, value }: { id: string; value: string }) {
+  const [draft, setDraft] = useState(value);
+  const [problem, setProblem] = useState<string | null>(null);
+  useEffect(() => setDraft(value), [value]);
+  const commit = () => setProblem(draft === value ? null : renameKey(id, draft));
+  return (
+    <>
+      <TextInput
+        value={draft}
+        onChange={setDraft}
+        onCommit={commit}
+        onEnter={commit}
+        mono
+        invalid={Boolean(problem)}
+      />
+      {problem && <Text small tone="danger">{problem}</Text>}
+    </>
+  );
+}
+
 export function Inspector({ assets }: { assets: MeshAsset[] }) {
   const selected = useEditor((s) => s.selected);
   const item = useEditor((s) => s.project.items.find((i) => i.id === s.selected) ?? null);
@@ -886,6 +907,12 @@ export function Inspector({ assets }: { assets: MeshAsset[] }) {
           aria-label="Name"
         />
       </div>
+      <Field
+        label="Id"
+        hint="the entity name in the exported scene; right-click an item to rename it"
+      >
+        <KeyInput id={item.id} value={item.key ?? ""} />
+      </Field>
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
         <Badge>{item.kind === "primitive" ? item.params.shape : item.kind}</Badge>
         {asset && <Badge tone="info">{asset.hulls.length} collision hulls</Badge>}

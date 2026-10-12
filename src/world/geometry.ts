@@ -86,6 +86,7 @@ const rgba = (color: Rgb, alpha = 1): Rgba => [color[0], color[1], color[2], alp
 
 /** MJCF-safe, unique-ish body name from an item's name and id */
 export function bodyName(item: Item): string {
+  if (item.key) return item.key;
   const base = item.name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "") ||
     item.kind;
   return `${base}_${item.id.slice(0, 6)}`;

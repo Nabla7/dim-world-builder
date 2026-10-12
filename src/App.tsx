@@ -30,8 +30,10 @@ import {
   duplicateItem,
   getState,
   loadProject,
+  openMenu,
   redo,
   removeItem,
+  renameKey,
   renameProject,
   select,
   setDrawingPath,
@@ -42,6 +44,7 @@ import {
   setSnap,
   undo,
   useEditor,
+  useMenu,
 } from "./editor/store.ts";
 import { makeItem } from "./world/defaults.ts";
 import { view } from "./editor/palette.ts";
@@ -250,6 +253,7 @@ export function App() {
         }}
       />
       <ExportDialog open={exporting} onClose={() => setExporting(false)} />
+      <ItemMenu />
     </div>
   );
 }
@@ -618,6 +622,93 @@ function ViewerOverlay() {
         onChange={setShowCollision}
         label="Show the robot's lidar"
       />
+    </div>
+  );
+}
+
+/** right-click on an item: its readable id (renamable), and focus / duplicate / remove */
+function ItemMenu() {
+  const menu = useMenu();
+  const item = useEditor((s) => s.project.items.find((i) => i.id === menu?.itemId) ?? null);
+  const [draft, setDraft] = useState("");
+  const [problem, setProblem] = useState<string | null>(null);
+  useEffect(() => {
+    setDraft(item?.key ?? "");
+    setProblem(null);
+  }, [menu?.itemId]);
+  useEffect(() => {
+    if (!menu) return;
+    const close = (e: MouseEvent) => {
+      if (!(e.target as HTMLElement).closest("[data-testid=item-menu]")) openMenu(null);
+    };
+    addEventListener("pointerdown", close, true);
+    return () => removeEventListener("pointerdown", close, true);
+  }, [menu]);
+  if (!menu || !item) return null;
+  const rename = () => {
+    const error = renameKey(item.id, draft);
+    setProblem(error);
+    if (!error) openMenu(null);
+  };
+  return (
+    <div
+      data-testid="item-menu"
+      style={{
+        position: "fixed",
+        left: Math.min(menu.x, innerWidth - 260),
+        top: Math.min(menu.y, innerHeight - 220),
+        width: 240,
+        zIndex: 50,
+        display: "flex",
+        flexDirection: "column",
+        gap: 8,
+        padding: 10,
+        borderRadius: "var(--radius)",
+        background: "var(--raised)",
+        border: "1px solid var(--border)",
+        boxShadow: "var(--shadow-lg)",
+      }}
+    >
+      <Text small muted>{item.name}</Text>
+      <Field label="Id (the entity name in the exported scene)">
+        <TextInput
+          value={draft}
+          onChange={setDraft}
+          onEnter={rename}
+          mono
+          autoFocus
+          data-testid="item-key"
+          invalid={Boolean(problem)}
+        />
+      </Field>
+      {problem && <Text small tone="danger">{problem}</Text>}
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+        <Button size="sm" variant="primary" onClick={rename}>Rename</Button>
+        <Button
+          size="sm"
+          icon="target"
+          onClick={() => {
+            (globalThis as unknown as { dimWorldBuilder: { focus(k: string): void } })
+              .dimWorldBuilder.focus(
+                item.key ?? "",
+              );
+            openMenu(null);
+          }}
+        >
+          Focus
+        </Button>
+        <Button size="sm" icon="copy" onClick={() => (duplicateItem(item.id), openMenu(null))}>
+          Duplicate
+        </Button>
+        <Button
+          size="sm"
+          icon="trash"
+          variant="danger"
+          onClick={() => (removeItem(item.id), openMenu(null))}
+        >
+          Remove
+        </Button>
+      </div>
     </div>
   );
 }

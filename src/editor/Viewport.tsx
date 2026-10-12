@@ -22,6 +22,7 @@ import {
   addItem,
   addNavPoint,
   getState,
+  openMenu,
   select,
   setDrawingPath,
   setNavTool,
@@ -108,6 +109,19 @@ function exposeForAutomation(viewer: {
         )
           .multiplyScalar(factor);
         return toScreen(origin.add(offset));
+      },
+      /** glide to an item by its readable id, as a double-click on it does */
+      focus(key: string) {
+        const item = getState().project.items.find((i) => i.key === key);
+        const object = item && view.worldRoot?.children.find((o) => o.userData.itemId === item.id);
+        if (!object) return false;
+        const bounds = new THREE.Box3().setFromObject(object);
+        glide(
+          viewer as unknown as Parameters<typeof glide>[0],
+          bounds.getCenter(new THREE.Vector3()),
+          Math.max(2.5, bounds.getSize(new THREE.Vector3()).length() * 1.6),
+        );
+        return true;
       },
       lookAt(target: [number, number, number], from: [number, number, number]) {
         const place = () => {
@@ -260,7 +274,8 @@ function WorldLayer({ assets }: { assets: Record<string, MeshAsset> }) {
       const object = bodyObject(body, assets, style, () => live.viewer.requestRender());
       const editable = mode === "view" || body.floor === project.activeFloor;
       ghost(object, !editable);
-      object.userData.pickable = editable && mode === "edit";
+      // the floor slab is ground, not an item to pick
+      object.userData.pickable = editable && mode === "edit" && body.kind !== "slab";
       objects.set(body.itemId, object);
       root.add(object);
     }
@@ -344,14 +359,91 @@ function Picker({ objects }: { objects: () => Map<string, THREE.Group> | undefin
       while (node && !node.userData.itemId) node = node.parent;
       select(node ? (node.userData.itemId as string) : null);
     };
+    const ndcOf = (e: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      return new THREE.Vector2(
+        ((e.clientX - rect.left) / rect.width) * 2 - 1,
+        -((e.clientY - rect.top) / rect.height) * 2 + 1,
+      );
+    };
+    const itemUnder = (e: MouseEvent): { object: THREE.Object3D; point: THREE.Vector3 } | null => {
+      raycaster.setFromCamera(ndcOf(e), viewer.camera);
+      const pickable = [...(objects()?.values() ?? [])].filter((o) => o.userData.pickable);
+      const hit = raycaster.intersectObjects(pickable, true)[0];
+      let node: THREE.Object3D | null = hit?.object ?? null;
+      while (node && !node.userData.itemId) node = node.parent;
+      return node && hit ? { object: node, point: hit.point } : null;
+    };
+    // double-click: glide the camera to the item (framing it) or to the spot on the ground
+    const onDouble = (e: MouseEvent) => {
+      const under = itemUnder(e);
+      let target: THREE.Vector3;
+      let distance: number;
+      if (under) {
+        const bounds = new THREE.Box3().setFromObject(under.object);
+        target = bounds.getCenter(new THREE.Vector3());
+        distance = Math.max(2.5, bounds.getSize(new THREE.Vector3()).length() * 1.6);
+        select(under.object.userData.itemId as string);
+      } else {
+        raycaster.setFromCamera(ndcOf(e), viewer.camera);
+        const hit = raycaster.ray.intersectPlane(
+          new THREE.Plane(new THREE.Vector3(0, 0, 1), 0),
+          new THREE.Vector3(),
+        );
+        if (!hit) return;
+        target = hit;
+        distance = viewer.camera.position.distanceTo(viewer.controls.target) * 0.7;
+      }
+      glide(viewer, target, distance);
+    };
+    // right-click on an item: its menu (rename its id, focus, duplicate, remove)
+    const onContext = (e: MouseEvent) => {
+      const under = itemUnder(e);
+      if (!under) return;
+      e.preventDefault();
+      const id = under.object.userData.itemId as string;
+      select(id);
+      openMenu({ x: e.clientX, y: e.clientY, itemId: id });
+    };
     canvas.addEventListener("pointerdown", onDown);
     canvas.addEventListener("pointerup", onUp);
+    canvas.addEventListener("dblclick", onDouble);
+    canvas.addEventListener("contextmenu", onContext);
     return () => {
       canvas.removeEventListener("pointerdown", onDown);
       canvas.removeEventListener("pointerup", onUp);
+      canvas.removeEventListener("dblclick", onDouble);
+      canvas.removeEventListener("contextmenu", onContext);
     };
   }, [viewer, objects]);
   return null;
+}
+
+/** ease the camera to look at `target` from `distance` away, keeping its viewing direction (about 0.7 s) */
+function glide(
+  viewer: {
+    camera: THREE.PerspectiveCamera;
+    controls: { target: THREE.Vector3; update(): void };
+    requestRender(): void;
+  },
+  target: THREE.Vector3,
+  distance: number,
+) {
+  const fromTarget = viewer.controls.target.clone();
+  const fromPosition = viewer.camera.position.clone();
+  const direction = fromPosition.clone().sub(fromTarget).normalize();
+  const toPosition = target.clone().addScaledVector(direction, distance);
+  const started = performance.now();
+  const step = (now: number) => {
+    const t = Math.min(1, (now - started) / 700);
+    const ease = t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
+    viewer.controls.target.lerpVectors(fromTarget, target, ease);
+    viewer.camera.position.lerpVectors(fromPosition, toPosition, ease);
+    viewer.controls.update();
+    viewer.requestRender();
+    if (t < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
 }
 
 /** a new AprilTag item at a world point, its front (+x) along the surface normal, its top up */

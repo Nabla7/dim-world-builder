@@ -3,54 +3,63 @@
   "name": "Shelf with Drawers",
   "category": "storage",
   "size": [
-    1.1411,
+    1.141,
     0.4901,
-    1.8812
+    1.8806
   ],
   "base": "",
   "visuals": [
     {
       "file": "visual_0.obj",
       "rgba": [
-        0.464,
-        0.342,
-        0.227,
+        0.473,
+        0.35,
+        0.233,
         1.0
       ]
     },
     {
       "file": "visual_1.obj",
       "rgba": [
-        0.502,
-        0.381,
-        0.261,
+        0.0,
+        0.0,
+        0.0,
         1.0
       ]
     },
     {
       "file": "visual_2.obj",
       "rgba": [
-        0.0,
-        0.0,
-        0.0,
+        0.508,
+        0.387,
+        0.265,
         1.0
       ]
     },
     {
       "file": "visual_3.obj",
       "rgba": [
-        0.406,
-        0.292,
-        0.183,
+        0.421,
+        0.305,
+        0.195,
         1.0
       ]
     },
     {
       "file": "visual_4.obj",
       "rgba": [
-        0.125,
+        0.124,
         0.122,
         0.144,
+        1.0
+      ]
+    },
+    {
+      "file": "visual_5.obj",
+      "rgba": [
+        0.634,
+        0.634,
+        0.633,
         1.0
       ]
     }
@@ -78,7 +87,8 @@
     "hull_19.obj",
     "hull_20.obj",
     "hull_21.obj",
-    "hull_22.obj"
+    "hull_22.obj",
+    "hull_23.obj"
   ],
   "license": "CC0-1.0",
   "source": "https://polyhaven.com/a/drawer_cabinet",

@@ -1,11 +1,11 @@
 {
-  "id": "standing_fan",
-  "name": "Standing Fan",
-  "category": "decor",
+  "id": "table_fan",
+  "name": "Table Fan",
+  "category": "appliances",
   "size": [
-    0.6951,
-    0.5613,
-    1.2
+    0.2607,
+    0.2105,
+    0.45
   ],
   "base": "",
   "visuals": [

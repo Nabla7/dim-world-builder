@@ -3,6 +3,7 @@
 
 import { buildWorld } from "../src/world/geometry.ts";
 import { toScene } from "../src/world/mjcf.ts";
+import { keyedProject } from "../src/world/keys.ts";
 import type { MeshAsset, Project } from "../src/world/types.ts";
 
 /** a Python package name: lower snake case, not starting with a digit */
@@ -20,7 +21,7 @@ export interface ExportResult {
 }
 
 export async function exportProject(
-  project: Project,
+  unkeyed: Project,
   assets: Record<string, MeshAsset>,
   /** asset id -> the folder holding its files on this machine */
   assetDirs: Record<string, string>,
@@ -28,6 +29,8 @@ export async function exportProject(
   options: { visualGlb?: Uint8Array } = {},
 ): Promise<ExportResult> {
   const assetsRoot = new URL("../assets", import.meta.url).pathname;
+  // every item exports under its readable id ("bed_2")
+  const project = keyedProject(unkeyed);
   const name = packageName(project.name);
   const dir = `${parentDir.replace(/\/+$/, "")}/${name}`;
   const world = buildWorld(project, assets);

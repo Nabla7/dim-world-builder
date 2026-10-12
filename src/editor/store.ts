@@ -4,6 +4,7 @@
 import { useSyncExternalStore } from "react";
 import { emptyProject } from "../world/defaults.ts";
 import type { Floor, Item, MoverPath, NavPlan, Project, Vec3 } from "../world/types.ts";
+import { keyedProject, slug, withKeys } from "../world/keys.ts";
 
 export type Gizmo = "translate" | "rotate" | "scale";
 export type Mode = "edit" | "view";
@@ -99,8 +100,9 @@ export function redo() {
   });
 }
 
-export function loadProject(project: Project) {
+export function loadProject(loaded: Project) {
   coalesceKey = null;
+  const project = keyedProject(loaded);
   set({
     project,
     selected: null,
@@ -126,13 +128,21 @@ export function selectedItem(): Item | null {
 }
 
 export function addItem(item: Item) {
-  edit((p) => ({ ...p, items: [...p.items, item] }));
+  edit((p) => ({ ...p, items: [...p.items, ...withKeys([item], p.items)] }));
   set({ selected: item.id });
 }
 
 export function addItems(items: Item[]) {
-  edit((p) => ({ ...p, items: [...p.items, ...items] }));
+  edit((p) => ({ ...p, items: [...p.items, ...withKeys(items, p.items)] }));
   set({ selected: null });
+}
+
+/** rename an item's readable id; refuses one another item already has. Returns the error, if any. */
+export function renameKey(id: string, wanted: string): string | null {
+  const key = slug(wanted);
+  if (state.project.items.some((i) => i.id !== id && i.key === key)) return `${key} is taken`;
+  updateItem(id, (item) => ({ ...item, key }));
+  return null;
 }
 
 export function updateItem(id: string, change: (item: Item) => Item, coalesce?: string) {
@@ -150,6 +160,7 @@ export function duplicateItem(id: string) {
   const copy = structuredClone(item);
   copy.id = crypto.randomUUID().replace(/-/g, "").slice(0, 12);
   copy.name = `${item.name} copy`;
+  delete copy.key;
   copy.position = [item.position[0] + 0.5, item.position[1] + 0.5, item.position[2]] as Vec3;
   addItem(copy);
 }
@@ -240,3 +251,22 @@ export function addNavPoint(point: Vec3) {
     }));
   }
 }
+
+// ── a right-click menu on an item ──
+
+export interface ContextMenuState {
+  x: number;
+  y: number;
+  itemId: string;
+}
+let menu: ContextMenuState | null = null;
+const menuListeners = new Set<() => void>();
+export const openMenu = (next: ContextMenuState | null) => {
+  menu = next;
+  menuListeners.forEach((l) => l());
+};
+export const useMenu = () =>
+  useSyncExternalStore((l) => {
+    menuListeners.add(l);
+    return () => menuListeners.delete(l);
+  }, () => menu);

@@ -127,6 +127,8 @@ export interface MoverPath {
 
 interface ItemBase {
   id: string;
+  /** the readable, unique id ("bed_2"): the entity name in the exported scene; see world/keys.ts */
+  key?: string;
   name: string;
   floor: string;
   /** relative to the floor's elevation */

@@ -1,5 +1,65 @@
 [
   {
+    "id": "arched_bridge",
+    "name": "Arched Stone Bridge",
+    "category": "outdoor",
+    "size": [
+      3.12,
+      2.52,
+      1.2
+    ],
+    "base": "assets/library/arched_bridge",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.8,
+          0.86,
+          0.87,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.866,
+          0.948,
+          0.959,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj",
+      "hull_16.obj",
+      "hull_17.obj",
+      "hull_18.obj",
+      "hull_19.obj",
+      "hull_20.obj",
+      "hull_21.obj",
+      "hull_22.obj",
+      "hull_23.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://kenney.nl/assets/nature-kit",
+    "frame": "z-up"
+  },
+  {
     "id": "barrel",
     "name": "Barrel",
     "category": "storage",
@@ -77,6 +137,75 @@
     "frame": "z-up"
   },
   {
+    "id": "bed_double",
+    "name": "Double Bed",
+    "category": "furniture",
+    "size": [
+      1.7081,
+      2.01,
+      0.67
+    ],
+    "base": "assets/library/bed_double",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.954,
+          0.798,
+          0.659,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.988,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_2.obj",
+        "rgba": [
+          0.975,
+          0.641,
+          0.619,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_3.obj",
+        "rgba": [
+          0.876,
+          0.918,
+          0.926,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://kenney.nl/assets/furniture-kit",
+    "frame": "z-up"
+  },
+  {
     "id": "bed_single",
     "name": "Single Bed",
     "category": "furniture",
@@ -141,6 +270,279 @@
     "frame": "z-up"
   },
   {
+    "id": "berry_bush",
+    "name": "Berry Bush",
+    "category": "nature",
+    "size": [
+      0.9821,
+      1.2124,
+      0.9
+    ],
+    "base": "assets/library/berry_bush",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.295,
+          0.383,
+          0.24,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.644,
+          0.166,
+          0.194,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj",
+      "hull_16.obj",
+      "hull_17.obj",
+      "hull_18.obj",
+      "hull_19.obj",
+      "hull_20.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://quaternius.com/packs/ultimatenature.html",
+    "frame": "z-up"
+  },
+  {
+    "id": "big_bowl",
+    "name": "Big Bowl",
+    "category": "kitchen",
+    "size": [
+      0.3131,
+      0.309,
+      0.0938
+    ],
+    "base": "assets/library/big_bowl",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.322,
+          0.227,
+          0.155,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.254,
+          0.181,
+          0.128,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_2.obj",
+        "rgba": [
+          0.381,
+          0.281,
+          0.194,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_3.obj",
+        "rgba": [
+          0.457,
+          0.349,
+          0.239,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj",
+      "hull_16.obj",
+      "hull_17.obj",
+      "hull_18.obj",
+      "hull_19.obj",
+      "hull_20.obj",
+      "hull_21.obj",
+      "hull_22.obj",
+      "hull_23.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://polyhaven.com/a/wooden_bowl_01",
+    "frame": "z-up"
+  },
+  {
+    "id": "birch_tree",
+    "name": "Birch Tree",
+    "category": "nature",
+    "size": [
+      2.6191,
+      3.8163,
+      5.5
+    ],
+    "base": "assets/library/birch_tree",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.295,
+          0.383,
+          0.24,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.752,
+          0.767,
+          0.737,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_2.obj",
+        "rgba": [
+          0.23,
+          0.303,
+          0.194,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_3.obj",
+        "rgba": [
+          0.23,
+          0.23,
+          0.23,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj",
+      "hull_16.obj",
+      "hull_17.obj",
+      "hull_18.obj",
+      "hull_19.obj",
+      "hull_20.obj",
+      "hull_21.obj",
+      "hull_22.obj",
+      "hull_23.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://quaternius.com/packs/ultimatenature.html",
+    "frame": "z-up"
+  },
+  {
+    "id": "book_pile",
+    "name": "Pile of Books",
+    "category": "clutter",
+    "size": [
+      0.2176,
+      0.214,
+      0.2
+    ],
+    "base": "assets/library/book_pile",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.561,
+          0.526,
+          0.448,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.332,
+          0.181,
+          0.15,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj",
+      "hull_16.obj",
+      "hull_17.obj",
+      "hull_18.obj",
+      "hull_19.obj",
+      "hull_20.obj",
+      "hull_21.obj",
+      "hull_22.obj",
+      "hull_23.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://quaternius.com/packs/ultimaterpg.html",
+    "frame": "z-up"
+  },
+  {
     "id": "bookcase",
     "name": "Bookcase",
     "category": "storage",
@@ -189,6 +591,325 @@
     ],
     "license": "CC0-1.0",
     "source": "https://kenney.nl/assets/furniture-kit",
+    "frame": "z-up"
+  },
+  {
+    "id": "bookcase_closed",
+    "name": "Closed Bookcase",
+    "category": "storage",
+    "size": [
+      1.519,
+      0.4747,
+      1.5
+    ],
+    "base": "assets/library/bookcase_closed",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.954,
+          0.798,
+          0.659,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj",
+      "hull_16.obj",
+      "hull_17.obj",
+      "hull_18.obj",
+      "hull_19.obj",
+      "hull_20.obj",
+      "hull_21.obj",
+      "hull_22.obj",
+      "hull_23.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://kenney.nl/assets/furniture-kit",
+    "frame": "z-up"
+  },
+  {
+    "id": "boulder",
+    "name": "Boulder",
+    "category": "nature",
+    "size": [
+      1.3107,
+      1.4247,
+      1.2
+    ],
+    "base": "assets/library/boulder",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.48,
+          0.493,
+          0.53,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://quaternius.com/packs/ultimatenature.html",
+    "frame": "z-up"
+  },
+  {
+    "id": "broom",
+    "name": "Broom",
+    "category": "clutter",
+    "size": [
+      0.4125,
+      0.5679,
+      1.1982
+    ],
+    "base": "assets/library/broom",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.282,
+          0.259,
+          0.249,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.034,
+          0.031,
+          0.029,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_2.obj",
+        "rgba": [
+          0.149,
+          0.137,
+          0.13,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_3.obj",
+        "rgba": [
+          0.668,
+          0.653,
+          0.623,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_4.obj",
+        "rgba": [
+          0.447,
+          0.141,
+          0.134,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_5.obj",
+        "rgba": [
+          0.413,
+          0.015,
+          0.015,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://polyhaven.com/a/plastic_broom",
+    "frame": "z-up"
+  },
+  {
+    "id": "bunk_bed",
+    "name": "Bunk Bed",
+    "category": "furniture",
+    "size": [
+      1.0748,
+      2.0612,
+      1.6
+    ],
+    "base": "assets/library/bunk_bed",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.954,
+          0.798,
+          0.659,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.975,
+          0.641,
+          0.619,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_2.obj",
+        "rgba": [
+          0.988,
+          1.0,
+          1.0,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj",
+      "hull_16.obj",
+      "hull_17.obj",
+      "hull_18.obj",
+      "hull_19.obj",
+      "hull_20.obj",
+      "hull_21.obj",
+      "hull_22.obj",
+      "hull_23.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://kenney.nl/assets/furniture-kit",
+    "frame": "z-up"
+  },
+  {
+    "id": "bush",
+    "name": "Bush",
+    "category": "nature",
+    "size": [
+      1.0698,
+      1.361,
+      1.0
+    ],
+    "base": "assets/library/bush",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.295,
+          0.383,
+          0.24,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://quaternius.com/packs/ultimatenature.html",
+    "frame": "z-up"
+  },
+  {
+    "id": "bush_small",
+    "name": "Small Bush",
+    "category": "nature",
+    "size": [
+      1.0031,
+      1.0031,
+      0.6
+    ],
+    "base": "assets/library/bush_small",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.452,
+          0.93,
+          0.866,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj",
+      "hull_16.obj",
+      "hull_17.obj",
+      "hull_18.obj",
+      "hull_19.obj",
+      "hull_20.obj",
+      "hull_21.obj",
+      "hull_22.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://kenney.nl/assets/nature-kit",
     "frame": "z-up"
   },
   {
@@ -307,6 +1028,109 @@
     "frame": "z-up"
   },
   {
+    "id": "coffee_cup",
+    "name": "Coffee Mug",
+    "category": "kitchen",
+    "size": [
+      0.1257,
+      0.1043,
+      0.1
+    ],
+    "base": "assets/library/coffee_cup",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.412,
+          0.243,
+          0.179,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.384,
+          0.403,
+          0.483,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_2.obj",
+        "rgba": [
+          0.467,
+          0.489,
+          0.586,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj",
+      "hull_16.obj",
+      "hull_17.obj",
+      "hull_18.obj",
+      "hull_19.obj",
+      "hull_20.obj",
+      "hull_21.obj",
+      "hull_22.obj",
+      "hull_23.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://kenney.nl/assets/food-kit",
+    "frame": "z-up"
+  },
+  {
+    "id": "computer_monitor",
+    "name": "Computer Monitor",
+    "category": "office",
+    "size": [
+      0.6005,
+      0.159,
+      0.45
+    ],
+    "base": "assets/library/computer_monitor",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.589,
+          0.656,
+          0.656,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://kenney.nl/assets/furniture-kit",
+    "frame": "z-up"
+  },
+  {
     "id": "desk",
     "name": "Desk",
     "category": "furniture",
@@ -358,6 +1182,248 @@
     "frame": "z-up"
   },
   {
+    "id": "desk_corner",
+    "name": "Corner Desk",
+    "category": "furniture",
+    "size": [
+      1.9013,
+      1.9013,
+      0.75
+    ],
+    "base": "assets/library/desk_corner",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.954,
+          0.798,
+          0.659,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.876,
+          0.918,
+          0.926,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://kenney.nl/assets/furniture-kit",
+    "frame": "z-up"
+  },
+  {
+    "id": "desk_fan",
+    "name": "Desk Fan",
+    "category": "appliances",
+    "size": [
+      0.297,
+      0.222,
+      0.4
+    ],
+    "base": "assets/library/desk_fan",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.078,
+          0.078,
+          0.078,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.545,
+          0.545,
+          0.545,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj",
+      "hull_16.obj",
+      "hull_17.obj",
+      "hull_18.obj",
+      "hull_19.obj",
+      "hull_20.obj",
+      "hull_21.obj",
+      "hull_22.obj",
+      "hull_23.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://poly.pizza/m/OlTLyyXoXY",
+    "frame": "z-up"
+  },
+  {
+    "id": "desk_lamp",
+    "name": "Desk Lamp",
+    "category": "office",
+    "size": [
+      0.2027,
+      0.6149,
+      0.8927
+    ],
+    "base": "assets/library/desk_lamp",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.556,
+          0.554,
+          0.545,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.667,
+          0.269,
+          0.057,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_2.obj",
+        "rgba": [
+          0.566,
+          0.238,
+          0.092,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_3.obj",
+        "rgba": [
+          0.391,
+          0.382,
+          0.379,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_4.obj",
+        "rgba": [
+          0.429,
+          0.205,
+          0.118,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_5.obj",
+        "rgba": [
+          0.7,
+          0.7,
+          0.699,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj",
+      "hull_16.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://polyhaven.com/a/desk_lamp_arm_01",
+    "frame": "z-up"
+  },
+  {
+    "id": "desktop_tower",
+    "name": "Desktop Computer Tower",
+    "category": "office",
+    "size": [
+      0.216,
+      0.4523,
+      0.45
+    ],
+    "base": "assets/library/desktop_tower",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.078,
+          0.078,
+          0.078,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.545,
+          0.545,
+          0.545,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://poly.pizza/m/7KNoiQlSxi",
+    "frame": "z-up"
+  },
+  {
     "id": "doorway",
     "name": "Doorway",
     "category": "structure",
@@ -399,6 +1465,153 @@
     ],
     "license": "CC0-1.0",
     "source": "https://kenney.nl/assets/furniture-kit",
+    "frame": "z-up"
+  },
+  {
+    "id": "drawer_cabinet",
+    "name": "Shelf with Drawers",
+    "category": "storage",
+    "size": [
+      1.141,
+      0.4901,
+      1.8806
+    ],
+    "base": "assets/library/drawer_cabinet",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.473,
+          0.35,
+          0.233,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_2.obj",
+        "rgba": [
+          0.508,
+          0.387,
+          0.265,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_3.obj",
+        "rgba": [
+          0.421,
+          0.305,
+          0.195,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_4.obj",
+        "rgba": [
+          0.124,
+          0.122,
+          0.144,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_5.obj",
+        "rgba": [
+          0.634,
+          0.634,
+          0.633,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj",
+      "hull_16.obj",
+      "hull_17.obj",
+      "hull_18.obj",
+      "hull_19.obj",
+      "hull_20.obj",
+      "hull_21.obj",
+      "hull_22.obj",
+      "hull_23.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://polyhaven.com/a/drawer_cabinet",
+    "frame": "z-up"
+  },
+  {
+    "id": "dresser",
+    "name": "Dresser",
+    "category": "furniture",
+    "size": [
+      1.7554,
+      0.7028,
+      0.85
+    ],
+    "base": "assets/library/dresser",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.332,
+          0.295,
+          0.23,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.422,
+          0.371,
+          0.295,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_2.obj",
+        "rgba": [
+          0.23,
+          0.194,
+          0.166,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://quaternius.com/packs/houseinterior.html",
     "frame": "z-up"
   },
   {
@@ -527,6 +1740,332 @@
     "frame": "z-up"
   },
   {
+    "id": "fire_hydrant",
+    "name": "Fire Hydrant",
+    "category": "outdoor",
+    "size": [
+      0.2738,
+      0.3173,
+      0.8008
+    ],
+    "base": "assets/library/fire_hydrant",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.457,
+          0.184,
+          0.136,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.397,
+          0.21,
+          0.161,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_2.obj",
+        "rgba": [
+          0.16,
+          0.127,
+          0.103,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_3.obj",
+        "rgba": [
+          0.259,
+          0.258,
+          0.253,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_4.obj",
+        "rgba": [
+          0.057,
+          0.056,
+          0.056,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_5.obj",
+        "rgba": [
+          0.46,
+          0.3,
+          0.265,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj",
+      "hull_16.obj",
+      "hull_17.obj",
+      "hull_18.obj",
+      "hull_19.obj",
+      "hull_20.obj",
+      "hull_21.obj",
+      "hull_22.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://polyhaven.com/a/fire_hydrant",
+    "frame": "z-up"
+  },
+  {
+    "id": "fire_pit",
+    "name": "Stone Fire Pit",
+    "category": "outdoor",
+    "size": [
+      1.4485,
+      1.4332,
+      0.3883
+    ],
+    "base": "assets/library/fire_pit",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.25,
+          0.234,
+          0.214,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.208,
+          0.189,
+          0.166,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_2.obj",
+        "rgba": [
+          0.325,
+          0.307,
+          0.282,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_3.obj",
+        "rgba": [
+          0.414,
+          0.396,
+          0.365,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj",
+      "hull_16.obj",
+      "hull_17.obj",
+      "hull_18.obj",
+      "hull_19.obj",
+      "hull_20.obj",
+      "hull_21.obj",
+      "hull_22.obj",
+      "hull_23.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://polyhaven.com/a/stone_fire_pit",
+    "frame": "z-up"
+  },
+  {
+    "id": "fire_ring",
+    "name": "Fire Ring",
+    "category": "outdoor",
+    "size": [
+      1.0434,
+      0.9945,
+      0.15
+    ],
+    "base": "assets/library/fire_ring",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.866,
+          0.948,
+          0.959,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj",
+      "hull_16.obj",
+      "hull_17.obj",
+      "hull_18.obj",
+      "hull_19.obj",
+      "hull_20.obj",
+      "hull_21.obj",
+      "hull_22.obj",
+      "hull_23.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://kenney.nl/assets/nature-kit",
+    "frame": "z-up"
+  },
+  {
+    "id": "floor_lamp",
+    "name": "Floor Lamp",
+    "category": "decor",
+    "size": [
+      0.2829,
+      0.3266,
+      1.6
+    ],
+    "base": "assets/library/floor_lamp",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          1.0,
+          0.961,
+          0.791,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.876,
+          0.918,
+          0.926,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://kenney.nl/assets/furniture-kit",
+    "frame": "z-up"
+  },
+  {
+    "id": "floor_lamp_square",
+    "name": "Square Floor Lamp",
+    "category": "decor",
+    "size": [
+      0.2093,
+      0.2093,
+      1.5
+    ],
+    "base": "assets/library/floor_lamp_square",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          1.0,
+          0.961,
+          0.791,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.876,
+          0.918,
+          0.926,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj",
+      "hull_16.obj",
+      "hull_17.obj",
+      "hull_18.obj",
+      "hull_19.obj",
+      "hull_20.obj",
+      "hull_21.obj",
+      "hull_22.obj",
+      "hull_23.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://kenney.nl/assets/furniture-kit",
+    "frame": "z-up"
+  },
+  {
     "id": "fridge",
     "name": "Fridge",
     "category": "appliances",
@@ -567,6 +2106,371 @@
       "hull_7.obj",
       "hull_8.obj",
       "hull_9.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://kenney.nl/assets/furniture-kit",
+    "frame": "z-up"
+  },
+  {
+    "id": "garden_hose",
+    "name": "Coiled Garden Hose",
+    "category": "outdoor",
+    "size": [
+      0.4676,
+      0.2503,
+      0.5563
+    ],
+    "base": "assets/library/garden_hose",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.005,
+          0.153,
+          0.119,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.052,
+          0.209,
+          0.171,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_2.obj",
+        "rgba": [
+          0.097,
+          0.249,
+          0.208,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_3.obj",
+        "rgba": [
+          0.289,
+          0.294,
+          0.29,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_4.obj",
+        "rgba": [
+          0.342,
+          0.338,
+          0.331,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_5.obj",
+        "rgba": [
+          0.433,
+          0.385,
+          0.331,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj",
+      "hull_16.obj",
+      "hull_17.obj",
+      "hull_18.obj",
+      "hull_19.obj",
+      "hull_20.obj",
+      "hull_21.obj",
+      "hull_22.obj",
+      "hull_23.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://polyhaven.com/a/garden_hose_wall_mounted_01",
+    "frame": "z-up"
+  },
+  {
+    "id": "hand_basket",
+    "name": "Shopping Basket",
+    "category": "clutter",
+    "size": [
+      0.49,
+      0.49,
+      0.35
+    ],
+    "base": "assets/library/hand_basket",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.184,
+          0.474,
+          0.342,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.121,
+          0.412,
+          0.31,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_2.obj",
+        "rgba": [
+          0.266,
+          0.557,
+          0.382,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_3.obj",
+        "rgba": [
+          0.652,
+          0.652,
+          0.67,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_4.obj",
+        "rgba": [
+          0.579,
+          0.579,
+          0.623,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj",
+      "hull_16.obj",
+      "hull_17.obj",
+      "hull_18.obj",
+      "hull_19.obj",
+      "hull_20.obj",
+      "hull_21.obj",
+      "hull_22.obj",
+      "hull_23.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://kenney.nl/assets/mini-market",
+    "frame": "z-up"
+  },
+  {
+    "id": "houseplant_round",
+    "name": "Round Houseplant",
+    "category": "plants",
+    "size": [
+      0.7249,
+      0.7483,
+      0.6
+    ],
+    "base": "assets/library/houseplant_round",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.48,
+          0.596,
+          0.23,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.181,
+          0.181,
+          0.181,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj",
+      "hull_16.obj",
+      "hull_17.obj",
+      "hull_18.obj",
+      "hull_19.obj",
+      "hull_20.obj",
+      "hull_21.obj",
+      "hull_22.obj",
+      "hull_23.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://quaternius.com/packs/houseinterior.html",
+    "frame": "z-up"
+  },
+  {
+    "id": "houseplant_tall",
+    "name": "Tall Houseplant",
+    "category": "plants",
+    "size": [
+      0.446,
+      0.4404,
+      1.1
+    ],
+    "base": "assets/library/houseplant_tall",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.295,
+          0.383,
+          0.24,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.181,
+          0.181,
+          0.181,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_2.obj",
+        "rgba": [
+          0.694,
+          0.549,
+          0.318,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj",
+      "hull_16.obj",
+      "hull_17.obj",
+      "hull_18.obj",
+      "hull_19.obj",
+      "hull_20.obj",
+      "hull_21.obj",
+      "hull_22.obj",
+      "hull_23.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://quaternius.com/packs/houseinterior.html",
+    "frame": "z-up"
+  },
+  {
+    "id": "microwave",
+    "name": "Microwave",
+    "category": "appliances",
+    "size": [
+      0.4833,
+      0.3833,
+      0.3
+    ],
+    "base": "assets/library/microwave",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.988,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.641,
+          0.713,
+          0.713,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_2.obj",
+        "rgba": [
+          0.589,
+          0.656,
+          0.656,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj"
     ],
     "license": "CC0-1.0",
     "source": "https://kenney.nl/assets/furniture-kit",
@@ -666,6 +2570,66 @@
     ],
     "license": "CC0-1.0",
     "source": "https://polyhaven.com/a/plastic_monobloc_chair_01",
+    "frame": "z-up"
+  },
+  {
+    "id": "motorcycle",
+    "name": "Motorcycle",
+    "category": "vehicles",
+    "size": [
+      0.4694,
+      2.344,
+      1.1
+    ],
+    "base": "assets/library/motorcycle",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.339,
+          0.26,
+          0.406,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.518,
+          0.534,
+          0.827,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj",
+      "hull_16.obj",
+      "hull_17.obj",
+      "hull_18.obj",
+      "hull_19.obj",
+      "hull_20.obj",
+      "hull_21.obj",
+      "hull_22.obj",
+      "hull_23.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://poly.pizza/m/j20srJUjpB",
     "frame": "z-up"
   },
   {
@@ -786,6 +2750,179 @@
     "frame": "z-up"
   },
   {
+    "id": "pine_tree",
+    "name": "Pine Tree",
+    "category": "nature",
+    "size": [
+      4.347,
+      4.0341,
+      6.0
+    ],
+    "base": "assets/library/pine_tree",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.295,
+          0.383,
+          0.24,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.383,
+          0.26,
+          0.24,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj",
+      "hull_16.obj",
+      "hull_17.obj",
+      "hull_18.obj",
+      "hull_19.obj",
+      "hull_20.obj",
+      "hull_21.obj",
+      "hull_22.obj",
+      "hull_23.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://quaternius.com/packs/ultimatenature.html",
+    "frame": "z-up"
+  },
+  {
+    "id": "plant_tabletop",
+    "name": "Tabletop Plant",
+    "category": "plants",
+    "size": [
+      0.2028,
+      0.2028,
+      0.3
+    ],
+    "base": "assets/library/plant_tabletop",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.954,
+          0.798,
+          0.659,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.462,
+          0.916,
+          0.784,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj",
+      "hull_16.obj",
+      "hull_17.obj",
+      "hull_18.obj",
+      "hull_19.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://kenney.nl/assets/furniture-kit",
+    "frame": "z-up"
+  },
+  {
+    "id": "plate",
+    "name": "Plate",
+    "category": "kitchen",
+    "size": [
+      0.2675,
+      0.2675,
+      0.027
+    ],
+    "base": "assets/library/plate",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.664,
+          0.664,
+          0.677,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.533,
+          0.533,
+          0.595,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_2.obj",
+        "rgba": [
+          0.606,
+          0.606,
+          0.641,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://kenney.nl/assets/food-kit",
+    "frame": "z-up"
+  },
+  {
     "id": "potted_plant",
     "name": "Potted Plant",
     "category": "plants",
@@ -842,6 +2979,92 @@
     ],
     "license": "CC0-1.0",
     "source": "https://kenney.nl/assets/furniture-kit",
+    "frame": "z-up"
+  },
+  {
+    "id": "potted_plant_leafy",
+    "name": "Leafy Potted Plant",
+    "category": "plants",
+    "size": [
+      0.7032,
+      0.6583,
+      0.8425
+    ],
+    "base": "assets/library/potted_plant_leafy",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.476,
+          0.301,
+          0.201,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.264,
+          0.254,
+          0.188,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_2.obj",
+        "rgba": [
+          0.28,
+          0.343,
+          0.214,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_3.obj",
+        "rgba": [
+          0.187,
+          0.166,
+          0.135,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_4.obj",
+        "rgba": [
+          0.391,
+          0.44,
+          0.26,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj",
+      "hull_16.obj",
+      "hull_17.obj",
+      "hull_18.obj",
+      "hull_19.obj",
+      "hull_20.obj",
+      "hull_21.obj",
+      "hull_22.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://polyhaven.com/a/potted_plant_02",
     "frame": "z-up"
   },
   {
@@ -941,6 +3164,532 @@
     "frame": "z-up"
   },
   {
+    "id": "potted_plant_tall",
+    "name": "Tall Potted Plant",
+    "category": "plants",
+    "size": [
+      0.587,
+      0.6305,
+      1.3483
+    ],
+    "base": "assets/library/potted_plant_tall",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.457,
+          0.284,
+          0.186,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.252,
+          0.303,
+          0.159,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_2.obj",
+        "rgba": [
+          0.421,
+          0.245,
+          0.155,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_3.obj",
+        "rgba": [
+          0.328,
+          0.304,
+          0.246,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_4.obj",
+        "rgba": [
+          0.494,
+          0.331,
+          0.226,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_5.obj",
+        "rgba": [
+          0.204,
+          0.203,
+          0.145,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj",
+      "hull_16.obj",
+      "hull_17.obj",
+      "hull_18.obj",
+      "hull_19.obj",
+      "hull_20.obj",
+      "hull_21.obj",
+      "hull_22.obj",
+      "hull_23.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://polyhaven.com/a/potted_plant_01",
+    "frame": "z-up"
+  },
+  {
+    "id": "rock_flat",
+    "name": "Flat Rock",
+    "category": "nature",
+    "size": [
+      0.9064,
+      1.1727,
+      0.3
+    ],
+    "base": "assets/library/rock_flat",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.948,
+          0.744,
+          0.619,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://kenney.nl/assets/nature-kit",
+    "frame": "z-up"
+  },
+  {
+    "id": "rock_mossy",
+    "name": "Mossy Rock",
+    "category": "nature",
+    "size": [
+      0.5313,
+      0.5642,
+      0.6
+    ],
+    "base": "assets/library/rock_mossy",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.48,
+          0.493,
+          0.53,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.295,
+          0.383,
+          0.24,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://quaternius.com/packs/ultimatenature.html",
+    "frame": "z-up"
+  },
+  {
+    "id": "rock_small",
+    "name": "Small Rock",
+    "category": "nature",
+    "size": [
+      0.1688,
+      0.3203,
+      0.1435
+    ],
+    "base": "assets/library/rock_small",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.226,
+          0.156,
+          0.11,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.276,
+          0.197,
+          0.13,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_2.obj",
+        "rgba": [
+          0.327,
+          0.249,
+          0.166,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_3.obj",
+        "rgba": [
+          0.172,
+          0.121,
+          0.093,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_4.obj",
+        "rgba": [
+          0.365,
+          0.303,
+          0.225,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_5.obj",
+        "rgba": [
+          0.413,
+          0.36,
+          0.301,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://polyhaven.com/a/rock_07",
+    "frame": "z-up"
+  },
+  {
+    "id": "rock_tall",
+    "name": "Tall Rock",
+    "category": "nature",
+    "size": [
+      0.9871,
+      0.686,
+      1.0
+    ],
+    "base": "assets/library/rock_tall",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.948,
+          0.744,
+          0.619,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.452,
+          0.93,
+          0.866,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj",
+      "hull_16.obj",
+      "hull_17.obj",
+      "hull_18.obj",
+      "hull_19.obj",
+      "hull_20.obj",
+      "hull_21.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://kenney.nl/assets/nature-kit",
+    "frame": "z-up"
+  },
+  {
+    "id": "shelving_unit",
+    "name": "Shelving Unit",
+    "category": "storage",
+    "size": [
+      1.4474,
+      0.3237,
+      1.9
+    ],
+    "base": "assets/library/shelving_unit",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.632,
+          0.629,
+          0.622,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj",
+      "hull_16.obj",
+      "hull_17.obj",
+      "hull_18.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://quaternius.com/packs/houseinterior.html",
+    "frame": "z-up"
+  },
+  {
+    "id": "shoe_pile",
+    "name": "Pile of Shoes",
+    "category": "clutter",
+    "size": [
+      0.9012,
+      0.8016,
+      0.3
+    ],
+    "base": "assets/library/shoe_pile",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.996,
+          0.811,
+          0.306,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.996,
+          0.731,
+          0.242,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_2.obj",
+        "rgba": [
+          0.996,
+          0.86,
+          0.344,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj",
+      "hull_16.obj",
+      "hull_17.obj",
+      "hull_18.obj",
+      "hull_19.obj",
+      "hull_20.obj",
+      "hull_21.obj",
+      "hull_22.obj",
+      "hull_23.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://poly.pizza/m/7XCvej7wZU",
+    "frame": "z-up"
+  },
+  {
+    "id": "shopping_cart",
+    "name": "Shopping Cart",
+    "category": "clutter",
+    "size": [
+      0.7681,
+      1.2262,
+      1.0
+    ],
+    "base": "assets/library/shopping_cart",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.455,
+          0.476,
+          0.571,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.397,
+          0.415,
+          0.498,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_2.obj",
+        "rgba": [
+          0.342,
+          0.355,
+          0.421,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_3.obj",
+        "rgba": [
+          0.169,
+          0.169,
+          0.187,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_4.obj",
+        "rgba": [
+          0.283,
+          0.3,
+          0.364,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_5.obj",
+        "rgba": [
+          0.63,
+          0.261,
+          0.197,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj",
+      "hull_16.obj",
+      "hull_17.obj",
+      "hull_18.obj",
+      "hull_19.obj",
+      "hull_20.obj",
+      "hull_21.obj",
+      "hull_22.obj",
+      "hull_23.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://kenney.nl/assets/mini-market",
+    "frame": "z-up"
+  },
+  {
     "id": "sofa",
     "name": "Sofa",
     "category": "furniture",
@@ -1007,6 +3756,102 @@
     ],
     "license": "CC0-1.0",
     "source": "https://polyhaven.com/a/sofa_02",
+    "frame": "z-up"
+  },
+  {
+    "id": "statue",
+    "name": "Gothic Statue",
+    "category": "decor",
+    "size": [
+      1.5262,
+      1.6229,
+      1.8
+    ],
+    "base": "assets/library/statue",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.104,
+          0.086,
+          0.044,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.192,
+          0.167,
+          0.109,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_2.obj",
+        "rgba": [
+          0.293,
+          0.261,
+          0.191,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_3.obj",
+        "rgba": [
+          0.384,
+          0.35,
+          0.302,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_4.obj",
+        "rgba": [
+          0.498,
+          0.46,
+          0.423,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_5.obj",
+        "rgba": [
+          0.644,
+          0.611,
+          0.581,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj",
+      "hull_16.obj",
+      "hull_17.obj",
+      "hull_18.obj",
+      "hull_19.obj",
+      "hull_20.obj",
+      "hull_21.obj",
+      "hull_22.obj",
+      "hull_23.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://polyhaven.com/a/gothic_statue",
     "frame": "z-up"
   },
   {
@@ -1097,6 +3942,75 @@
     "frame": "z-up"
   },
   {
+    "id": "suitcase",
+    "name": "Suitcase",
+    "category": "clutter",
+    "size": [
+      0.6934,
+      0.2392,
+      0.5682
+    ],
+    "base": "assets/library/suitcase",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.148,
+          0.146,
+          0.087,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.269,
+          0.251,
+          0.227,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_2.obj",
+        "rgba": [
+          0.305,
+          0.285,
+          0.262,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_3.obj",
+        "rgba": [
+          0.344,
+          0.322,
+          0.301,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_4.obj",
+        "rgba": [
+          0.187,
+          0.176,
+          0.118,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://polyhaven.com/a/vintage_suitcase",
+    "frame": "z-up"
+  },
+  {
     "id": "table",
     "name": "Table",
     "category": "furniture",
@@ -1135,6 +4049,313 @@
     ],
     "license": "CC0-1.0",
     "source": "https://kenney.nl/assets/furniture-kit",
+    "frame": "z-up"
+  },
+  {
+    "id": "table_fan",
+    "name": "Table Fan",
+    "category": "appliances",
+    "size": [
+      0.2607,
+      0.2105,
+      0.45
+    ],
+    "base": "assets/library/table_fan",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.906,
+          0.906,
+          0.906,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.51,
+          0.51,
+          0.51,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://poly.pizza/m/QdOxYDGjhN",
+    "frame": "z-up"
+  },
+  {
+    "id": "tire",
+    "name": "Tire",
+    "category": "clutter",
+    "size": [
+      0.65,
+      0.1787,
+      0.65
+    ],
+    "base": "assets/library/tire",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.067,
+          0.058,
+          0.05,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.118,
+          0.107,
+          0.099,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_2.obj",
+        "rgba": [
+          0.03,
+          0.021,
+          0.014,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_3.obj",
+        "rgba": [
+          0.169,
+          0.157,
+          0.148,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj",
+      "hull_16.obj",
+      "hull_17.obj",
+      "hull_18.obj",
+      "hull_19.obj",
+      "hull_20.obj",
+      "hull_21.obj",
+      "hull_22.obj",
+      "hull_23.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://polyhaven.com/a/old_tyre",
+    "frame": "z-up"
+  },
+  {
+    "id": "tool_box",
+    "name": "Tool Box",
+    "category": "clutter",
+    "size": [
+      0.4,
+      0.2707,
+      0.3047
+    ],
+    "base": "assets/library/tool_box",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.292,
+          0.31,
+          0.274,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.305,
+          0.253,
+          0.219,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_2.obj",
+        "rgba": [
+          0.382,
+          0.372,
+          0.332,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_3.obj",
+        "rgba": [
+          0.566,
+          0.527,
+          0.414,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_4.obj",
+        "rgba": [
+          0.509,
+          0.142,
+          0.122,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj",
+      "hull_16.obj",
+      "hull_17.obj",
+      "hull_18.obj",
+      "hull_19.obj",
+      "hull_20.obj",
+      "hull_21.obj",
+      "hull_22.obj",
+      "hull_23.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://polyhaven.com/a/metal_toolbox",
+    "frame": "z-up"
+  },
+  {
+    "id": "tool_cart",
+    "name": "Tool Cart",
+    "category": "storage",
+    "size": [
+      1.2743,
+      0.7548,
+      0.9647
+    ],
+    "base": "assets/library/tool_cart",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.158,
+          0.185,
+          0.147,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.218,
+          0.332,
+          0.248,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_2.obj",
+        "rgba": [
+          0.193,
+          0.272,
+          0.203,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_3.obj",
+        "rgba": [
+          0.153,
+          0.116,
+          0.083,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_4.obj",
+        "rgba": [
+          0.057,
+          0.053,
+          0.047,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_5.obj",
+        "rgba": [
+          0.389,
+          0.416,
+          0.395,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj",
+      "hull_16.obj",
+      "hull_17.obj",
+      "hull_18.obj",
+      "hull_19.obj",
+      "hull_20.obj",
+      "hull_21.obj",
+      "hull_22.obj",
+      "hull_23.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://polyhaven.com/a/tool_cart",
     "frame": "z-up"
   },
   {
@@ -1177,6 +4398,250 @@
     "frame": "z-up"
   },
   {
+    "id": "trash_bag",
+    "name": "Full Trash Bag",
+    "category": "clutter",
+    "size": [
+      0.5281,
+      0.4629,
+      0.575
+    ],
+    "base": "assets/library/trash_bag",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.039,
+          0.039,
+          0.038,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.119,
+          0.113,
+          0.108,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_2.obj",
+        "rgba": [
+          0.153,
+          0.069,
+          0.062,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_3.obj",
+        "rgba": [
+          0.229,
+          0.218,
+          0.208,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj",
+      "hull_16.obj",
+      "hull_17.obj",
+      "hull_18.obj",
+      "hull_19.obj",
+      "hull_20.obj",
+      "hull_21.obj",
+      "hull_22.obj",
+      "hull_23.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://polyhaven.com/a/trashbag",
+    "frame": "z-up"
+  },
+  {
+    "id": "trash_can_large",
+    "name": "Large Trash Can",
+    "category": "clutter",
+    "size": [
+      0.6294,
+      0.6294,
+      0.95
+    ],
+    "base": "assets/library/trash_can_large",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.406,
+          0.406,
+          0.406,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://quaternius.com/packs/houseinterior.html",
+    "frame": "z-up"
+  },
+  {
+    "id": "trash_can_metal",
+    "name": "Metal Trash Can",
+    "category": "clutter",
+    "size": [
+      0.778,
+      0.5553,
+      0.9062
+    ],
+    "base": "assets/library/trash_can_metal",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.265,
+          0.253,
+          0.238,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.323,
+          0.307,
+          0.281,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_2.obj",
+        "rgba": [
+          0.229,
+          0.214,
+          0.188,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_3.obj",
+        "rgba": [
+          0.378,
+          0.362,
+          0.338,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_4.obj",
+        "rgba": [
+          0.147,
+          0.137,
+          0.121,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj",
+      "hull_16.obj",
+      "hull_17.obj",
+      "hull_18.obj",
+      "hull_19.obj",
+      "hull_20.obj",
+      "hull_21.obj",
+      "hull_22.obj",
+      "hull_23.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://polyhaven.com/a/metal_trash_can",
+    "frame": "z-up"
+  },
+  {
+    "id": "trash_can_round",
+    "name": "Round Trash Can",
+    "category": "clutter",
+    "size": [
+      0.4919,
+      0.4919,
+      0.7
+    ],
+    "base": "assets/library/trash_can_round",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.406,
+          0.406,
+          0.406,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj",
+      "hull_16.obj",
+      "hull_17.obj",
+      "hull_18.obj",
+      "hull_19.obj",
+      "hull_20.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://quaternius.com/packs/houseinterior.html",
+    "frame": "z-up"
+  },
+  {
     "id": "trash_can_small",
     "name": "Small Trash Can",
     "category": "clutter",
@@ -1213,6 +4678,323 @@
     ],
     "license": "CC0-1.0",
     "source": "https://kenney.nl/assets/furniture-kit",
+    "frame": "z-up"
+  },
+  {
+    "id": "trash_can_wheelie",
+    "name": "Wheelie Bin",
+    "category": "clutter",
+    "size": [
+      0.578,
+      0.7557,
+      1.05
+    ],
+    "base": "assets/library/trash_can_wheelie",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.295,
+          0.383,
+          0.24,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.181,
+          0.181,
+          0.181,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj",
+      "hull_16.obj",
+      "hull_17.obj",
+      "hull_18.obj",
+      "hull_19.obj",
+      "hull_20.obj",
+      "hull_21.obj",
+      "hull_22.obj",
+      "hull_23.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://quaternius.com/packs/houseinterior.html",
+    "frame": "z-up"
+  },
+  {
+    "id": "tree",
+    "name": "Tree",
+    "category": "nature",
+    "size": [
+      3.8078,
+      5.5897,
+      5.0
+    ],
+    "base": "assets/library/tree",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.295,
+          0.383,
+          0.24,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.383,
+          0.26,
+          0.24,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj",
+      "hull_16.obj",
+      "hull_17.obj",
+      "hull_18.obj",
+      "hull_19.obj",
+      "hull_20.obj",
+      "hull_21.obj",
+      "hull_22.obj",
+      "hull_23.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://quaternius.com/packs/ultimatenature.html",
+    "frame": "z-up"
+  },
+  {
+    "id": "vending_machine",
+    "name": "Vending Machine",
+    "category": "appliances",
+    "size": [
+      1.2,
+      1.14,
+      1.8
+    ],
+    "base": "assets/library/vending_machine",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.294,
+          0.309,
+          0.374,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.636,
+          0.264,
+          0.195,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_2.obj",
+        "rgba": [
+          0.388,
+          0.404,
+          0.482,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_3.obj",
+        "rgba": [
+          0.251,
+          0.267,
+          0.333,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_4.obj",
+        "rgba": [
+          0.582,
+          0.588,
+          0.641,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj",
+      "hull_15.obj",
+      "hull_16.obj",
+      "hull_17.obj",
+      "hull_18.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://kenney.nl/assets/mini-arcade",
+    "frame": "z-up"
+  },
+  {
+    "id": "water_bottle",
+    "name": "Water Bottle",
+    "category": "kitchen",
+    "size": [
+      0.0745,
+      0.0745,
+      0.25
+    ],
+    "base": "assets/library/water_bottle",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.457,
+          0.603,
+          0.742,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.371,
+          0.371,
+          0.371,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://quaternius.com/packs/survivalpack.html",
+    "frame": "z-up"
+  },
+  {
+    "id": "water_jug",
+    "name": "Gallon Water Jug",
+    "category": "kitchen",
+    "size": [
+      0.1664,
+      0.1265,
+      0.2744
+    ],
+    "base": "assets/library/water_jug",
+    "visuals": [
+      {
+        "file": "visual_0.obj",
+        "rgba": [
+          0.523,
+          0.508,
+          0.428,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_1.obj",
+        "rgba": [
+          0.54,
+          0.531,
+          0.466,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_2.obj",
+        "rgba": [
+          0.504,
+          0.474,
+          0.368,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_3.obj",
+        "rgba": [
+          0.567,
+          0.512,
+          0.337,
+          1.0
+        ]
+      },
+      {
+        "file": "visual_4.obj",
+        "rgba": [
+          0.432,
+          0.377,
+          0.273,
+          1.0
+        ]
+      }
+    ],
+    "hulls": [
+      "hull_0.obj",
+      "hull_1.obj",
+      "hull_2.obj",
+      "hull_3.obj",
+      "hull_4.obj",
+      "hull_5.obj",
+      "hull_6.obj",
+      "hull_7.obj",
+      "hull_8.obj",
+      "hull_9.obj",
+      "hull_10.obj",
+      "hull_11.obj",
+      "hull_12.obj",
+      "hull_13.obj",
+      "hull_14.obj"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://polyhaven.com/a/plastic_bottle_gallon",
     "frame": "z-up"
   },
   {
