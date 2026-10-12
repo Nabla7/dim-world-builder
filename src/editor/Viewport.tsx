@@ -178,7 +178,8 @@ function Lighting() {
     const root = new THREE.Group();
     const renderer = viewer.renderer;
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    // PCF honors shadow.radius (PCFSoft ignores it): a wide kernel gives the soft edges of a hazy, diffuse sun
+    renderer.shadowMap.type = THREE.PCFShadowMap;
     // Neutral keeps greens green (ACES pulls foliage toward gray-olive)
     renderer.toneMapping = THREE.NeutralToneMapping;
     renderer.toneMappingExposure = 1.0;
@@ -195,7 +196,7 @@ function Lighting() {
       fog: scene.fog,
     };
     scene.environment = environment;
-    scene.environmentIntensity = 0.55;
+    scene.environmentIntensity = 0.7;
     scene.fog = new THREE.Fog(
       SKY.horizon.clone(),
       mode === "view" ? 45 : 70,
@@ -205,11 +206,12 @@ function Lighting() {
     const fill = new THREE.HemisphereLight(
       new THREE.Color(0.62, 0.75, 0.95),
       new THREE.Color(0.42, 0.4, 0.3),
-      0.55,
+      0.8,
     );
     fill.up.set(0, 0, 1);
     fill.position.set(0, 0, 50);
-    const sun = new THREE.DirectionalLight(SKY.sun.clone(), 2.6);
+    // a diffuse sun: less direct light, more sky fill, soft-edged shadows that still read on a light floor
+    const sun = new THREE.DirectionalLight(SKY.sun.clone(), 2.0);
     sun.position.copy(SUN_DIRECTION).multiplyScalar(60);
     sun.castShadow = true;
     sun.shadow.mapSize.set(4096, 4096);
@@ -223,7 +225,7 @@ function Lighting() {
     });
     sun.shadow.bias = -0.0004;
     sun.shadow.normalBias = 0.03;
-    sun.shadow.radius = 3;
+    sun.shadow.radius = 5;
     // editing: only shadows over the grid; viewing: a concrete ground with a soft checker, like the simulation's
     const ground = new THREE.Mesh(
       new THREE.PlaneGeometry(800, 800),
