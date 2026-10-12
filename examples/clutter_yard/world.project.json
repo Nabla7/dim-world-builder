@@ -19,7 +19,7 @@
   ],
   "items": [
     {
-      "id": "39921085a961",
+      "id": "40a987aed4bc",
       "kind": "primitive",
       "params": {
         "shape": "step_stool",
@@ -46,10 +46,11 @@
         0.5,
         0.45,
         0.5
-      ]
+      ],
+      "key": "step_stool_1"
     },
     {
-      "id": "4d7992cd518d",
+      "id": "57f3ac36691d",
       "kind": "primitive",
       "params": {
         "shape": "pipe",
@@ -76,10 +77,11 @@
         1.6,
         0.2,
         0.2
-      ]
+      ],
+      "key": "pipe_1"
     },
     {
-      "id": "5eec6c5afbee",
+      "id": "da6d97acd416",
       "kind": "primitive",
       "params": {
         "shape": "soccer_ball",
@@ -106,10 +108,11 @@
         0.22,
         0.22,
         0.22
-      ]
+      ],
+      "key": "soccer_ball_1"
     },
     {
-      "id": "0b054f3547dd",
+      "id": "0653eb5bf11d",
       "kind": "primitive",
       "params": {
         "shape": "step_stool",
@@ -136,10 +139,11 @@
         0.5,
         0.45,
         0.5
-      ]
+      ],
+      "key": "step_stool_2"
     },
     {
-      "id": "dfa43e1c5498",
+      "id": "eca5f02367be",
       "kind": "primitive",
       "params": {
         "shape": "step_stool",
@@ -166,10 +170,11 @@
         0.5,
         0.45,
         0.5
-      ]
+      ],
+      "key": "step_stool_3"
     },
     {
-      "id": "bccddbdeb8ef",
+      "id": "951e01b0867c",
       "kind": "primitive",
       "params": {
         "shape": "pipe",
@@ -196,10 +201,11 @@
         1.6,
         0.2,
         0.2
-      ]
+      ],
+      "key": "pipe_2"
     },
     {
-      "id": "c7282459d673",
+      "id": "ff9688441dca",
       "kind": "primitive",
       "params": {
         "shape": "cone",
@@ -226,10 +232,11 @@
         0.3,
         0.3,
         0.45
-      ]
+      ],
+      "key": "cone_1"
     },
     {
-      "id": "c593228d5f03",
+      "id": "4fe4c533facc",
       "kind": "primitive",
       "params": {
         "shape": "step_stool",
@@ -256,10 +263,11 @@
         0.5,
         0.45,
         0.5
-      ]
+      ],
+      "key": "step_stool_4"
     },
     {
-      "id": "6440bd1340a5",
+      "id": "ec6077b09e77",
       "kind": "primitive",
       "params": {
         "shape": "soccer_ball",
@@ -286,10 +294,11 @@
         0.22,
         0.22,
         0.22
-      ]
+      ],
+      "key": "soccer_ball_2"
     },
     {
-      "id": "77fdd9dfe097",
+      "id": "3931d10306f1",
       "kind": "primitive",
       "params": {
         "shape": "soccer_ball",
@@ -316,10 +325,11 @@
         0.22,
         0.22,
         0.22
-      ]
+      ],
+      "key": "soccer_ball_3"
     },
     {
-      "id": "8d0b8e2bf2d1",
+      "id": "5e1cdbf9c993",
       "kind": "primitive",
       "params": {
         "shape": "cone",
@@ -346,10 +356,11 @@
         0.3,
         0.3,
         0.45
-      ]
+      ],
+      "key": "cone_2"
     },
     {
-      "id": "4b78283f6294",
+      "id": "f15570064eca",
       "kind": "primitive",
       "params": {
         "shape": "bowling_pin",
@@ -376,10 +387,11 @@
         0.12,
         0.12,
         0.38
-      ]
+      ],
+      "key": "bowling_pin_1"
     },
     {
-      "id": "f6fe7fe049ee",
+      "id": "47dba7e54608",
       "kind": "primitive",
       "params": {
         "shape": "box",
@@ -406,10 +418,11 @@
         0.4,
         0.3,
         0.3
-      ]
+      ],
+      "key": "box_1"
     },
     {
-      "id": "932befaa9783",
+      "id": "0f6b63ff655c",
       "kind": "primitive",
       "params": {
         "shape": "cone",
@@ -436,10 +449,11 @@
         0.3,
         0.3,
         0.45
-      ]
+      ],
+      "key": "cone_3"
     },
     {
-      "id": "78aefe4fd435",
+      "id": "fb8f36f7f982",
       "kind": "primitive",
       "params": {
         "shape": "ladder",
@@ -466,10 +480,11 @@
         2.4,
         0.45,
         0.06
-      ]
+      ],
+      "key": "ladder_1"
     },
     {
-      "id": "fa1c21afeb19",
+      "id": "54c4f4117bf9",
       "kind": "primitive",
       "params": {
         "shape": "box",
@@ -496,10 +511,11 @@
         0.4,
         0.3,
         0.3
-      ]
+      ],
+      "key": "box_2"
     },
     {
-      "id": "9f8c78cd3340",
+      "id": "c6e2995bd36c",
       "kind": "primitive",
       "params": {
         "shape": "soccer_ball",
@@ -526,10 +542,11 @@
         0.22,
         0.22,
         0.22
-      ]
+      ],
+      "key": "soccer_ball_4"
     },
     {
-      "id": "0a3596a5d4bb",
+      "id": "ea68781cfdc4",
       "kind": "primitive",
       "params": {
         "shape": "cone",
@@ -556,10 +573,11 @@
         0.3,
         0.3,
         0.45
-      ]
+      ],
+      "key": "cone_4"
     },
     {
-      "id": "6fd312009dbc",
+      "id": "6bfd9ee35803",
       "kind": "primitive",
       "params": {
         "shape": "step_stool",
@@ -586,10 +604,11 @@
         0.5,
         0.45,
         0.5
-      ]
+      ],
+      "key": "step_stool_5"
     },
     {
-      "id": "55a54f59614d",
+      "id": "1e969291bb2d",
       "kind": "primitive",
       "params": {
         "shape": "cone",
@@ -616,10 +635,11 @@
         0.3,
         0.3,
         0.45
-      ]
+      ],
+      "key": "cone_5"
     },
     {
-      "id": "6764f1f22f5f",
+      "id": "be11aa287bdc",
       "kind": "primitive",
       "params": {
         "shape": "cone",
@@ -646,10 +666,11 @@
         0.3,
         0.3,
         0.45
-      ]
+      ],
+      "key": "cone_6"
     },
     {
-      "id": "24c0b99afd09",
+      "id": "fa286a1a7ded",
       "kind": "primitive",
       "params": {
         "shape": "bowling_pin",
@@ -676,10 +697,11 @@
         0.12,
         0.12,
         0.38
-      ]
+      ],
+      "key": "bowling_pin_2"
     },
     {
-      "id": "cdc1876a9618",
+      "id": "6b0745731c8c",
       "kind": "primitive",
       "params": {
         "shape": "ladder",
@@ -706,10 +728,11 @@
         2.4,
         0.45,
         0.06
-      ]
+      ],
+      "key": "ladder_2"
     },
     {
-      "id": "4c9ac6b88103",
+      "id": "80a941612054",
       "kind": "stairs",
       "params": {
         "steps": 5,
@@ -746,10 +769,11 @@
         1,
         1,
         1
-      ]
+      ],
+      "key": "open_stairs_1"
     },
     {
-      "id": "61b768d6f5d0",
+      "id": "9b2efeca6d88",
       "kind": "primitive",
       "params": {
         "shape": "pipe",
@@ -776,7 +800,8 @@
         3,
         0.6,
         0.6
-      ]
+      ],
+      "key": "pipe_3"
     }
   ],
   "spawns": [

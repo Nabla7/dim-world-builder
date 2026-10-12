@@ -2,68 +2,68 @@
   "format": "dimos.scene.v1",
   "id": "nav_test_course",
   "entities": {
-    "lab_room_2b8bb3": {
-      "body": "lab_room_2b8bb3",
+    "lab_room_1": {
+      "body": "lab_room_1",
       "label": "Lab room",
       "kind": "room",
       "movable": false
     },
-    "upper_room_ce1051": {
-      "body": "upper_room_ce1051",
+    "upper_room_1": {
+      "body": "upper_room_1",
       "label": "Upper room",
       "kind": "room",
       "movable": false
     },
-    "crate_8212d0": {
-      "body": "crate_8212d0",
+    "box_1": {
+      "body": "box_1",
       "label": "Crate",
       "kind": "box",
       "movable": false
     },
-    "cart_ddb243": {
-      "body": "cart_ddb243",
+    "box_2": {
+      "body": "box_2",
       "label": "Cart",
       "kind": "box",
       "movable": false
     },
-    "stairs_7aa627": {
-      "body": "stairs_7aa627",
+    "stairs_1": {
+      "body": "stairs_1",
       "label": "Stairs",
       "kind": "stairs",
       "movable": false
     },
-    "hill_08224b": {
-      "body": "hill_08224b",
+    "hill_1": {
+      "body": "hill_1",
       "label": "Hill",
       "kind": "hill",
       "movable": false
     },
-    "cone_a_69fcf6": {
-      "body": "cone_a_69fcf6",
+    "cone_1": {
+      "body": "cone_1",
       "label": "Cone A",
       "kind": "cone",
       "movable": false
     },
-    "cone_b_cfdbb4": {
-      "body": "cone_b_cfdbb4",
+    "cone_2": {
+      "body": "cone_2",
       "label": "Cone B",
       "kind": "cone",
       "movable": false
     },
-    "beanbag_cab921": {
-      "body": "beanbag_cab921",
+    "beanbag_1": {
+      "body": "beanbag_1",
       "label": "Beanbag",
       "kind": "beanbag",
       "movable": false
     },
-    "ramp_9b1322": {
-      "body": "ramp_9b1322",
+    "ramp_1": {
+      "body": "ramp_1",
       "label": "Ramp",
       "kind": "ramp",
       "movable": false
     },
-    "pillar_beb099": {
-      "body": "pillar_beb099",
+    "cylinder_1": {
+      "body": "cylinder_1",
       "label": "Pillar",
       "kind": "cylinder",
       "movable": false

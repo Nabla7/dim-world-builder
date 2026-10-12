@@ -52,19 +52,22 @@ export async function exportProject(
     `"""python -m ${name}: compile the world with MuJoCo and summarize it."""\nfrom . import main\n\nmain()\n`,
   );
   await write("README.md", readme(name, project));
+  await write("pyproject.toml", pyproject(name));
+  // the SceneData module (scene_data_request -> scene_data), the same file in every export
+  await write("scene_data.py", await Deno.readTextFile(new URL("./python/scene_data.py", import.meta.url)));
   for (const [asset, meshFiles] of scene.meshFiles) {
     const source = assetDirs[asset];
     if (!source) throw new Error(`no files for mesh asset ${asset}`);
     await Deno.mkdir(`${dir}/meshes/${asset}`, { recursive: true });
     for (const file of meshFiles) {
-      await Deno.copyFile(`${source}/${file}`, `${dir}/meshes/${asset}/${file}`);
+      await copyWritable(`${source}/${file}`, `${dir}/meshes/${asset}/${file}`);
       files.push(`meshes/${asset}/${file}`);
     }
   }
   if (scene.textureFiles.size) await Deno.mkdir(`${dir}/textures`, { recursive: true });
   for (const texture of scene.textureFiles) {
     const name = texture.split("/").pop()!;
-    await Deno.copyFile(`${assetsRoot}/${texture}`, `${dir}/textures/${name}`);
+    await copyWritable(`${assetsRoot}/${texture}`, `${dir}/textures/${name}`);
     files.push(`textures/${name}`);
   }
   if (options.visualGlb) {
@@ -121,14 +124,17 @@ function pythonPackage(name: string, project: Project): string {
   return `"""${name}: a dim-world-builder world for dimos sim2 (MuJoCo).
 
 Files beside this one: scene.xml (MJCF), scene.json (dimos.scene.v1: entities, spawns), movers.json
-(dimos.movers.v1: scripted obstacles), meshes/ and world.project.json (the editor's project).
+(dimos.movers.v1: scripted obstacles), meshes/, world.project.json (the editor's project) and scene_data.py (the
+SceneData module: publish on scene_data_request, get the world's bodies, meshes and lights on scene_data).
 ${project.items.length} items, ${project.floors.length} floor(s).
 """
 
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
+import sys
 from typing import Any
 
 SCENE_DIR = Path(__file__).resolve().parent
@@ -150,18 +156,75 @@ def check() -> Any:
     return mujoco.MjModel.from_xml_path(str(SCENE_XML))
 
 
-def blueprint(robot: str = "unitree-go2-freewalk") -> Any:
-    """A dimos blueprint for \`robot\` in this world (sets the global scene package first)."""
+def blueprint(robot: str = "unitree-go2-freewalk", scene_data: bool = True) -> Any:
+    """A dimos blueprint for \`robot\` in this world (sets the global scene package first), plus the SceneData module
+    (scene_data_request -> scene_data) so frontends can draw the world."""
     from dimos.core.global_config import global_config
 
     global_config.update(simulation="mujoco", scene_package=str(SCENE_DIR))
     from dimos.robot.get_all_blueprints import get_blueprint_by_name
 
-    return get_blueprint_by_name(robot)
+    robot_blueprint = get_blueprint_by_name(robot)
+    if not scene_data:
+        return robot_blueprint
+    # module workers import SceneData by this package's name, so they need its parent on their path
+    parent = str(SCENE_DIR.parent)
+    paths = [p for p in os.environ.get("PYTHONPATH", "").split(os.pathsep) if p]
+    if parent not in paths:
+        os.environ["PYTHONPATH"] = os.pathsep.join([parent, *paths])
+    if parent not in sys.path:
+        sys.path.insert(0, parent)
+    from dimos.core.coordination.blueprints import autoconnect
+
+    from .scene_data import SceneData
+
+    return autoconnect(robot_blueprint, SceneData.blueprint())
+
+
+def __getattr__(attribute: str) -> Any:
+    # the go2 entry point (dimos run <world>.go2) is built on first use, not on import
+    if attribute == "go2":
+        return blueprint("unitree-go2-freewalk")
+    raise AttributeError(attribute)
 
 
 def main() -> None:
     model = check()
     print(f"{SCENE_XML}: {model.nbody} bodies, {model.ngeom} geoms, {len(MOVERS)} movers, spawns {sorted(SPAWNS)}")
+`;
+}
+
+/** a copy the next export can overwrite: sources in the Nix store are read-only, and a copy keeps that mode */
+async function copyWritable(from: string, to: string) {
+  await Deno.remove(to).catch(() => {});
+  await Deno.copyFile(from, to);
+  await Deno.chmod(to, 0o644);
+}
+
+/** makes the folder a pip package that registers dimos blueprints: \`dimos run <name>.go2\` and \`<name>.scene-data\` */
+function pyproject(name: string): string {
+  return `# pip install -e this folder (into dimos's venv) and dimos finds its blueprints:
+#   dimos run ${name.replace(/_/g, "-")}.go2          a Go2 in this world, plus the SceneData module
+#   dimos run <blueprint> ${name.replace(/_/g, "-")}.scene-data --scene-package <this folder>   SceneData beside any sim2 blueprint
+[project]
+name = "${name}"
+version = "0.1.0"
+description = "A dim-world-builder world for dimos sim2"
+requires-python = ">=3.10"
+
+[project.entry-points."dimos.blueprints"]
+go2 = "${name}:go2"
+scene-data = "${name}.scene_data:SceneData"
+
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["${name}"]
+package-dir = { "${name}" = "." }
+
+[tool.setuptools.package-data]
+"*" = ["*", "**/*"]
 `;
 }

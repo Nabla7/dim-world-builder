@@ -426,9 +426,12 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
         `${outDir}/playground_nav_eval.json`,
       ],
       env: { PYTHONPATH: "" },
-      stdout: "null",
-      stderr: "null",
+      stdout: "piped",
+      stderr: "piped",
     }).spawn();
+    // its output goes to a log beside the video, for when the run dies early
+    const log = await Deno.open(`${outDir}/playground_nav_eval.log`, { write: true, create: true, truncate: true });
+    const logged = Promise.all([sim.stdout.pipeTo(log.writable, { preventClose: true }), sim.stderr.pipeTo(log.writable, { preventClose: true })]);
     try {
       await demo.say("nav_eval.py starts a simulated Go2 (dimos sim2) in the export and walks its mapping path…", 400);
       await demo.click('[data-testid=mode] >> text="Viewer"', 500);
@@ -440,8 +443,15 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
       await demo.lookAt([2, 2, 0], [-10, -12, 9]);
       await demo.say("Walking the mapping path before the goals", 20000);
     } finally {
-      sim.kill("SIGINT");
+      // the run may already have ended (its report is written, or it crashed: see the log)
+      try {
+        sim.kill("SIGINT");
+      } catch {
+        // already exited
+      }
       await sim.status;
+      await logged;
+      log.close();
     }
   },
 

@@ -24,7 +24,7 @@
   ],
   "items": [
     {
-      "id": "2b8bb3529474",
+      "id": "b9c298cac9b0",
       "kind": "room",
       "params": {
         "width": 6,
@@ -64,10 +64,11 @@
         1,
         1,
         1
-      ]
+      ],
+      "key": "lab_room_1"
     },
     {
-      "id": "ce1051f28340",
+      "id": "afc40c3b06ac",
       "kind": "room",
       "params": {
         "width": 6,
@@ -107,10 +108,11 @@
         1,
         1,
         1
-      ]
+      ],
+      "key": "upper_room_1"
     },
     {
-      "id": "8212d0ddd6e8",
+      "id": "9b43b5ded3d6",
       "kind": "primitive",
       "params": {
         "shape": "box",
@@ -137,10 +139,11 @@
         0.6,
         0.8,
         0.6
-      ]
+      ],
+      "key": "box_1"
     },
     {
-      "id": "ddb24379e4b9",
+      "id": "e2b36153a85a",
       "kind": "primitive",
       "params": {
         "shape": "box",
@@ -184,10 +187,11 @@
         "speed": 0.4,
         "mode": "pingpong",
         "heading": "fixed"
-      }
+      },
+      "key": "box_2"
     },
     {
-      "id": "7aa627c8dfbe",
+      "id": "638a8c1de38c",
       "kind": "stairs",
       "params": {
         "steps": 6,
@@ -222,10 +226,11 @@
         1,
         1,
         1
-      ]
+      ],
+      "key": "stairs_1"
     },
     {
-      "id": "08224ba8b550",
+      "id": "65dfd77a8afe",
       "kind": "hill",
       "params": {
         "sizeX": 10,
@@ -260,10 +265,11 @@
         1,
         1,
         1
-      ]
+      ],
+      "key": "hill_1"
     },
     {
-      "id": "69fcf6a8fea3",
+      "id": "66a5394d7f4e",
       "kind": "primitive",
       "params": {
         "shape": "cone",
@@ -290,10 +296,11 @@
         0.35,
         0.35,
         0.5
-      ]
+      ],
+      "key": "cone_1"
     },
     {
-      "id": "cfdbb484ba9d",
+      "id": "b0c519c9de10",
       "kind": "primitive",
       "params": {
         "shape": "cone",
@@ -320,10 +327,11 @@
         0.35,
         0.35,
         0.5
-      ]
+      ],
+      "key": "cone_2"
     },
     {
-      "id": "cab9218393af",
+      "id": "c166d6d3947d",
       "kind": "primitive",
       "params": {
         "shape": "beanbag",
@@ -350,10 +358,11 @@
         0.9,
         0.9,
         0.6
-      ]
+      ],
+      "key": "beanbag_1"
     },
     {
-      "id": "9b1322640248",
+      "id": "11d2cabd7f08",
       "kind": "primitive",
       "params": {
         "shape": "ramp",
@@ -380,10 +389,11 @@
         2,
         1.2,
         0.25
-      ]
+      ],
+      "key": "ramp_1"
     },
     {
-      "id": "beb099eea77a",
+      "id": "877c1a4788c8",
       "kind": "primitive",
       "params": {
         "shape": "cylinder",
@@ -410,7 +420,8 @@
         0.4,
         0.4,
         2.8
-      ]
+      ],
+      "key": "cylinder_1"
     }
   ],
   "spawns": [
