@@ -102,7 +102,8 @@ Domain (CC0)". Poly Haven models used for the 1k glTF were first decimated in Bl
 triangles (UVs kept) and cooked with `--texture-size 256 --max-faces 3000` to keep each folder under
 1 MB; metal_trash_can, vintage_suitcase and fire_hydrant ship as sets, so only one item was kept.
 book_pile is five Quaternius Book1_Closed copies stacked, and shoe_pile is two Boots and two
-Slippers (Isa Lousberg) arranged together, before cooking.
+Slippers (Isa Lousberg) arranged together, before cooking. The Kenney, Quaternius and Poly Pizza
+kits store sRGB colors as glTF's linear base color, so they are cooked with `--srgb-factors`.
 
 **License note (2026-10-11):** quaternius.com now shows a site-wide "Quaternius Asset License"
 (updated 2026-08-28) that restricts redistributing assets as assets, while each pack page used here

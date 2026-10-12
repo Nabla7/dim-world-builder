@@ -258,9 +258,6 @@ function livelier<M extends THREE.Material | THREE.Material[]>(material: M): M {
     made = source.clone();
     const standard = made as THREE.MeshStandardMaterial;
     if (standard.color) {
-      // the flat-color kits (Kenney, Quaternius, poly.pizza) wrote sRGB values as glTF's linear factors, so they render
-      // pale; textured models (Poly Haven) are right as they are
-      if (!standard.map) standard.color.convertSRGBToLinear();
       standard.flatShading = true;
       standard.roughness = Math.max(standard.roughness ?? 1, 0.8);
       const hsl = standard.color.getHSL({ h: 0, s: 0, l: 0 }, THREE.SRGBColorSpace);

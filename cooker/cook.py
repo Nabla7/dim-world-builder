@@ -87,6 +87,23 @@ def place(meshes, up, scale, target_height):
 # ---------------------------------------------------------------- colors
 
 
+def srgb_to_linear(c):
+    c = np.clip(np.asarray(c, dtype=float), 0, 1)
+    return np.where(c <= 0.04045, c / 12.92, np.power((c + 0.055) / 1.055, 2.4))
+
+
+def linearize_factors(meshes):
+    """For sources that wrote sRGB colors as glTF's linear baseColorFactor (the Kenney, Quaternius, poly.pizza kits)."""
+    for mesh in meshes:
+        material = material_of(mesh)
+        factor = getattr(material, "baseColorFactor", None)
+        if factor is None or texture_image(material) is not None:
+            continue
+        f = np.asarray(factor, dtype=float)
+        f = f / 255.0 if f.max() > 1.0 else f
+        material.baseColorFactor = np.concatenate([srgb_to_linear(f[:3]), f[3:]])
+
+
 def linear_to_srgb(c):
     c = np.clip(np.asarray(c, dtype=float), 0, 1)
     return np.where(c <= 0.0031308, c * 12.92, 1.055 * np.power(c, 1 / 2.4) - 0.055)
@@ -457,6 +474,8 @@ def cook(args):
 
     emit("load", 0.02, input=str(args.input))
     meshes = load_meshes(args.input)
+    if args.srgb_factors:
+        linearize_factors(meshes)
     up = args.up or "y"
     factor = place(meshes, up, args.scale, args.target_height)
     lo, hi = bounds_of(meshes)
@@ -562,6 +581,11 @@ def main():
     parser.add_argument("--resolution", type=int, default=2000, help="CoACD sampling resolution")
     parser.add_argument("--preprocess-resolution", type=int, default=40)
     parser.add_argument("--max-colors", type=int, default=6, help="max visual_<k>.obj color groups")
+    parser.add_argument(
+        "--srgb-factors",
+        action="store_true",
+        help="the source's untextured base colors are sRGB, not glTF's linear (Kenney, Quaternius, poly.pizza kits)",
+    )
     parser.add_argument(
         "--max-faces", type=int, default=12000, help="face budget across visual OBJs"
     )
