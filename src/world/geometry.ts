@@ -450,6 +450,8 @@ function mannequinParts(): [Cloth, InlineMesh][] {
     dx,
     rot: (k++ % 2 ? 1 : -1) * 0.18,
   });
+  // the torso stays untwisted, so its broad faces read as clean planes
+  const S = (t: number, w: number, d: number, dx = 0): Ring => ({ t, w, d, dx });
   const parts: [Cloth, InlineMesh][] = [
     // a skull with a flat face plane, jaw narrower, crown back
     [
@@ -476,11 +478,11 @@ function mannequinParts(): [Cloth, InlineMesh][] {
         [0, 0, 1.15],
         [0, 0, 1.47],
         [
-          R(0, 0.14, 0.105),
-          R(0.4, 0.185, 0.135, 0.018),
-          R(0.62, 0.2, 0.14, 0.022),
-          R(0.86, 0.215, 0.115),
-          R(1, 0.15, 0.08, -0.015),
+          S(0, 0.14, 0.105),
+          S(0.4, 0.185, 0.135, 0.018),
+          S(0.62, 0.2, 0.14, 0.022),
+          S(0.86, 0.215, 0.115),
+          S(1, 0.15, 0.08, -0.015),
         ],
         6,
         0,
@@ -491,7 +493,7 @@ function mannequinParts(): [Cloth, InlineMesh][] {
       loftMesh(
         [0, 0, 0.98],
         [0, 0, 1.18],
-        [R(0, 0.14, 0.1), R(0.5, 0.125, 0.095, 0.008), R(1, 0.14, 0.1)],
+        [S(0, 0.14, 0.1), S(0.5, 0.125, 0.095, 0.008), S(1, 0.14, 0.1)],
         6,
         0,
       ),
@@ -501,7 +503,7 @@ function mannequinParts(): [Cloth, InlineMesh][] {
       loftMesh(
         [0, 0, 0.84],
         [0, 0, 1.0],
-        [R(0, 0.12, 0.09), R(0.45, 0.165, 0.11), R(1, 0.145, 0.1)],
+        [S(0, 0.12, 0.09), S(0.45, 0.165, 0.11), S(1, 0.145, 0.1)],
         6,
         0,
       ),
