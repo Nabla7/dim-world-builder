@@ -109,6 +109,8 @@ export interface LightParams {
   /** spot: half-angle of the cone, degrees */
   angle: number;
   shadows: boolean;
+  /** what it looks like: a bare bulb (editor only) or a recessed can whose face is at the light, its trim above */
+  fixture?: "bulb" | "can";
 }
 
 export interface AprilTagParams {

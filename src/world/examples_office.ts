@@ -13,6 +13,8 @@ const UPPER_SLAB = 0.3;
 // the angles below were written for these two facing the other way
 const BACKWARD = new Set(["office_chair", "computer_monitor"]);
 const FLOOR: Rgb = [0.66, 0.64, 0.6];
+// near-white paint
+const WALL_PAINT: Rgb = [0.93, 0.92, 0.9];
 
 type Segment = {
   x0: number;
@@ -20,6 +22,8 @@ type Segment = {
   x1: number;
   y1: number;
   height: number;
+  /** its foot above the floor (a window's lintel) */
+  bottom?: number;
   floor: string;
   name: string;
 };
@@ -76,10 +80,10 @@ function trimmed(walls: Segment[]): Segment[] {
 
 function wallItem(w: Segment): Item {
   const length = Math.hypot(w.x1 - w.x0, w.y1 - w.y0);
-  return makeItem("primitive", { shape: "box", color: PAINT.wall }, {
+  return makeItem("primitive", { shape: "box", color: WALL_PAINT }, {
     name: w.name,
     floor: w.floor,
-    position: [round((w.x0 + w.x1) / 2), round((w.y0 + w.y1) / 2), 0],
+    position: [round((w.x0 + w.x1) / 2), round((w.y0 + w.y1) / 2), w.bottom ?? 0],
     rotation: yaw(Math.atan2(w.y1 - w.y0, w.x1 - w.x0)),
     scale: [round(length), WALL, w.height],
   });
@@ -143,13 +147,49 @@ export function office555(): Project {
     }
   };
 
+  /**
+   * a big window in a run of wall: pass its [from, to] as one of the wall's gaps, then this fills the gap below `sill`
+   * and above `head` and stands mullions about every 2.4 m
+   */
+  const bigWindow = (
+    x0: number,
+    y0: number,
+    x1: number,
+    y1: number,
+    [from, to]: [number, number],
+    sill: number,
+    head: number,
+    height: number,
+    floor = ground,
+  ) => {
+    const length = Math.hypot(x1 - x0, y1 - y0);
+    const ux = (x1 - x0) / length;
+    const uy = (y1 - y0) / length;
+    const at = (d: number): [number, number] => [x0 + ux * d, y0 + uy * d];
+    const piece = (a: number, b: number, bottom: number, top: number, name: string) => {
+      const [ax, ay] = at(a);
+      const [bx, by] = at(b);
+      walls.push({ x0: ax, y0: ay, x1: bx, y1: by, bottom, height: top - bottom, floor, name });
+    };
+    piece(from, to, 0, sill, "Window sill wall");
+    piece(from, to, head, height, "Window lintel");
+    const panes = Math.max(1, Math.round((to - from) / 2.4));
+    for (let i = 1; i < panes; i++) {
+      const d = from + ((to - from) * i) / panes;
+      piece(d - 0.08, d + 0.08, sill, head, "Window mullion");
+    }
+  };
+
   // ── floor 1: the shell (west block walls reach floor 2's slab; the east hall is double height) ──
   const shell = 6;
   const west = UPPER_Z - UPPER_SLAB;
   wall(-0.45, -12.45, -0.45, 17.55, ground, west, [[27.05, 28.85]], "Outer wall"); // the west entrance at y 14.6..16.4
   wall(-0.45, 17.55, 9.85, 17.55, ground, west, [], "Outer wall");
   wall(9.95, 17.55, 29.7, 17.55, ground, shell, [], "Outer wall");
-  wall(29.7, 17.55, 29.7, -12.6, ground, shell, [], "Outer wall");
+  // the east hall's outer wall: two big windows, their sills above the shelving
+  wall(29.7, 17.55, 29.7, -12.6, ground, shell, [[4.5, 11.5], [18.5, 25.5]], "Outer wall");
+  bigWindow(29.7, 17.55, 29.7, -12.6, [4.5, 11.5], 2.0, 5.0, shell);
+  bigWindow(29.7, 17.55, 29.7, -12.6, [18.5, 25.5], 2.0, 5.0, shell);
   wall(29.7, -12.6, 9.9, -12.6, ground, shell, [], "Outer wall");
   wall(9.9, -12.6, 9.9, -12.45, ground, west, [], "Outer wall");
   wall(9.9, -12.45, -0.45, -12.45, ground, west, [], "Outer wall");
@@ -489,6 +529,39 @@ export function office555(): Project {
       floor: ground,
       position: [x, y, 5.5],
     }));
+  }
+
+  // recessed can lights in floor 1's rooms, flush with the underside of floor 2's slab
+  for (
+    const [x, y] of [
+      [4.7, 10],
+      [8.6, 10],
+      [8.6, 8], // meeting room
+      [6.6, 7.9], // phone pod
+      [2.2, 2.6],
+      [6.8, 2.6],
+      [3.5, -0.8],
+      [7.5, -1.5], // lab
+      [0.7, -3.2], // small room
+      [3.9, -9],
+      [8, -8.9],
+      [8, -11.5], // south rooms
+    ]
+  ) {
+    add(
+      makeItem("light", {
+        ...defaultLight(),
+        type: "spot",
+        angle: 60,
+        intensity: 0.5,
+        range: 6,
+        fixture: "can",
+      }, {
+        name: "Can light",
+        floor: ground,
+        position: [x, y, UPPER_Z - UPPER_SLAB - 0.07],
+      }),
+    );
   }
 
   // ── people walking around: kinematic movers (they push the robot, nothing pushes them) ──

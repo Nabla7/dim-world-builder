@@ -1094,14 +1094,22 @@ export function itemShapes(item: Item, assets: Record<string, MeshAsset>): Shape
       return aprilTagShapes(item.params);
     case "light":
       // a bulb to pick it by in the editor; the light itself is in Body.lights
-      return [{
-        type: "sphere",
-        pos: [0, 0, 0],
-        quat: IDENTITY,
-        size: [0.12],
-        rgba: [...item.params.color, 1] as Rgba,
-        role: "editor",
-      }];
+      return [
+        ...(item.params.fixture === "can"
+          ? [
+            cylinderAlong("z", [0, 0, 0.035], 0.1, 0.07, [0.94, 0.94, 0.93, 1], "visual"),
+            cylinderAlong("z", [0, 0, -0.002], 0.075, 0.004, [1, 0.97, 0.88, 1], "visual"),
+          ]
+          : []),
+        {
+          type: "sphere",
+          pos: [0, 0, 0],
+          quat: IDENTITY,
+          size: [0.12],
+          rgba: [...item.params.color, 1] as Rgba,
+          role: "editor",
+        },
+      ];
   }
 }
 
