@@ -24,11 +24,12 @@ import { testCourse } from "./world/examples.ts";
 import { clutterYard } from "./world/examples_clutter.ts";
 import type { MeshAsset } from "./world/types.ts";
 import {
-  AddPanel,
-  FloorsPanel,
+  BuildersPanel,
   Inspector,
-  ItemsPanel,
+  LibraryPanel,
   NavPanel,
+  ScenePanel,
+  ShapesPanel,
   ViewsPanel,
 } from "./editor/Panels.tsx";
 import { Viewport } from "./editor/Viewport.tsx";
@@ -37,10 +38,12 @@ import {
   addItem,
   duplicateItem,
   getState,
+  groupSelection,
   loadProject,
   openMenu,
   redo,
   removeItem,
+  removeSelection,
   renameKey,
   renameProject,
   select,
@@ -54,17 +57,18 @@ import {
   setShowCollision,
   setSnap,
   undo,
+  ungroup,
   useEditor,
   useMenu,
 } from "./editor/store.ts";
 import { makeItem } from "./world/defaults.ts";
 import { view } from "./editor/palette.ts";
 
-type Tab = "add" | "floors" | "items" | "nav" | "views";
+type Tab = "shapes" | "items" | "builders" | "scene" | "nav" | "views";
 
 export function App() {
   const [assets, setAssets] = useState<MeshAsset[]>([]);
-  const [tab, setTab] = useState<Tab>("add");
+  const [tab, setTab] = useState<Tab>("items");
   const [importing, setImporting] = useState(false);
   const [exporting, setExporting] = useState(false);
   const mode = useEditor((s) => s.mode);
@@ -169,10 +173,11 @@ export function App() {
               value={tab}
               onChange={(t: string) => setTab(t as Tab)}
               items={[
-                { value: "add", label: "Add" },
-                { value: "floors", label: "Floors" },
                 { value: "items", label: "Items" },
-                { value: "nav", label: "Nav test" },
+                { value: "shapes", label: "Shapes" },
+                { value: "builders", label: "Builders" },
+                { value: "scene", label: "Scene" },
+                { value: "nav", label: "Nav" },
                 { value: "views", label: "Views" },
               ]}
               style={{ padding: "0 8px" }}
@@ -181,9 +186,15 @@ export function App() {
               style={{ flex: 1, overflow: "auto", paddingBottom: "var(--dim-inset-bottom, 0px)" }}
               data-testid="sidebar"
             >
-              {tab === "add" && <AddPanel assets={assets} onImport={() => setImporting(true)} />}
-              {tab === "floors" && <FloorsPanel />}
-              {tab === "items" && <ItemsPanel />}
+              {tab === "items" && (
+                <LibraryPanel
+                  assets={assets}
+                  onImport={() => setImporting(true)}
+                />
+              )}
+              {tab === "shapes" && <ShapesPanel />}
+              {tab === "builders" && <BuildersPanel />}
+              {tab === "scene" && <ScenePanel />}
               {tab === "nav" && <NavPanel />}
               {tab === "views" && <ViewsPanel />}
             </div>
@@ -344,7 +355,7 @@ function useKeyboard() {
         e.preventDefault();
         duplicateItem(selected);
       } else if ((e.key === "Delete" || e.key === "Backspace") && selected) {
-        removeItem(selected);
+        removeSelection();
       } else if (e.key === "Escape") {
         if (getState().navTool) setNavTool(null);
         else if (getState().drawingPath) setDrawingPath(null);
@@ -683,6 +694,8 @@ function ViewerOverlay() {
 function ItemMenu() {
   const menu = useMenu();
   const item = useEditor((s) => s.project.items.find((i) => i.id === menu?.itemId) ?? null);
+  const selection = useEditor((s) => s.selection);
+  const items = useEditor((s) => s.project.items);
   const [draft, setDraft] = useState("");
   const [problem, setProblem] = useState<string | null>(null);
   useEffect(() => {
@@ -722,7 +735,39 @@ function ItemMenu() {
         boxShadow: "var(--shadow-lg)",
       }}
     >
-      <Text small muted>{item.name}</Text>
+      <Text small muted>
+        {selection.length > 1 ? `${selection.length} items selected` : item.name}
+      </Text>
+      {(selection.length > 1 || item.group) && (
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          {selection.length > 1 && !selection.every((id) => {
+            const member = items.find((i) =>
+              i.id === id
+            );
+            return member?.group && member.group === item.group;
+          }) && (
+            <Button
+              size="sm"
+              icon="layers"
+              variant="primary"
+              data-testid="menu-group"
+              onClick={() => (groupSelection(), openMenu(null))}
+            >
+              Group
+            </Button>
+          )}
+          {item.group && (
+            <Button
+              size="sm"
+              icon="layers"
+              data-testid="menu-ungroup"
+              onClick={() => (ungroup(item.group!), openMenu(null))}
+            >
+              Ungroup
+            </Button>
+          )}
+        </div>
+      )}
       <Field label="Id (the entity name in the exported scene)">
         <TextInput
           value={draft}

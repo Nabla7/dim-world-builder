@@ -6,7 +6,7 @@ import { type FloorAO, floorAO } from "./floor_ao.ts";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import type { Body, Shape, WorldLight } from "../world/geometry.ts";
-import type { MeshAsset } from "../world/types.ts";
+import type { FloorFinish, MeshAsset } from "../world/types.ts";
 
 const gltfLoader = new GLTFLoader();
 const textureLoader = new THREE.TextureLoader();
@@ -182,48 +182,14 @@ function surfaceLook<M extends THREE.Material>(material: M, detail: Detail | nul
   return material;
 }
 
-/** a slab material's floor occlusion uniforms */
-export const slabAO = new WeakMap<THREE.Material, FloorAO>();
-
 /**
- * A floor slab's top: the baked floor occlusion (floor_ao.ts) on its sky light, so under and around furniture is
- * darker even inside the sun's shadow, and optionally sealed concrete in world meters (lines up across slabs): broad
- * cloudy patches, mid-size blotches, fine aggregate, faint trowel arcs, a few stains, saw-cut control joints every
- * 3.6 m, a little sheen. Only faces that look up.
- * The occlusion uniforms are `slabAO.get(material)`, shared per floor and filled in by the world layer (not userData:
- * material clones JSON-copy that).
+ * A floor finish as shader lines on the slab's top (`xy`: world meters; `slabUp()`: 1 on faces that look up), each
+ * shading `diffuseColor` around the floor's own color, procedurally (no image files), at several scales so it reads
+ * near and far.
  */
-function slabLook(
-  material: THREE.MeshStandardMaterial,
-  concrete: boolean,
-): THREE.MeshStandardMaterial {
-  if (concrete) material.roughness = 0.6;
-  slabAO.set(material, floorAO());
-  material.onBeforeCompile = (shader) => {
-    const ao = slabAO.get(material)!;
-    shader.uniforms.uFloorAO = ao.map;
-    shader.uniforms.uFloorAOBounds = ao.bounds;
-    if (concrete) shader.uniforms.uDetail = { value: detailTexture("stone") };
-    shader.vertexShader = shader.vertexShader
-      .replace("#include <common>", "#include <common>\nvarying vec3 vWorldPos;")
-      .replace(
-        "#include <worldpos_vertex>",
-        "#include <worldpos_vertex>\nvWorldPos = (modelMatrix * vec4(transformed, 1.0)).xyz;",
-      );
-    shader.fragmentShader = shader.fragmentShader
-      .replace(
-        "#include <common>",
-        `#include <common>
-        varying vec3 vWorldPos;
-        uniform sampler2D uFloorAO;
-        uniform vec4 uFloorAOBounds;
-        ${concrete ? "uniform sampler2D uDetail;" : ""}
-        float slabUp() { return step(0.9, abs(normalize(cross(dFdx(vWorldPos), dFdy(vWorldPos))).z)); }`,
-      )
-      .replace(
-        "#include <color_fragment>",
-        concrete
-          ? `#include <color_fragment>
+const FINISH_GLSL: Record<FloorFinish, string> = {
+  plain: "",
+  concrete: `
         vec2 xy = vWorldPos.xy;
         // each scale turned and offset from the last, so the tile repeats never line up
         mat2 turn = mat2(0.8, -0.6, 0.6, 0.8);
@@ -239,9 +205,80 @@ function slabLook(
         float shade = clouds * 0.3 + blotch * 0.1 + aggregate * 0.12 + trowel * 0.035 - stain * 0.14 - joint * 0.3;
         diffuseColor.rgb *= 1.0 + slabUp() * shade;
         // a slight warm/cool drift with the clouds, as concrete has
-        diffuseColor.rgb *= 1.0 + slabUp() * clouds * vec3(0.04, 0.0, -0.04);`
-          : "#include <color_fragment>",
+        diffuseColor.rgb *= 1.0 + slabUp() * clouds * vec3(0.04, 0.0, -0.04);`,
+  wood: `
+        vec2 xy = vWorldPos.xy;
+        // planks 18 cm wide along x, 1.2 m long, each row's joints staggered, each plank its own shade and grain
+        float row = floor(xy.y / 0.18);
+        float along = xy.x / 1.2 + fract(row * 0.618);
+        float plank = floor(along);
+        float tone = texture2D(uDetail, vec2(plank * 0.137, row * 0.291)).r - 0.5;
+        float grain = texture2D(uDetail, vec2(xy.x / 0.9 + plank * 0.31, xy.y / 0.09 + row * 0.17)).r - 0.5;
+        float seamY = abs(fract(xy.y / 0.18) - 0.5) * 0.18;
+        float seamX = abs(fract(along) - 0.5) * 1.2;
+        float seam = 1.0 - smoothstep(0.003, 0.008, min(0.09 - seamY, 0.6 - seamX));
+        diffuseColor.rgb *= 1.0 + slabUp() * (tone * 0.35 + grain * 0.25 - seam * 0.35);`,
+  tile: `
+        vec2 xy = vWorldPos.xy;
+        // 60 cm square tiles with grout lines; each tile a touch lighter or darker
+        vec2 tileId = floor(xy / 0.6);
+        float tone = texture2D(uDetail, tileId * 0.173 + 0.11).r - 0.5;
+        float speck = texture2D(uDetail, xy / 0.31).r - 0.5;
+        vec2 toGrout = abs(fract(xy / 0.6) - 0.5) * 0.6;
+        float grout = 1.0 - smoothstep(0.004, 0.007, 0.3 - max(toGrout.x, toGrout.y));
+        diffuseColor.rgb *= 1.0 + slabUp() * (tone * 0.12 + speck * 0.05 - grout * 0.35);`,
+  carpet: `
+        vec2 xy = vWorldPos.xy;
+        // a fine pile (a weave seen up close) with soft broader wear and 50 cm carpet-tile seams
+        float pile = texture2D(uDetail, xy / 0.06).r - 0.5;
+        float wear = texture2D(uDetail, xy / 3.1 + 0.4).r - 0.5;
+        vec2 toSeam = abs(fract(xy / 0.5) - 0.5) * 0.5;
+        float seam = 1.0 - smoothstep(0.002, 0.005, 0.25 - max(toSeam.x, toSeam.y));
+        diffuseColor.rgb *= 1.0 + slabUp() * (pile * 0.22 + wear * 0.12 - seam * 0.12);`,
+};
+
+/** a slab material's floor occlusion uniforms */
+export const slabAO = new WeakMap<THREE.Material, FloorAO>();
+
+/**
+ * A floor slab's top: the baked floor occlusion (floor_ao.ts) on its sky light, so under and around furniture is
+ * darker even inside the sun's shadow, and optionally sealed concrete in world meters (lines up across slabs): broad
+ * cloudy patches, mid-size blotches, fine aggregate, faint trowel arcs, a few stains, saw-cut control joints every
+ * 3.6 m, a little sheen. Only faces that look up.
+ * The occlusion uniforms are `slabAO.get(material)`, shared per floor and filled in by the world layer (not userData:
+ * material clones JSON-copy that).
+ */
+function slabLook(
+  material: THREE.MeshStandardMaterial,
+  finish: FloorFinish,
+): THREE.MeshStandardMaterial {
+  material.roughness =
+    { plain: material.roughness, concrete: 0.6, wood: 0.55, tile: 0.35, carpet: 1 }[finish];
+  slabAO.set(material, floorAO());
+  material.onBeforeCompile = (shader) => {
+    const ao = slabAO.get(material)!;
+    shader.uniforms.uFloorAO = ao.map;
+    shader.uniforms.uFloorAOBounds = ao.bounds;
+    shader.uniforms.uDetail = {
+      value: detailTexture(finish === "wood" ? "wood" : finish === "carpet" ? "fabric" : "stone"),
+    };
+    shader.vertexShader = shader.vertexShader
+      .replace("#include <common>", "#include <common>\nvarying vec3 vWorldPos;")
+      .replace(
+        "#include <worldpos_vertex>",
+        "#include <worldpos_vertex>\nvWorldPos = (modelMatrix * vec4(transformed, 1.0)).xyz;",
+      );
+    shader.fragmentShader = shader.fragmentShader
+      .replace(
+        "#include <common>",
+        `#include <common>
+        varying vec3 vWorldPos;
+        uniform sampler2D uFloorAO;
+        uniform vec4 uFloorAOBounds;
+        uniform sampler2D uDetail;
+        float slabUp() { return step(0.9, abs(normalize(cross(dFdx(vWorldPos), dFdy(vWorldPos))).z)); }`,
       )
+      .replace("#include <color_fragment>", `#include <color_fragment>\n${FINISH_GLSL[finish]}`)
       .replace(
         "#include <aomap_fragment>",
         `#include <aomap_fragment>
@@ -252,7 +289,7 @@ function slabLook(
         reflectedLight.directDiffuse *= mix(1.0, floorOcclusion, 0.5);`,
       );
   };
-  material.customProgramCacheKey = () => `slabLook:${concrete}`;
+  material.customProgramCacheKey = () => `slabLook:${finish}`;
   return material;
 }
 
@@ -275,7 +312,7 @@ function material(shape: Shape, slab = false): THREE.MeshStandardMaterial {
     opacity: a,
     flatShading: shape.type === "mesh",
   });
-  if (slab) return slabLook(made, shape.finish === "concrete");
+  if (slab) return slabLook(made, shape.finish ?? "plain");
   return surfaceLook(made);
 }
 

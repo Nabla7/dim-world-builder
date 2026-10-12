@@ -213,7 +213,7 @@ export function skyDome(): THREE.Mesh {
 /** how far the camera is from what it orbits; the grid fades out a few of these away */
 export const gridFocus = { value: 20 };
 
-/** fades the editor's grid out with distance (its far lines alias into rings); patches it once */
+/** fades the editor's grid out with distance and at grazing angles (where its lines alias into rings); once */
 export function fadeGrid(grid: THREE.Object3D) {
   const material = (grid as THREE.LineSegments).material as THREE.Material;
   if (material.userData.faded) return;
@@ -222,19 +222,27 @@ export function fadeGrid(grid: THREE.Object3D) {
   material.onBeforeCompile = (shader) => {
     shader.uniforms.uFocus = gridFocus;
     shader.vertexShader = shader.vertexShader
-      .replace("#include <common>", "#include <common>\nvarying float vViewDistance;")
+      .replace(
+        "#include <common>",
+        "#include <common>\nvarying float vViewDistance;\nvarying float vGrazing;",
+      )
       .replace(
         "#include <project_vertex>",
-        "#include <project_vertex>\nvViewDistance = length(mvPosition.xyz);",
+        `#include <project_vertex>
+        vViewDistance = length(mvPosition.xyz);
+        vGrazing = abs(normalize((modelMatrix * vec4(transformed, 1.0)).xyz - cameraPosition).z);`,
       );
     shader.fragmentShader = shader.fragmentShader
       .replace(
         "#include <common>",
-        "#include <common>\nvarying float vViewDistance;\nuniform float uFocus;",
+        "#include <common>\nvarying float vViewDistance;\nvarying float vGrazing;\nuniform float uFocus;",
       )
       .replace(
         "#include <fog_fragment>",
-        "gl_FragColor.a *= 1.0 - smoothstep(uFocus * 0.9, uFocus * 1.8, vViewDistance);\n#include <fog_fragment>",
+        // seen edge-on, the lines crowd closer than a pixel and beat into rings: fade them there too
+        `gl_FragColor.a *= 1.0 - smoothstep(uFocus * 0.9, uFocus * 1.8, vViewDistance);
+        gl_FragColor.a *= smoothstep(0.1, 0.35, vGrazing);
+        #include <fog_fragment>`,
       );
   };
   material.needsUpdate = true;

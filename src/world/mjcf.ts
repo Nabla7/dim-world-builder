@@ -86,8 +86,8 @@ export function toScene(world: World, name: string): SceneFiles {
       parts.push(`material="${textureMaterial(shape.texture)}"`);
     } else if (shape.type === "hfield") {
       parts.push(`material="${grassMaterial(shape.rgba)}"`);
-    } else if (shape.finish === "concrete") {
-      parts.push(`material="${concreteMaterial(shape.rgba)}"`);
+    } else if (shape.finish) {
+      parts.push(`material="${finishMaterial(shape.finish, shape.rgba)}"`);
     } else {
       parts.push(`rgba="${vec(shape.rgba)}"`);
     }
@@ -99,22 +99,55 @@ export function toScene(world: World, name: string): SceneFiles {
     return `      <geom ${parts.join(" ")}/>`;
   }
 
-  /** a concrete slab's color with a fine darker aggregate speckle (MuJoCo's built-in random marks), a little glossy */
-  const concreteMaterials = new Map<string, string>();
-  function concreteMaterial(rgba: readonly number[]): string {
-    const key = vec(rgba.slice(0, 3));
-    let material = concreteMaterials.get(key);
+  /**
+   * A floor finish from MuJoCo's built-in textures around the slab's color (no image files): concrete a fine darker
+   * speckle, wood two close tones in long thin planks with seams, tile squares with grout, carpet a dense speckle.
+   */
+  const finishMaterials = new Map<string, string>();
+  function finishMaterial(finish: NonNullable<Shape["finish"]>, rgba: readonly number[]): string {
+    const color = rgba.slice(0, 3);
+    const key = `${finish} ${vec(color)}`;
+    let material = finishMaterials.get(key);
     if (!material) {
-      material = `concrete_${concreteMaterials.size}`;
-      concreteMaterials.set(key, material);
-      const darker = rgba.slice(0, 3).map((c) => c * 0.82);
+      material = `${finish}_${finishMaterials.size}`;
+      finishMaterials.set(key, material);
+      const shade = (k: number) => vec(color.map((c) => Math.min(1, c * k)));
+      const look = {
+        // [texture attributes, texrepeat (tiles per meter, x y), material attributes]
+        concrete: [
+          `builtin="flat" width="256" height="256" rgb1="${
+            shade(1)
+          }" mark="random" random="0.08" markrgb="${shade(0.82)}"`,
+          "1 1",
+          `specular="0.2" shininess="0.4" reflectance="0.04"`,
+        ],
+        wood: [
+          `builtin="checker" width="256" height="256" rgb1="${shade(1)}" rgb2="${
+            shade(0.86)
+          }" mark="edge" markrgb="${shade(0.6)}"`,
+          "0.42 2.78",
+          `specular="0.3" shininess="0.5"`,
+        ],
+        tile: [
+          `builtin="flat" width="256" height="256" rgb1="${shade(1)}" mark="edge" markrgb="${
+            shade(0.7)
+          }"`,
+          "1.667 1.667",
+          `specular="0.4" shininess="0.6" reflectance="0.06"`,
+        ],
+        carpet: [
+          `builtin="flat" width="256" height="256" rgb1="${
+            shade(1)
+          }" mark="random" random="0.3" markrgb="${shade(0.85)}"`,
+          "4 4",
+          `specular="0.02"`,
+        ],
+      }[finish];
+      assets.push(`    <texture name="${material}" type="2d" ${look[0]}/>`);
       assets.push(
-        `    <texture name="${material}" type="2d" builtin="flat" width="256" height="256" rgb1="${key}" mark="random" random="0.08" markrgb="${
-          vec(darker)
-        }"/>`,
-      );
-      assets.push(
-        `    <material name="${material}" texture="${material}" texrepeat="1 1" texuniform="true" specular="0.2" shininess="0.4" reflectance="0.04"/>`,
+        `    <material name="${material}" texture="${material}" texrepeat="${
+          look[1]
+        }" texuniform="true" ${look[2]}/>`,
       );
     }
     return material;

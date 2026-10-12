@@ -5,6 +5,8 @@ export type Vec3 = [number, number, number];
 export type Quat = [number, number, number, number];
 export type Rgb = [number, number, number];
 
+export type FloorFinish = "plain" | "concrete" | "wood" | "tile" | "carpet";
+
 export interface Floor {
   id: string;
   name: string;
@@ -21,8 +23,8 @@ export interface Floor {
     center: [number, number];
     /** its top's color (default a dark gray) */
     color?: Rgb;
-    /** how its top looks in the views: plain color (default) or sealed concrete (mottling, control joints) */
-    finish?: "plain" | "concrete";
+    /** how its top looks in the views: plain color (default), sealed concrete, wood planks, tile or carpet */
+    finish?: FloorFinish;
   };
 }
 
@@ -186,6 +188,14 @@ interface ItemBase {
   /** full extents for primitives, a multiplier for meshes; ignored by generators (they have params) */
   scale: Vec3;
   mover?: MoverPath;
+  /** the group it belongs to (Project.groups): its members are selected, moved and turned together */
+  group?: string;
+}
+
+/** items bundled to move as one (the members carry its id; the export still writes each member) */
+export interface ItemGroup {
+  id: string;
+  name: string;
 }
 
 export type Item =
@@ -244,6 +254,7 @@ export interface Project {
   nav?: NavPlan;
   /** remembered camera views, for people and agents to look from again (exported as MuJoCo cameras) */
   views?: CameraView[];
+  groups?: ItemGroup[];
 }
 
 /** a remembered camera: where it looks from and at; `key` is its readable id and its MuJoCo camera's name */

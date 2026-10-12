@@ -3,6 +3,7 @@
 
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
+import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import { TransformControls } from "three/examples/jsm/controls/TransformControls.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import {
@@ -30,6 +31,7 @@ import {
   setDrawingPath,
   setNavTool,
   updateItem,
+  updateItems,
   useEditor,
 } from "./store.ts";
 import { makeItem } from "../world/defaults.ts";
@@ -66,6 +68,7 @@ export function Viewport({ assets }: { assets: Record<string, MeshAsset> }) {
       <WorldLayer assets={assets} />
       {mode === "edit" && <Gizmo />}
       {mode === "edit" && <MoverPaths />}
+      {mode === "edit" && <FloorMarkers />}
       <NavOverlay />
       {mode === "view" && <LiveRobot />}
       <SceneControls />
@@ -243,7 +246,11 @@ function Lighting() {
     // the sky stays centered on the camera
     const off = viewer.onFrame(({ camera }: { camera: THREE.Camera }) => {
       sky.position.copy(camera.position);
-      gridFocus.value = Math.max(8, camera.position.distanceTo(viewer.controls.target));
+      // the grid reaches a little past what the camera orbits, never far out where it can only alias
+      gridFocus.value = Math.min(
+        40,
+        Math.max(8, camera.position.distanceTo(viewer.controls.target)),
+      );
       // the viewer remakes its grid on a theme change: fade each new one
       for (const child of scene.children) {
         if ((child as THREE.GridHelper).isLineSegments && child.type === "GridHelper") {
@@ -585,7 +592,9 @@ function Picker({ objects }: { objects: () => Map<string, THREE.Group> | undefin
       const hit = raycaster.intersectObjects(pickable, true)[0];
       let node: THREE.Object3D | null = hit?.object ?? null;
       while (node && !node.userData.itemId) node = node.parent;
-      select(node ? (node.userData.itemId as string) : null);
+      // Shift adds to the selection (an empty click keeps it); Alt picks one member out of its group
+      if (!node && e.shiftKey) return;
+      select(node ? (node.userData.itemId as string) : null, { add: e.shiftKey, member: e.altKey });
     };
     const ndcOf = (e: MouseEvent) => {
       const rect = canvas.getBoundingClientRect();
@@ -630,7 +639,8 @@ function Picker({ objects }: { objects: () => Map<string, THREE.Group> | undefin
       if (!under) return;
       e.preventDefault();
       const id = under.object.userData.itemId as string;
-      select(id);
+      // keep a multi-selection the click lands in, for Group
+      if (!getState().selection.includes(id)) select(id);
       openMenu({ x: e.clientX, y: e.clientY, itemId: id });
     };
     canvas.addEventListener("pointerdown", onDown);
@@ -778,15 +788,36 @@ function applyScale(item: Item, raw: Vec3): Item {
 const round = (v: number, step = 0.05) => Math.max(step, Math.round(v / step) * step);
 
 /** translate / rotate / scale handles on the selected item; commits once per drag (one undo step) */
+/** an item with its pose taken from its drawn object (after a gizmo drag) */
+function posedFrom(object: THREE.Object3D, item: Item): Item {
+  const floor = getState().project.floors.find((f) => f.id === item.floor);
+  const lift = floor?.elevation ?? 0;
+  const scale: Vec3 = [object.scale.x, object.scale.y, object.scale.z];
+  let next: Item = {
+    ...item,
+    // below the floor is allowed (a sunken pit, a basement step): no snapping back up
+    position: [object.position.x, object.position.y, object.position.z - lift]
+      .map((v) => Math.round(v * 1000) / 1000) as Vec3,
+    rotation: object.quaternion.toArray() as Quat,
+  };
+  if (scale.some((v) => Math.abs(v - 1) > 1e-4)) next = applyScale(next, scale);
+  return next;
+}
+
 function Gizmo() {
   const viewer = useViewer();
   const selected = useEditor((s) => s.selected);
+  const selection = useEditor((s) => s.selection);
   const gizmo = useEditor((s) => s.gizmo);
   const snap = useEditor((s) => s.snap);
   const project = useEditor((s) => s.project);
   // while clicking out a path, the gizmo would swallow clicks that land on it
   const drawing = useEditor((s) => Boolean(s.drawingPath || s.navTool));
   const controlsRef = useRef<TransformControls | null>(null);
+  // several selected: the gizmo moves this pivot, and the members follow it
+  const pivot = useRef(new THREE.Object3D());
+  const members = useRef<{ object: THREE.Object3D; start: THREE.Matrix4 }[]>([]);
+  const pivotStart = useRef(new THREE.Matrix4());
 
   useEffect(() => {
     if (!viewer) return;
@@ -794,35 +825,44 @@ function Gizmo() {
     controls.setSpace("local");
     const helper = controls.getHelper();
     viewer.scene.add(helper);
+    viewer.scene.add(pivot.current);
     viewer.setOnTop(helper, true);
     // drawing on top moves the helper to its own layer; let the gizmo's own picking ray see every layer
     controls.getRaycaster().layers.enableAll();
     controls.addEventListener("change", () => viewer.requestRender());
+    controls.addEventListener("objectChange", () => {
+      if (controls.object !== pivot.current) return;
+      pivot.current.updateMatrix();
+      const delta = pivot.current.matrix.clone().multiply(pivotStart.current.clone().invert());
+      for (const { object, start } of members.current) {
+        delta.clone().multiply(start).decompose(object.position, object.quaternion, object.scale);
+      }
+    });
     controls.addEventListener("dragging-changed", (event) => {
       const dragging = Boolean((event as unknown as { value: boolean }).value);
       viewer.controls.enabled = !dragging;
       (viewer as unknown as { gizmoDragging?: boolean }).gizmoDragging = dragging;
-      if (dragging) return;
-      // drag ended: write the object's pose back to its item
       const object = controls.object;
+      if (dragging) {
+        if (object === pivot.current) {
+          pivot.current.updateMatrix();
+          pivotStart.current.copy(pivot.current.matrix);
+          for (const m of members.current) m.object.updateMatrix(), m.start.copy(m.object.matrix);
+        }
+        return;
+      }
+      // drag ended: write the poses back to the items (all members in one undo step)
+      if (object === pivot.current) {
+        const byId = new Map(
+          members.current.map((m) => [m.object.userData.itemId as string, m.object]),
+        );
+        updateItems((item) => (byId.has(item.id) ? posedFrom(byId.get(item.id)!, item) : null));
+        return;
+      }
       const id = object?.userData.itemId as string | undefined;
       const item = getState().project.items.find((i) => i.id === id);
       if (!object || !item) return;
-      const floor = getState().project.floors.find((f) => f.id === item.floor);
-      const lift = floor?.elevation ?? 0;
-      const scale: Vec3 = [object.scale.x, object.scale.y, object.scale.z];
-      const scaled = scale.some((v) => Math.abs(v - 1) > 1e-4);
-      updateItem(item.id, (current) => {
-        let next: Item = {
-          ...current,
-          // below the floor is allowed (a sunken pit, a basement step): no snapping back up
-          position: [object.position.x, object.position.y, object.position.z - lift]
-            .map((v) => Math.round(v * 1000) / 1000) as Vec3,
-          rotation: object.quaternion.toArray() as Quat,
-        };
-        if (scaled) next = applyScale(next, scale);
-        return next;
-      });
+      updateItem(item.id, (current) => posedFrom(object, current));
     });
     controlsRef.current = controls;
     (globalThis as unknown as { dimWorldBuilderGizmo?: TransformControls }).dimWorldBuilderGizmo =
@@ -830,6 +870,7 @@ function Gizmo() {
     return () => {
       controls.detach();
       viewer.scene.remove(helper);
+      viewer.scene.remove(pivot.current);
       controls.dispose();
       viewer.controls.enabled = true;
     };
@@ -845,14 +886,36 @@ function Gizmo() {
     controls.setTranslationSnap(snap ? SNAP.translate : null);
     controls.setRotationSnap(snap ? SNAP.rotate : null);
     controls.setScaleSnap(snap ? SNAP.scale : null);
-    // the world layer rebuilds its objects on every project change: find the selected one afresh
-    const target = selected
-      ? viewer.scene.getObjectByName("world")?.children.find((o) => o.userData.itemId === selected)
-      : undefined;
-    if (target && !drawing) controls.attach(target);
-    else controls.detach();
+    // the world layer rebuilds its objects on every project change: find the selected ones afresh
+    const world = viewer.scene.getObjectByName("world");
+    const find = (id: string) => world?.children.find((o) => o.userData.itemId === id);
+    const target = selected ? find(selected) : undefined;
+    const several = selection.map(find).filter((o): o is THREE.Object3D => Boolean(o));
+    if (several.length > 1 && !drawing) {
+      // the pivot sits on the last-clicked one, square to the world
+      const at = (target ?? several[0]).position;
+      pivot.current.position.copy(at);
+      pivot.current.quaternion.identity();
+      pivot.current.scale.set(1, 1, 1);
+      members.current = several.map((object) => ({ object, start: object.matrix.clone() }));
+      controls.attach(pivot.current);
+    } else if (target && !drawing) {
+      members.current = [];
+      controls.attach(target);
+    } else controls.detach();
+    // a box around each of several selected items, so the selection is plain to see
+    const boxes = new THREE.Group();
+    if (several.length > 1) {
+      const color = themeColor("var(--primary)");
+      for (const object of several) boxes.add(new THREE.BoxHelper(object, color));
+    }
+    viewer.scene.add(boxes);
     viewer.requestRender();
-  }, [viewer, selected, gizmo, snap, project, drawing]);
+    return () => {
+      viewer.scene.remove(boxes);
+      boxes.traverse((o) => (o as THREE.LineSegments).geometry?.dispose());
+    };
+  }, [viewer, selected, selection, gizmo, snap, project, drawing]);
   return null;
 }
 
@@ -887,6 +950,96 @@ function MoverPaths() {
     return { root, dispose: () => disposeObject(root) };
   }, [project, selected, drawing]);
   useEffect(() => () => setDrawingPath(null), []);
+  return null;
+}
+
+/**
+ * Every floor drawn where it is, editor only (never exported): its outline (its slab's, or around its items), a
+ * faint plane when it has no slab, a label with its name and height, and the floor being edited in the accent color.
+ * The lowest floor, when it sits above the ground, stands on posts down to it, so a floor up in the air is plain.
+ */
+function FloorMarkers() {
+  const floors = useEditor((s) => s.project.floors);
+  const items = useEditor((s) => s.project.items);
+  const active = useEditor((s) => s.project.activeFloor);
+  useLayer(() => {
+    const root = new THREE.Group();
+    const accent = themeColor("var(--primary)");
+    const muted = themeColor("var(--muted, #888)");
+    const lowest = Math.min(...floors.map((f) => f.elevation));
+    for (const floor of floors) {
+      let [x0, y0, x1, y1] = [-4, -4, 4, 4];
+      if (floor.slab) {
+        const { center: [cx, cy], sizeX, sizeY } = floor.slab;
+        [x0, y0, x1, y1] = [cx - sizeX / 2, cy - sizeY / 2, cx + sizeX / 2, cy + sizeY / 2];
+      } else {
+        const own = items.filter((i) => i.floor === floor.id);
+        if (own.length) {
+          x0 = Math.min(...own.map((i) => i.position[0])) - 2;
+          y0 = Math.min(...own.map((i) => i.position[1])) - 2;
+          x1 = Math.max(...own.map((i) => i.position[0])) + 2;
+          y1 = Math.max(...own.map((i) => i.position[1])) + 2;
+        }
+      }
+      const z = floor.elevation + 0.01;
+      const color = floor.id === active ? accent : muted;
+      const corners = [[x0, y0], [x1, y0], [x1, y1], [x0, y1]].map(([x, y]) =>
+        new THREE.Vector3(x, y, z)
+      );
+      const outline = new THREE.LineLoop(
+        new THREE.BufferGeometry().setFromPoints(corners),
+        new THREE.LineBasicMaterial({
+          color,
+          transparent: true,
+          opacity: floor.id === active ? 0.9 : 0.45,
+        }),
+      );
+      root.add(outline);
+      if (!floor.slab) {
+        const plane = new THREE.Mesh(
+          new THREE.PlaneGeometry(x1 - x0, y1 - y0),
+          new THREE.MeshBasicMaterial({
+            color,
+            transparent: true,
+            opacity: floor.id === active ? 0.08 : 0.04,
+            depthWrite: false,
+            side: THREE.DoubleSide,
+          }),
+        );
+        plane.position.set((x0 + x1) / 2, (y0 + y1) / 2, z);
+        plane.raycast = () => {};
+        root.add(plane);
+      }
+      if (floor.elevation === lowest && lowest > 0.05) {
+        const posts = corners.flatMap((c) => [c, new THREE.Vector3(c.x, c.y, 0)]);
+        const lines = new THREE.LineSegments(
+          new THREE.BufferGeometry().setFromPoints(posts),
+          new THREE.LineDashedMaterial({ color: muted, dashSize: 0.3, gapSize: 0.2 }),
+        );
+        lines.computeLineDistances();
+        root.add(lines);
+      }
+      const tag = document.createElement("div");
+      tag.textContent = `${floor.name} · ${floor.elevation.toFixed(1)} m${
+        floor.slab ? "" : " · no slab"
+      }`;
+      tag.style.cssText =
+        `font: 500 11px system-ui; padding: 2px 6px; border-radius: 4px; pointer-events: none;
+        color: white; background: ${floor.id === active ? "var(--primary)" : "rgba(40,44,52,.7)"}`;
+      const label = new CSS2DObject(tag);
+      label.position.set(x0, y0, z);
+      root.add(label);
+    }
+    return {
+      root,
+      dispose: () => {
+        root.traverse((o) => {
+          if (o instanceof CSS2DObject) o.element.remove();
+        });
+        disposeObject(root);
+      },
+    };
+  }, [floors, items, active]);
   return null;
 }
 

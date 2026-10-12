@@ -30,6 +30,7 @@ import type {
   AprilTagParams,
   CameraView,
   DoorOpening,
+  FloorFinish,
   GrateParams,
   HillParams,
   HoleParams,
@@ -84,38 +85,39 @@ const heading: React.CSSProperties = {
 
 // ── Add ──
 
-export function AddPanel({ assets, onImport }: { assets: MeshAsset[]; onImport: () => void }) {
+/** adds a palette entry's item(s) where the view is centered, on the floor being edited */
+function addEntry(entry: PaletteEntry) {
+  if (entry.tool) {
+    setNavTool(entry.tool);
+    return;
+  }
+  const { floors, activeFloor: floor } = getState().project;
+  // on whatever the view is centered on: the floor, or the desk standing there
+  const at: Vec3 = [view.center[0], view.center[1], view.surfaceAt(view.center[0], view.center[1])];
+  if (entry.makeMany) return addItems(entry.makeMany(floor, at));
+  const item = entry.make(floor, at);
+  // stairs added under another floor climb all the way to it
+  const above = item.kind === "stairs" ? floorAbove(floors, floor) : undefined;
+  const here = floors.find((f) => f.id === floor);
+  if (item.kind === "stairs" && above && here) {
+    item.params = climbing(item.params, above.elevation - here.elevation);
+  }
+  addItem(item);
+}
+
+/** palette tiles, one heading per group, filtered by a search box when `search` */
+function Palette({ entries, search, children }: {
+  entries: PaletteEntry[];
+  search?: boolean;
+  children?: React.ReactNode;
+}) {
   const [query, setQuery] = useState("");
-  const floor = useEditor((s) => s.project.activeFloor);
-  const entries = useMemo(() => [...BUILT_IN, ...assetEntries(assets)], [assets]);
   const shown = entries.filter((e) => e.title.toLowerCase().includes(query.toLowerCase()));
   const groups = [...new Set(shown.map((e) => e.group))];
-  const add = (entry: PaletteEntry) => {
-    if (entry.tool) {
-      setNavTool(entry.tool);
-      return;
-    }
-    // on whatever the view is centered on: the floor, or the desk standing there
-    const at: Vec3 = [
-      view.center[0],
-      view.center[1],
-      view.surfaceAt(view.center[0], view.center[1]),
-    ];
-    if (entry.makeMany) return addItems(entry.makeMany(floor, at));
-    const item = entry.make(floor, at);
-    // stairs added under another floor climb all the way to it
-    const { floors } = getState().project;
-    const above = item.kind === "stairs" ? floorAbove(floors, floor) : undefined;
-    const here = floors.find((f) => f.id === floor);
-    if (item.kind === "stairs" && above && here) {
-      item.params = climbing(item.params, above.elevation - here.elevation);
-    }
-    addItem(item);
-  };
   return (
-    <div style={section} data-testid="add-panel">
-      <SearchInput value={query} onChange={setQuery} placeholder="Search assets" />
-      <Button icon="upload" onClick={onImport} data-testid="import-open">Import a GLB…</Button>
+    <>
+      {search && <SearchInput value={query} onChange={setQuery} placeholder="Search" />}
+      {children}
       {groups.map((group) => (
         <div key={group}>
           <p style={heading}>{group}</p>
@@ -135,12 +137,50 @@ export function AddPanel({ assets, onImport }: { assets: MeshAsset[]; onImport: 
                     />
                   )
                   : undefined}
-                onClick={() => add(entry)}
+                onClick={() => addEntry(entry)}
               />
             ))}
           </TileGrid>
         </div>
       ))}
+      {shown.length === 0 && <Text small muted>Nothing matches “{query}”.</Text>}
+    </>
+  );
+}
+
+const SHAPE_GROUPS = new Set(["Shapes", "Clutter"]);
+
+/** geometric solids and simple procedural things: sized freely */
+export function ShapesPanel() {
+  return (
+    <div style={section} data-testid="shapes-panel">
+      <Palette entries={BUILT_IN.filter((e) => SHAPE_GROUPS.has(e.group))} />
+    </div>
+  );
+}
+
+/** the modeled library (by category) and imported models */
+export function LibraryPanel({ assets, onImport }: { assets: MeshAsset[]; onImport: () => void }) {
+  const entries = useMemo(() => assetEntries(assets), [assets]);
+  return (
+    <div style={section} data-testid="add-panel">
+      <Palette entries={entries} search>
+        <Button icon="upload" onClick={onImport} data-testid="import-open">Import a GLB…</Button>
+      </Palette>
+    </div>
+  );
+}
+
+/** what gives a world its structure: floors, then rooms, stairs, holes, hills, lights, tags */
+export function BuildersPanel() {
+  return (
+    <div style={section} data-testid="builders-panel">
+      <FloorsPanel />
+      <Palette entries={BUILT_IN.filter((e) => !SHAPE_GROUPS.has(e.group))} />
+      <Text small muted>
+        Moving obstacles: select any item, then Motion → Make it a moving object, and click out its
+        path.
+      </Text>
     </div>
   );
 }
@@ -153,7 +193,8 @@ export function FloorsPanel() {
   const items = useEditor((s) => s.project.items);
   const sorted = [...floors].sort((a, b) => b.elevation - a.elevation);
   return (
-    <div style={section} data-testid="floors-panel">
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }} data-testid="floors-panel">
+      <p style={heading}>Floors</p>
       <Text small muted>
         New items go on the selected floor; the others are drawn faded and can't be picked.
       </Text>
@@ -168,7 +209,8 @@ export function FloorsPanel() {
               items.filter((i) => i.floor === floor.id).length
             } items`}
             selected={floor.id === active}
-            onClick={() => setActiveFloor(floor.id)}
+            onClick={() =>
+              setActiveFloor(floor.id)}
             actions={floors.length > 1
               ? (
                 <IconButton
@@ -186,7 +228,12 @@ export function FloorsPanel() {
           />
         ))}
       </List>
-      <Button icon="plus" onClick={() => addFloor(view.center)} data-testid="add-floor">
+      <Button
+        icon="plus"
+        onClick={() =>
+          addFloor(view.center)}
+        data-testid="add-floor"
+      >
         Add a floor above
       </Button>
       {floors.filter((f) => f.id === active).map((floor) => (
@@ -225,13 +272,38 @@ export function FloorsPanel() {
               })}
             label="Solid slab (what its items stand on; holes cut into it)"
           />
-          {!floor.slab && floor.elevation > 0 && (
-            <Text small muted>
-              No slab: things on this floor stand only on its rooms' floors and stairs, or float.
+          {!floor.slab && (
+            <Text small muted data-testid="no-slab-note">
+              FYI: the floor will be an invisible plane for placing objects (outlined in the editor,
+              not in the exported scene).
             </Text>
           )}
           {floor.slab && (
             <>
+              <Field label="Floor finish">
+                <Segmented
+                  size="sm"
+                  value={floor.slab.finish ?? "plain"}
+                  items={[
+                    { value: "plain", label: "Plain" },
+                    { value: "concrete", label: "Concrete" },
+                    { value: "wood", label: "Wood" },
+                    { value: "tile", label: "Tile" },
+                    { value: "carpet", label: "Carpet" },
+                  ]}
+                  data-testid="floor-finish"
+                  onChange={(finish: string) =>
+                    updateFloor(floor.id, {
+                      slab: { ...floor.slab!, finish: finish as FloorFinish },
+                    })}
+                />
+              </Field>
+              <Field label="Floor color">
+                <Swatches
+                  value={floor.slab.color ?? [0.26, 0.27, 0.29]}
+                  onChange={(color) => updateFloor(floor.id, { slab: { ...floor.slab!, color } })}
+                />
+              </Field>
               <Range
                 label="Slab thickness"
                 value={floor.slab.thickness}
@@ -289,29 +361,73 @@ export function FloorsPanel() {
   );
 }
 
-// ── Items ──
+// ── Scene (the outliner) ──
 
-export function ItemsPanel() {
+const kindIcon = (item: Item) =>
+  item.kind === "mesh"
+    ? "cube"
+    : item.kind === "room"
+    ? "home"
+    : item.kind === "light"
+    ? "sun"
+    : "pin";
+
+/** what is on the floor being edited: one row per item, a group as one row with its members under it */
+export function ScenePanel() {
   const items = useEditor((s) => s.project.items);
+  const groups = useEditor((s) => s.project.groups ?? []);
   const active = useEditor((s) => s.project.activeFloor);
-  const selected = useEditor((s) => s.selected);
+  const selection = useEditor((s) => s.selection);
   const onFloor = items.filter((i) => i.floor === active);
+  const pick = (id: string, e: { shiftKey: boolean; altKey: boolean }) =>
+    select(id, { add: e.shiftKey, member: e.altKey });
+  const row = (item: Item, indent = false) => (
+    <ListRow
+      key={item.id}
+      icon={kindIcon(item)}
+      title={item.name}
+      subtitle={item.kind + (item.mover ? " · moving" : "")}
+      selected={selection.includes(item.id)}
+      style={indent ? { paddingLeft: 28 } : undefined}
+      data-testid={`scene-${item.key ?? item.id}`}
+      onClick={(e: { shiftKey: boolean; altKey: boolean }) => pick(item.id, e)}
+    />
+  );
+  const grouped = groups.filter((g) => onFloor.some((i) => i.group === g.id));
   return (
-    <div style={section}>
-      {onFloor.length === 0 && (
-        <Text small muted>Nothing on this floor yet: add something from Add.</Text>
-      )}
+    <div style={section} data-testid="scene-panel">
+      {onFloor.length === 0
+        ? (
+          <Text small muted>
+            Nothing on this floor yet: add something from Items, Shapes or Builders.
+          </Text>
+        )
+        : (
+          <Text small muted>
+            Shift-click to select several; right-click → Group to move them as one. Alt-click a
+            group's member to edit it alone.
+          </Text>
+        )}
       <List divided>
-        {onFloor.map((item) => (
-          <ListRow
-            key={item.id}
-            icon={item.kind === "mesh" ? "cube" : item.kind === "room" ? "home" : "pin"}
-            title={item.name}
-            subtitle={item.kind + (item.mover ? " · moving" : "")}
-            selected={item.id === selected}
-            onClick={() => select(item.id)}
-          />
-        ))}
+        {grouped.map((group) => {
+          const members = onFloor.filter((i) => i.group === group.id);
+          return [
+            <ListRow
+              key={group.id}
+              icon="layers"
+              title={group.name}
+              subtitle={`group · ${members.length} items`}
+              selected={members.every((m) => selection.includes(m.id))}
+              data-testid={`scene-group-${group.id}`}
+              onClick={(e: { shiftKey: boolean }) =>
+                pick(members[0].id, { shiftKey: e.shiftKey, altKey: false })}
+            />,
+            ...members.map((m) => row(m, true)),
+          ];
+        })}
+        {onFloor.filter((i) => !i.group || !groups.some((g) => g.id === i.group)).map((item) =>
+          row(item)
+        )}
       </List>
     </div>
   );

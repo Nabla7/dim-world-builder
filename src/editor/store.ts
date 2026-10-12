@@ -11,7 +11,10 @@ export type Mode = "edit" | "view";
 
 export interface EditorState {
   project: Project;
+  /** the item the inspector and the gizmo are on (the last one clicked) */
   selected: string | null;
+  /** everything selected (Shift-click adds; a group's members come together), `selected` among them */
+  selection: string[];
   gizmo: Gizmo;
   mode: Mode;
   snap: boolean;
@@ -35,6 +38,7 @@ export interface EditorState {
 let state: EditorState = {
   project: emptyProject(),
   selected: null,
+  selection: [],
   gizmo: "translate",
   mode: "edit",
   snap: true,
@@ -55,6 +59,10 @@ export function getState(): EditorState {
 }
 
 function set(next: Partial<EditorState>) {
+  // a plain change of `selected` selects just that one
+  if ("selected" in next && !("selection" in next)) {
+    next = { ...next, selection: next.selected ? [next.selected] : [] };
+  }
   state = { ...state, ...next };
   listeners.forEach((listener) => listener());
 }
@@ -119,8 +127,70 @@ export function loadProject(loaded: Project) {
   });
 }
 
-export const select = (selected: string | null) =>
-  set({ selected, drawingPath: null, navTool: null });
+/**
+ * Selects an item: with `add` (Shift-click) it joins (or leaves) the selection; a group's member brings its whole
+ * group, unless `member` (Alt-click: just that one, to edit it on its own).
+ */
+export function select(selected: string | null, how: { add?: boolean; member?: boolean } = {}) {
+  const item = state.project.items.find((i) => i.id === selected);
+  const ids = item?.group && !how.member
+    ? state.project.items.filter((i) => i.group === item.group).map((i) => i.id)
+    : selected
+    ? [selected]
+    : [];
+  if (how.add && selected) {
+    const already = state.selection.includes(selected);
+    const selection = already
+      ? state.selection.filter((id) => !ids.includes(id))
+      : [...state.selection, ...ids.filter((id) => !state.selection.includes(id))];
+    set({ selected: selection.at(-1) ?? null, selection, drawingPath: null, navTool: null });
+    return;
+  }
+  set({ selected, selection: ids, drawingPath: null, navTool: null });
+}
+
+/** bundles the selection into a new group; returns its id */
+export function groupSelection(): string | null {
+  if (state.selection.length < 2) return null;
+  const id = `group_${crypto.randomUUID().slice(0, 6)}`;
+  const chosen = new Set(state.selection);
+  edit((p) => {
+    const groups = p.groups ?? [];
+    return {
+      ...p,
+      groups: [...groups, { id, name: `Group ${groups.length + 1}` }],
+      items: p.items.map((i) => (chosen.has(i.id) ? { ...i, group: id } : i)),
+    };
+  });
+  return id;
+}
+
+/** dissolves a group: its members stay where they are, each on its own again */
+export function ungroup(group: string) {
+  edit((p) => ({
+    ...p,
+    groups: (p.groups ?? []).filter((g) => g.id !== group),
+    items: p.items.map((i) => (i.group === group ? { ...i, group: undefined } : i)),
+  }));
+}
+
+export function renameGroup(group: string, name: string) {
+  edit(
+    (p) => ({ ...p, groups: (p.groups ?? []).map((g) => (g.id === group ? { ...g, name } : g)) }),
+    `group-${group}`,
+  );
+}
+
+/** several items changed as one undo step (a group dragged together) */
+export function updateItems(change: (item: Item) => Item | null) {
+  edit((p) => ({ ...p, items: p.items.map((i) => change(i) ?? i) }));
+}
+
+export function removeSelection() {
+  const gone = new Set(state.selection);
+  edit((p) => ({ ...p, items: p.items.filter((i) => !gone.has(i.id)) }));
+  set({ selected: null, drawingPath: null });
+}
 export const setNavTool = (navTool: "path" | "goal" | "tag" | null) =>
   set({ navTool, drawingPath: null, selected: navTool ? null : state.selected });
 export const setGizmo = (gizmo: Gizmo) => set({ gizmo });
