@@ -46,6 +46,7 @@ def convert(world: Path, out: Path, name: str) -> Path:
             texture.set("file", flat)
 
     tame_lighting(root)
+    dark_floors(root)
 
     worldbody = root.find("worldbody")
     if worldbody is None:
@@ -78,6 +79,20 @@ def tame_lighting(root: ET.Element) -> None:
             light.set("ambient", "0.28 0.28 0.3")
         elif light.get("diffuse"):
             light.set("diffuse", " ".join(f"{float(v) * 0.3:.3g}" for v in light.get("diffuse", "").split()))
+
+
+def dark_floors(root: ET.Element) -> None:
+    """Floor slabs in the dark gray the older sim's scenes use (a light floor reads as glare there): slab geoms and the
+    concrete textures they wear."""
+    dark = (0.26, 0.27, 0.29)
+    for texture in root.iter("texture"):
+        if (texture.get("name") or "").startswith("concrete"):
+            texture.set("rgb1", " ".join(f"{c:g}" for c in dark))
+            texture.set("markrgb", " ".join(f"{c * 0.8:.3g}" for c in dark))
+    for geom in root.iter("geom"):
+        if (geom.get("name") or "").startswith("slab_") and geom.get("rgba"):
+            alpha = geom.get("rgba", "").split()[3:] or ["1"]
+            geom.set("rgba", " ".join([*(f"{c:g}" for c in dark), *alpha]))
 
 
 def main() -> None:
