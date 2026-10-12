@@ -178,8 +178,9 @@ function Lighting() {
     const root = new THREE.Group();
     const renderer = viewer.renderer;
     renderer.shadowMap.enabled = true;
-    // PCF honors shadow.radius (PCFSoft ignores it): a wide kernel gives the soft edges of a hazy, diffuse sun
-    renderer.shadowMap.type = THREE.PCFShadowMap;
+    // variance shadow maps blur the map itself (a smooth, wide penumbra: a hazy, diffuse sun); PCF's 17 taps band when
+    // spread that wide, and PCFSoft ignores the radius
+    renderer.shadowMap.type = THREE.VSMShadowMap;
     // Neutral keeps greens green (ACES pulls foliage toward gray-olive)
     renderer.toneMapping = THREE.NeutralToneMapping;
     renderer.toneMappingExposure = 1.0;
@@ -225,7 +226,8 @@ function Lighting() {
     });
     sun.shadow.bias = -0.0004;
     sun.shadow.normalBias = 0.03;
-    sun.shadow.radius = 5;
+    sun.shadow.radius = 12;
+    sun.shadow.blurSamples = 16;
     // editing: only shadows over the grid; viewing: a concrete ground with a soft checker, like the simulation's
     const ground = new THREE.Mesh(
       new THREE.PlaneGeometry(800, 800),
