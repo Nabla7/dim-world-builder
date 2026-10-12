@@ -35,6 +35,7 @@ import type {
   HillParams,
   HoleParams,
   Item,
+  ItemGroup,
   LightParams,
   MeshAsset,
   OpeningKind,
@@ -196,7 +197,8 @@ export function FloorsPanel() {
     <div style={{ display: "flex", flexDirection: "column", gap: 8 }} data-testid="floors-panel">
       <p style={heading}>Floors</p>
       <Text small muted>
-        New items go on the selected floor; the others are drawn faded and can't be picked.
+        New items go on the selected floor, the only one you can pick from; floors above it are
+        drawn see-through.
       </Text>
       <List divided>
         {sorted.map((floor) => (
@@ -372,10 +374,12 @@ const kindIcon = (item: Item) =>
     ? "sun"
     : "pin";
 
+const NO_GROUPS: ItemGroup[] = [];
+
 /** what is on the floor being edited: one row per item, a group as one row with its members under it */
 export function ScenePanel() {
   const items = useEditor((s) => s.project.items);
-  const groups = useEditor((s) => s.project.groups ?? []);
+  const groups = useEditor((s) => s.project.groups) ?? NO_GROUPS;
   const active = useEditor((s) => s.project.activeFloor);
   const selection = useEditor((s) => s.selection);
   const onFloor = items.filter((i) => i.floor === active);

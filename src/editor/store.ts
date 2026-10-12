@@ -293,6 +293,8 @@ export function addFloor(around: Vec3 = [0, 0, 0]) {
     };
     return { ...p, floors: [...p.floors, floor], activeFloor: id };
   });
+  // what was selected is on another floor now
+  set({ selected: null });
 }
 
 export function removeFloor(id: string) {

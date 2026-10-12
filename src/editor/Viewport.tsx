@@ -61,6 +61,18 @@ export function Viewport({ assets }: { assets: Record<string, MeshAsset> }) {
         };
         viewer.controls.addEventListener("change", track);
         track();
+        // a plan editor's mouse: drag pans along the floor, Shift-drag (OrbitControls' modifier) or right-drag
+        // orbits, the wheel zooms
+        const controls = viewer.controls as unknown as {
+          mouseButtons: Record<string, number>;
+          screenSpacePanning: boolean;
+        };
+        controls.mouseButtons = {
+          LEFT: THREE.MOUSE.PAN,
+          MIDDLE: THREE.MOUSE.DOLLY,
+          RIGHT: THREE.MOUSE.ROTATE,
+        };
+        controls.screenSpacePanning = false;
         exposeForAutomation(viewer);
       }}
     >
@@ -105,6 +117,8 @@ function exposeForAutomation(viewer: {
   };
   Object.assign(globalThis, {
     dimWorldBuilder: {
+      /** where the camera is and looks */
+      view: () => view.camera?.get(),
       /** mean milliseconds to draw one frame of the current view (GPU included), for checking a look's cost */
       frameMs(frames = 30): number {
         const gl = viewer.renderer.getContext();
@@ -423,7 +437,10 @@ function WorldLayer({ assets }: { assets: Record<string, MeshAsset> }) {
         bake();
       });
       const editable = mode === "view" || body.floor === project.activeFloor;
-      ghost(object, !editable);
+      // floors above the one being edited are see-through, so it can be seen; it and those below draw solid (only
+      // its own items can be picked)
+      const level = (floor: string) => project.floors.find((f) => f.id === floor)?.elevation ?? 0;
+      ghost(object, mode !== "view" && level(body.floor) > level(project.activeFloor));
       // the floor slab is ground, not an item to pick
       object.userData.pickable = editable && mode === "edit" && body.kind !== "slab";
       objects.set(body.itemId, object);
@@ -532,12 +549,23 @@ function WorldLayer({ assets }: { assets: Record<string, MeshAsset> }) {
       }
       | null;
     if (!live) return;
-    const dz = elevation - live.viewer.controls.target.z;
-    if (Math.abs(dz) < 1e-3) return;
-    live.viewer.controls.target.z += dz;
-    live.viewer.camera.position.z += dz;
-    live.viewer.controls.update();
-    live.viewer.requestRender();
+    const { controls, camera } = live.viewer;
+    const from = controls.target.z;
+    if (Math.abs(elevation - from) < 1e-3) return;
+    // eased over 0.4 s, target and camera together
+    const started = performance.now();
+    let frame = 0;
+    const step = (now: number) => {
+      const t = Math.min(1, (now - started) / 400);
+      const z = from + (elevation - from) * (1 - (1 - t) ** 3);
+      camera.position.z += z - controls.target.z;
+      controls.target.z = z;
+      controls.update();
+      live.viewer.requestRender();
+      if (t < 1) frame = requestAnimationFrame(step);
+    };
+    frame = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(frame);
   }, [elevation, layer]);
   return <Picker objects={pickable} />;
 }
@@ -550,7 +578,11 @@ function Picker({ objects }: { objects: () => Map<string, THREE.Group> | undefin
     const canvas = viewer.renderer.domElement;
     let down: { x: number; y: number } | null = null;
     const raycaster = new THREE.Raycaster();
-    const onDown = (e: PointerEvent) => (down = { x: e.clientX, y: e.clientY });
+    const onDown = (e: PointerEvent) => {
+      down = { x: e.clientX, y: e.clientY };
+      // inside Desktop the page is an iframe: take the keyboard, so Esc, Delete and W/E/R reach it
+      globalThis.focus();
+    };
     const onUp = (e: PointerEvent) => {
       if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 4 || e.button !== 0) return;
       down = null;
@@ -617,14 +649,20 @@ function Picker({ objects }: { objects: () => Map<string, THREE.Group> | undefin
       let target: THREE.Vector3;
       let distance: number;
       if (under) {
-        const bounds = new THREE.Box3().setFromObject(under.object);
-        target = bounds.getCenter(new THREE.Vector3());
-        distance = Math.max(2.5, bounds.getSize(new THREE.Vector3()).length() * 1.6);
+        // its bounding sphere just fills the view (with a little room around it)
+        const sphere = new THREE.Box3().setFromObject(under.object).getBoundingSphere(
+          new THREE.Sphere(),
+        );
+        target = sphere.center;
+        const halfFov = THREE.MathUtils.degToRad(viewer.camera.fov) / 2;
+        distance = Math.max(1.2, (sphere.radius / Math.sin(halfFov)) * 1.2);
         select(under.object.userData.itemId as string);
       } else {
         raycaster.setFromCamera(ndcOf(e), viewer.camera);
+        const { floors, activeFloor } = getState().project;
+        const level = floors.find((f) => f.id === activeFloor)?.elevation ?? 0;
         const hit = raycaster.ray.intersectPlane(
-          new THREE.Plane(new THREE.Vector3(0, 0, 1), 0),
+          new THREE.Plane(new THREE.Vector3(0, 0, 1), -level),
           new THREE.Vector3(),
         );
         if (!hit) return;
@@ -657,6 +695,18 @@ function Picker({ objects }: { objects: () => Map<string, THREE.Group> | undefin
   return null;
 }
 
+/** OrbitControls' leftover inertia (private fields), cleared so a placed camera doesn't drift on */
+function clearDamping(controls: unknown) {
+  const c = controls as {
+    _sphericalDelta?: THREE.Spherical;
+    _panOffset?: THREE.Vector3;
+    _scale?: number;
+  };
+  c._sphericalDelta?.set(0, 0, 0);
+  c._panOffset?.set(0, 0, 0);
+  if (c._scale !== undefined) c._scale = 1;
+}
+
 /** ease the camera to look at `target` from `distance` away, keeping its viewing direction (about 0.7 s) */
 function glide(
   viewer: {
@@ -677,6 +727,8 @@ function glide(
     const ease = t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
     viewer.controls.target.lerpVectors(fromTarget, target, ease);
     viewer.camera.position.lerpVectors(fromPosition, toPosition, ease);
+    // the double-click's own drag and zoom left inertia in OrbitControls: drop it, or the camera sails past
+    clearDamping(viewer.controls);
     viewer.controls.update();
     viewer.requestRender();
     if (t < 1) requestAnimationFrame(step);
@@ -706,6 +758,7 @@ function glideTo(
     viewer.camera.position.lerpVectors(fromPosition, eye, ease);
     viewer.camera.fov = fromFov + (fov - fromFov) * ease;
     viewer.camera.updateProjectionMatrix();
+    clearDamping(viewer.controls);
     viewer.controls.update();
     viewer.requestRender();
     if (t < 1) requestAnimationFrame(step);

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { Component, type ReactNode, useCallback, useEffect, useState } from "react";
 import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter.js";
 import * as api from "./api.ts";
 import {
@@ -186,17 +186,19 @@ export function App() {
               style={{ flex: 1, overflow: "auto", paddingBottom: "var(--dim-inset-bottom, 0px)" }}
               data-testid="sidebar"
             >
-              {tab === "items" && (
-                <LibraryPanel
-                  assets={assets}
-                  onImport={() => setImporting(true)}
-                />
-              )}
-              {tab === "shapes" && <ShapesPanel />}
-              {tab === "builders" && <BuildersPanel />}
-              {tab === "scene" && <ScenePanel />}
-              {tab === "nav" && <NavPanel />}
-              {tab === "views" && <ViewsPanel />}
+              <PanelBoundary key={tab}>
+                {tab === "items" && (
+                  <LibraryPanel
+                    assets={assets}
+                    onImport={() => setImporting(true)}
+                  />
+                )}
+                {tab === "shapes" && <ShapesPanel />}
+                {tab === "builders" && <BuildersPanel />}
+                {tab === "scene" && <ScenePanel />}
+                {tab === "nav" && <NavPanel />}
+                {tab === "views" && <ViewsPanel />}
+              </PanelBoundary>
             </div>
           </aside>
         )}
@@ -221,23 +223,6 @@ export function App() {
                   boxShadow: "var(--shadow)",
                 }}
               >
-                {project.floors.length > 1 && (
-                  // the floor new items go on, always in sight (the others are drawn faded)
-                  <Select
-                    size="sm"
-                    value={project.activeFloor}
-                    style={{ width: 170 }}
-                    aria-label="Floor being edited"
-                    data-testid="active-floor"
-                    options={[...project.floors].sort((a, b) => b.elevation - a.elevation).map((
-                      f,
-                    ) => ({
-                      value: f.id,
-                      label: `${f.name} · ${f.elevation.toFixed(1)} m`,
-                    }))}
-                    onChange={setActiveFloor}
-                  />
-                )}
                 <Segmented
                   size="sm"
                   value={gizmo}
@@ -286,6 +271,24 @@ export function App() {
               </div>
             )
             : <ViewerOverlay />}
+          {mode === "edit" && <FloorPicker />}
+          {mode === "edit" && (
+            <div
+              style={{
+                position: "absolute",
+                bottom: 10,
+                left: "50%",
+                transform: "translateX(-50%)",
+                pointerEvents: "none",
+                opacity: 0.7,
+                font: "12px system-ui",
+                color: "var(--muted, #aaa)",
+                textShadow: "0 1px 2px rgba(0,0,0,.6)",
+              }}
+            >
+              drag: pan · shift-drag or right-drag: orbit · wheel: zoom · shift-click: select more
+            </div>
+          )}
         </main>
         {mode === "edit" && (
           <aside
@@ -345,7 +348,11 @@ function useKeyboard() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
-      if (target.closest("input, textarea, select, [contenteditable]")) return;
+      if (target.closest("input, textarea, select, [contenteditable]")) {
+        // Esc in a field leaves the field (and the selection alone)
+        if (e.key === "Escape") target.blur();
+        return;
+      }
       const mod = e.metaKey || e.ctrlKey;
       const selected = getState().selected;
       if (mod && e.key.toLowerCase() === "z") {
@@ -357,7 +364,19 @@ function useKeyboard() {
       } else if ((e.key === "Delete" || e.key === "Backspace") && selected) {
         removeSelection();
       } else if (e.key === "Escape") {
-        if (getState().navTool) setNavTool(null);
+        // undo first what's in progress: a gizmo drag (back to where it began), a path being drawn, a tool;
+        // then the selection, all of it
+        const gizmo = (globalThis as unknown as {
+          dimWorldBuilderGizmo?: {
+            dragging: boolean;
+            reset(): void;
+            pointerUp(p: { button: number }): void;
+          };
+        }).dimWorldBuilderGizmo;
+        if (gizmo?.dragging) {
+          gizmo.reset();
+          gizmo.pointerUp({ button: 0 });
+        } else if (getState().navTool) setNavTool(null);
         else if (getState().drawingPath) setDrawingPath(null);
         else select(null);
       } else if (!mod && getState().mode === "edit") {
@@ -370,6 +389,65 @@ function useKeyboard() {
     addEventListener("keydown", onKey);
     return () => removeEventListener("keydown", onKey);
   }, []);
+}
+
+/** the floors as a stack of buttons over the view's bottom-left corner (top floor on top): the lit one is edited */
+function FloorPicker() {
+  const floors = useEditor((s) => s.project.floors);
+  const active = useEditor((s) => s.project.activeFloor);
+  if (floors.length < 2) return null;
+  return (
+    <div
+      data-testid="floor-picker"
+      style={{
+        position: "absolute",
+        left: 12,
+        bottom: 12,
+        display: "flex",
+        flexDirection: "column",
+        gap: 4,
+        padding: 6,
+        borderRadius: "var(--radius)",
+        background: "var(--panel, var(--raised))",
+        boxShadow: "var(--shadow)",
+      }}
+    >
+      {[...floors].sort((a, b) => b.elevation - a.elevation).map((floor) => (
+        <Button
+          key={floor.id}
+          size="sm"
+          variant={floor.id === active ? "primary" : "ghost"}
+          data-testid={`floor-pick-${floor.id}`}
+          onClick={() => setActiveFloor(floor.id)}
+        >
+          {floor.name} · {floor.elevation.toFixed(1)} m
+        </Button>
+      ))}
+    </div>
+  );
+}
+
+/** a panel that throws shows its error in place, instead of taking the whole app down with it */
+class PanelBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+  override state = { error: null as Error | null };
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+  override componentDidCatch(error: Error) {
+    console.error("World Builder panel failed:", error);
+  }
+  override render() {
+    if (!this.state.error) return this.props.children;
+    return (
+      <div
+        style={{ padding: 12, display: "flex", flexDirection: "column", gap: 8 }}
+        data-testid="panel-error"
+      >
+        <Text small tone="danger">This panel hit an error: {this.state.error.message}</Text>
+        <Button size="sm" onClick={() => this.setState({ error: null })}>Try again</Button>
+      </div>
+    );
+  }
 }
 
 function ProjectMenu() {
