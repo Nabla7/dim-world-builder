@@ -387,41 +387,69 @@ function ladderShapes(sx: number, sy: number, sz: number, color: Rgba): Shape[] 
   return shapes;
 }
 
-/** a standing person facing +x (so a mover with heading "path" walks forward): legs, torso, arms, head */
+/**
+ * a standing person facing +x (so a mover with heading "path" walks forward), in human proportions of its height sz:
+ * shoes, legs, hips, torso, shoulders, arms and hands, a neck the head sits on, hair
+ */
 function personShapes(sx: number, sy: number, sz: number, color: Rgba): Shape[] {
   const skin: Rgba = [0.86, 0.69, 0.56, 1];
+  const hair: Rgba = [0.22, 0.15, 0.1, 1];
+  const shoe: Rgba = [0.14, 0.13, 0.13, 1];
   const trousers: Rgba = [color[0] * 0.45, color[1] * 0.45, color[2] * 0.5, 1];
-  const leg = sz * 0.46;
-  const legRadius = Math.min(sx, sy) * 0.22;
-  const torsoBottom = leg;
-  const torso = sz * 0.32;
-  const headRadius = sz * 0.065;
+  const width = sx, depth = sy;
+  const hip = sz * 0.48, shoulder = sz * 0.81, neckTop = sz * 0.885;
+  const headRadius = sz * 0.064;
+  const legRadius = width * 0.12;
+  const armRadius = width * 0.075;
+  const armY = width / 2 - armRadius;
   const shapes: Shape[] = [];
   for (const side of [1, -1]) {
-    shapes.push(cylinderAlong("z", [0, side * sx * 0.2, leg / 2], legRadius, leg, trousers));
+    const legY = side * width * 0.17;
+    shapes.push(
+      box([depth * 0.08, legY, sz * 0.02], [depth * 0.62, legRadius * 2.1, sz * 0.04], shoe),
+    );
+    shapes.push(
+      cylinderAlong("z", [0, legY, (sz * 0.04 + hip) / 2], legRadius, hip - sz * 0.04, trousers),
+    );
+    // arms hang from the shoulders to mid-thigh, hands at the ends
+    const handZ = sz * 0.43;
     shapes.push(
       cylinderAlong(
         "z",
-        [0, side * (sx / 2 - legRadius * 0.6), torsoBottom + torso * 0.45],
-        legRadius * 0.7,
-        torso * 0.95,
+        [0, side * armY, (shoulder + handZ) / 2],
+        armRadius,
+        shoulder - handZ,
         color,
       ),
     );
+    shapes.push(sphere([0, side * armY, handZ], armRadius * 1.1, skin));
+    shapes.push(sphere([0, side * armY, shoulder], armRadius * 1.35, color));
   }
-  shapes.push(box([0, 0, torsoBottom + torso / 2], [sy * 0.9, sx * 0.72, torso], color));
+  shapes.push(box([0, 0, hip], [depth * 0.62, width * 0.62, sz * 0.08], trousers));
   shapes.push(
-    cylinderAlong("z", [0, 0, torsoBottom + torso + sz * 0.03], headRadius * 0.45, sz * 0.06, skin),
+    box([0, 0, (hip + shoulder) / 2], [depth * 0.7, width * 0.72, shoulder - hip], color),
   );
-  shapes.push({
-    type: "sphere",
-    pos: [0, 0, sz - headRadius],
-    quat: IDENTITY,
-    size: [headRadius],
-    rgba: skin,
-    role: "both",
-  });
+  // the neck runs from inside the torso up into the head
+  shapes.push(
+    cylinderAlong(
+      "z",
+      [0, 0, (shoulder + neckTop) / 2],
+      headRadius * 0.5,
+      neckTop - shoulder + sz * 0.02,
+      skin,
+    ),
+  );
+  const headZ = neckTop + headRadius * 0.75;
+  shapes.push(sphere([0, 0, headZ], headRadius, skin));
+  // hair: a slightly bigger sphere set back and up, so the face shows in front
+  shapes.push(
+    sphere([-headRadius * 0.18, 0, headZ + headRadius * 0.16], headRadius * 0.98, hair, "visual"),
+  );
   return shapes;
+}
+
+function sphere(center: Vec3, radius: number, color: Rgba, role: Role = "both"): Shape {
+  return { type: "sphere", pos: center, quat: IDENTITY, size: [radius], rgba: color, role };
 }
 
 /** an open-topped bucket / can: tapered walls you can see into, a solid cylinder to collide with */
@@ -1028,7 +1056,7 @@ export function grateShapes(p: HoleParams): Shape[] {
 export function floorSlab(floor: Floor, holes: Item[], elevation: number): Body | null {
   const slab = floor.slab;
   if (!slab || slab.thickness <= 0) return null;
-  const color: Rgba = [0.26, 0.27, 0.29, 1];
+  const color: Rgba = slab.color ? rgba(slab.color) : [0.26, 0.27, 0.29, 1];
   const x0 = slab.center[0] - slab.sizeX / 2, x1 = slab.center[0] + slab.sizeX / 2;
   const y0 = slab.center[1] - slab.sizeY / 2, y1 = slab.center[1] + slab.sizeY / 2;
   const rects = holes.flatMap((h) =>

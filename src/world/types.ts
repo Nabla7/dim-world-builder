@@ -14,7 +14,14 @@ export interface Floor {
    * a solid slab under this floor (its top at the floor's elevation) that holes cut into; the ground floor has a
    * thick one by default so a hole can be a pit
    */
-  slab?: { thickness: number; sizeX: number; sizeY: number; center: [number, number] };
+  slab?: {
+    thickness: number;
+    sizeX: number;
+    sizeY: number;
+    center: [number, number];
+    /** its top's color (default a dark gray) */
+    color?: Rgb;
+  };
 }
 
 export type OpeningKind = "door" | "double" | "window" | "crawl" | "arch";

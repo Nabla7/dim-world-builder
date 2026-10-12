@@ -10,6 +10,7 @@ const WALL = 0.15;
 const UPPER = "upper";
 const UPPER_Z = 4.7;
 const UPPER_SLAB = 0.3;
+const FLOOR: Rgb = [0.66, 0.64, 0.6];
 
 type Segment = {
   x0: number;
@@ -87,12 +88,19 @@ export function office555(): Project {
   const ground = project.floors[0].id;
   project.floors[0].name = "Floor 1";
   // the scan spans x -0.5..29.8, y -12.6..17.6
-  project.floors[0].slab = { thickness: 1.5, sizeX: 36, sizeY: 36, center: [14.6, 2.5] };
+  // a light office floor, so shadows read
+  project.floors[0].slab = {
+    thickness: 1.5,
+    sizeX: 36,
+    sizeY: 36,
+    center: [14.6, 2.5],
+    color: FLOOR,
+  };
   project.floors.push({
     id: UPPER,
     name: "Floor 2",
     elevation: UPPER_Z,
-    slab: { thickness: UPPER_SLAB, sizeX: 10.5, sizeY: 30.2, center: [4.7, 2.5] },
+    slab: { thickness: UPPER_SLAB, sizeX: 10.5, sizeY: 30.2, center: [4.7, 2.5], color: FLOOR },
   });
 
   const walls: Segment[] = [];
