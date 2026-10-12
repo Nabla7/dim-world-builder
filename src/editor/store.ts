@@ -185,11 +185,42 @@ export function setActiveFloor(floor: string) {
   if (item && item.floor !== floor) set({ selected: null });
 }
 
-export function addFloor() {
+/**
+ * A new floor 3 m over the top one, with a slab to stand on (without one, what's added to it floats in the air): over
+ * the top floor's items and a meter around them, or 8 m square around `around` when that floor is empty.
+ */
+export function addFloor(around: Vec3 = [0, 0, 0]) {
   edit((p) => {
-    const top = Math.max(...p.floors.map((f) => f.elevation));
+    const topFloor = p.floors.reduce((a, b) => (b.elevation > a.elevation ? b : a));
     const id = `floor_${crypto.randomUUID().slice(0, 6)}`;
-    const floor: Floor = { id, name: `Floor ${p.floors.length + 1}`, elevation: top + 3 };
+    const below = p.items.filter((i) =>
+      i.floor === topFloor.id && !["light", "hill"].includes(i.kind)
+    );
+    let [x0, y0, x1, y1] = [around[0] - 4, around[1] - 4, around[0] + 4, around[1] + 4];
+    if (below.length) {
+      [x0, y0, x1, y1] = [Infinity, Infinity, -Infinity, -Infinity];
+      for (const item of below) {
+        const half = item.kind === "room"
+          ? Math.max(item.params.width, item.params.depth) / 2
+          : 0.5;
+        x0 = Math.min(x0, item.position[0] - half - 1);
+        y0 = Math.min(y0, item.position[1] - half - 1);
+        x1 = Math.max(x1, item.position[0] + half + 1);
+        y1 = Math.max(y1, item.position[1] + half + 1);
+      }
+    }
+    const round = (v: number) => Math.round(v * 10) / 10;
+    const floor: Floor = {
+      id,
+      name: `Floor ${p.floors.length + 1}`,
+      elevation: topFloor.elevation + 3,
+      slab: {
+        thickness: 0.2,
+        sizeX: round(Math.max(6, x1 - x0)),
+        sizeY: round(Math.max(6, y1 - y0)),
+        center: [round((x0 + x1) / 2), round((y0 + y1) / 2)],
+      },
+    };
     return { ...p, floors: [...p.floors, floor], activeFloor: id };
   });
 }

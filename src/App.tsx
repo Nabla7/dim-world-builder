@@ -44,6 +44,7 @@ import {
   renameKey,
   renameProject,
   select,
+  setActiveFloor,
   setDrawingPath,
   setGizmo,
   setGrass,
@@ -197,7 +198,11 @@ export function App() {
                   position: "absolute",
                   left: 12,
                   top: 12,
+                  // clear of the view cube
+                  maxWidth: "calc(100% - 170px)",
                   display: "flex",
+                  flexWrap: "wrap",
+                  alignItems: "center",
                   gap: 8,
                   padding: 6,
                   borderRadius: "var(--radius)",
@@ -205,6 +210,23 @@ export function App() {
                   boxShadow: "var(--shadow)",
                 }}
               >
+                {project.floors.length > 1 && (
+                  // the floor new items go on, always in sight (the others are drawn faded)
+                  <Select
+                    size="sm"
+                    value={project.activeFloor}
+                    style={{ width: 170 }}
+                    aria-label="Floor being edited"
+                    data-testid="active-floor"
+                    options={[...project.floors].sort((a, b) => b.elevation - a.elevation).map((
+                      f,
+                    ) => ({
+                      value: f.id,
+                      label: `${f.name} · ${f.elevation.toFixed(1)} m`,
+                    }))}
+                    onChange={setActiveFloor}
+                  />
+                )}
                 <Segmented
                   size="sm"
                   value={gizmo}

@@ -502,6 +502,7 @@ export function bodyObject(
   const group = new THREE.Group();
   group.name = body.name;
   group.userData.itemId = body.itemId;
+  group.userData.floor = body.floor;
   group.position.set(...body.pos);
   group.quaternion.set(...body.quat);
   const loadedVisuals = new Set<string>();

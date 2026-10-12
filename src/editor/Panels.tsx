@@ -93,7 +93,12 @@ export function AddPanel({ assets, onImport }: { assets: MeshAsset[]; onImport: 
       setNavTool(entry.tool);
       return;
     }
-    const at: Vec3 = [view.center[0], view.center[1], 0];
+    // on whatever the view is centered on: the floor, or the desk standing there
+    const at: Vec3 = [
+      view.center[0],
+      view.center[1],
+      view.surfaceAt(view.center[0], view.center[1]),
+    ];
     if (entry.makeMany) addItems(entry.makeMany(floor, at));
     else addItem(entry.make(floor, at));
   };
@@ -171,7 +176,9 @@ export function FloorsPanel() {
           />
         ))}
       </List>
-      <Button icon="plus" onClick={addFloor} data-testid="add-floor">Add a floor above</Button>
+      <Button icon="plus" onClick={() => addFloor(view.center)} data-testid="add-floor">
+        Add a floor above
+      </Button>
       {floors.filter((f) => f.id === active).map((floor) => (
         <div key={floor.id} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <p style={heading}>Selected floor</p>
@@ -182,34 +189,90 @@ export function FloorsPanel() {
                 updateFloor(floor.id, { name })}
             />
           </Field>
+          <Field label="Height above the ground (its items move with it)">
+            <NumberInput
+              value={floor.elevation}
+              step={0.1}
+              precision={2}
+              unit="m"
+              data-testid="floor-elevation"
+              onChange={(elevation: number) =>
+                updateFloor(floor.id, { elevation })}
+            />
+          </Field>
           <Toggle
             value={Boolean(floor.slab)}
             onChange={(on: boolean) =>
               updateFloor(floor.id, {
-                slab: on ? { thickness: 0.3, sizeX: 30, sizeY: 30, center: [0, 0] } : undefined,
+                slab: on
+                  ? {
+                    thickness: floor.elevation > 0 ? 0.2 : 0.3,
+                    sizeX: 10,
+                    sizeY: 10,
+                    center: [Math.round(view.center[0]), Math.round(view.center[1])],
+                  }
+                  : undefined,
               })}
-            label="Solid slab (holes cut into it)"
+            label="Solid slab (what its items stand on; holes cut into it)"
           />
-          {floor.slab && (
-            <Range
-              label="Slab thickness"
-              value={floor.slab.thickness}
-              min={0.05}
-              max={5}
-              step={0.05}
-              unit="m"
-              onChange={(thickness) =>
-                updateFloor(floor.id, { slab: { ...floor.slab!, thickness } })}
-            />
+          {!floor.slab && floor.elevation > 0 && (
+            <Text small muted>
+              No slab: things on this floor stand only on its rooms' floors and stairs, or float.
+            </Text>
           )}
-          <Field label="Elevation">
-            <NumberInput
-              value={floor.elevation}
-              step={0.1}
-              unit="m"
-              onChange={(elevation: number) => updateFloor(floor.id, { elevation })}
-            />
-          </Field>
+          {floor.slab && (
+            <>
+              <Range
+                label="Slab thickness"
+                value={floor.slab.thickness}
+                min={0.05}
+                max={5}
+                step={0.05}
+                unit="m"
+                onChange={(thickness) =>
+                  updateFloor(floor.id, { slab: { ...floor.slab!, thickness } })}
+              />
+              <Field label="Slab size (m)">
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                  {(["sizeX", "sizeY"] as const).map((key) => (
+                    <NumberInput
+                      key={key}
+                      size="sm"
+                      value={floor.slab![key]}
+                      step={0.5}
+                      precision={1}
+                      unit={key === "sizeX" ? "x" : "y"}
+                      aria-label={`Slab size ${key === "sizeX" ? "x" : "y"} (m)`}
+                      onChange={(v: number) =>
+                        updateFloor(floor.id, {
+                          slab: { ...floor.slab!, [key]: Math.max(0.5, v) },
+                        })}
+                    />
+                  ))}
+                </div>
+              </Field>
+              <Field label="Slab center (m)">
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                  {[0, 1].map((axis) => (
+                    <NumberInput
+                      key={axis}
+                      size="sm"
+                      value={floor.slab!.center[axis]}
+                      step={0.5}
+                      precision={1}
+                      unit={axis ? "y" : "x"}
+                      aria-label={`Slab center ${axis ? "y" : "x"} (m)`}
+                      onChange={(v: number) => {
+                        const center = [...floor.slab!.center] as [number, number];
+                        center[axis] = v;
+                        updateFloor(floor.id, { slab: { ...floor.slab!, center } });
+                      }}
+                    />
+                  ))}
+                </div>
+              </Field>
+            </>
+          )}
         </div>
       ))}
     </div>
@@ -1060,6 +1123,7 @@ function KeyInput({ id, value }: { id: string; value: string }) {
 export function Inspector({ assets }: { assets: MeshAsset[] }) {
   const selected = useEditor((s) => s.selected);
   const item = useEditor((s) => s.project.items.find((i) => i.id === s.selected) ?? null);
+  const floor = useEditor((s) => s.project.floors.find((f) => f.id === item?.floor));
   if (!selected || !item) {
     return (
       <div style={section}>
@@ -1094,7 +1158,13 @@ export function Inspector({ assets }: { assets: MeshAsset[] }) {
         {asset && <Badge tone="info">{asset.hulls.length} collision hulls</Badge>}
         {item.mover && <Badge tone="warn">moving</Badge>}
       </div>
-      <Vec label="Position" value={item.position} onChange={(position) => update({ position })} />
+      <Vec
+        label={floor && floor.elevation !== 0
+          ? `Position (z above ${floor.name}, at ${floor.elevation.toFixed(1)} m)`
+          : "Position"}
+        value={item.position}
+        onChange={(position) => update({ position })}
+      />
       <Field label="Rotation (yaw)">
         <NumberInput
           value={deg(toYaw(item.rotation))}

@@ -248,6 +248,9 @@ function Lighting() {
       for (const child of scene.children) {
         if ((child as THREE.GridHelper).isLineSegments && child.type === "GridHelper") {
           fadeGrid(child);
+          // the grid lies on the floor being edited, so that floor is plain to see
+          const { floors, activeFloor } = getState().project;
+          child.position.z = (floors.find((f) => f.id === activeFloor)?.elevation ?? 0) + 0.002;
         }
       }
     });
@@ -420,6 +423,25 @@ function WorldLayer({ assets }: { assets: Record<string, MeshAsset> }) {
       root.add(object);
     }
     live.state.grass = hasGrass(root);
+    // what a new object lands on: the highest surface of the active floor under (x, y), below head height (so not
+    // a room's ceiling); the floor itself when nothing is there
+    view.surfaceAt = (x, y) => {
+      const floor = project.floors.find((f) => f.id === project.activeFloor);
+      const base = floor?.elevation ?? 0;
+      const own = [...objects.values()].filter((o) => o.userData.floor === project.activeFloor);
+      const down = new THREE.Raycaster(
+        new THREE.Vector3(x, y, base + 1.9),
+        new THREE.Vector3(0, 0, -1),
+        0,
+        2.4,
+      );
+      // solid surfaces only: not grass blades, nor the see-through handles and collision wireframes
+      const solid = (o: THREE.Object3D) =>
+        o.visible && !(o as THREE.InstancedMesh).isInstancedMesh &&
+        !((o as THREE.Mesh).material instanceof THREE.MeshBasicMaterial);
+      const hit = down.intersectObjects(own, true).find((h) => solid(h.object));
+      return hit ? Math.max(0, Math.round((hit.point.z - base) * 100) / 100) : 0;
+    };
     // each floor's slab reads one shared occlusion map (before its shader compiles), which the bake below fills
     for (const floor of project.floors) {
       const slab = objects.get(`slab:${floor.id}`);
@@ -458,7 +480,9 @@ function WorldLayer({ assets }: { assets: Record<string, MeshAsset> }) {
           for (const [object, visible] of shown) object.visible = visible;
         }
         // for automation: how long the bake took, and the maps (to check them)
-        Object.assign(globalThis, { dimWorldBuilderAO: { ms: performance.now() - start, floors: aoByFloor.current } });
+        Object.assign(globalThis, {
+          dimWorldBuilderAO: { ms: performance.now() - start, floors: aoByFloor.current },
+        });
         live.viewer.requestRender();
       }, 250);
     };
@@ -488,6 +512,26 @@ function WorldLayer({ assets }: { assets: Record<string, MeshAsset> }) {
     bake();
     live.viewer.requestRender();
   }, [world, assets, showCollision, grass, mode, project.activeFloor, layer]);
+  // switching floors (or moving one) lifts the camera with it, so the floor being edited stays in view
+  const elevation = project.floors.find((f) => f.id === project.activeFloor)?.elevation ?? 0;
+  useEffect(() => {
+    const live = layer.current as unknown as
+      | {
+        viewer: {
+          camera: THREE.Camera;
+          controls: { target: THREE.Vector3; update(): void };
+          requestRender(): void;
+        };
+      }
+      | null;
+    if (!live) return;
+    const dz = elevation - live.viewer.controls.target.z;
+    if (Math.abs(dz) < 1e-3) return;
+    live.viewer.controls.target.z += dz;
+    live.viewer.camera.position.z += dz;
+    live.viewer.controls.update();
+    live.viewer.requestRender();
+  }, [elevation, layer]);
   return <Picker objects={pickable} />;
 }
 

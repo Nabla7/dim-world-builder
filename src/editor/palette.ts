@@ -26,20 +26,34 @@ export interface PaletteEntry {
   tool?: "tag";
 }
 
-/** the ground point the camera orbits and the drawn world, set by the viewport */
 /** the editor camera, for the Views panel: where it is, and a smooth move to a remembered view */
 export interface CameraHandle {
   get(): { eye: Vec3; target: Vec3; fov: number };
   goTo(eye: Vec3, target: Vec3, fov?: number): void;
 }
 
-export const view: { center: Vec3; worldRoot: Object3D | null; camera: CameraHandle | null } = {
+/** the ground point the camera orbits, the drawn world and the camera, set by the viewport */
+export const view: {
+  center: Vec3;
+  worldRoot: Object3D | null;
+  camera: CameraHandle | null;
+  /** the height above the active floor of the top surface at (x, y): what a new object should stand on */
+  surfaceAt: (x: number, y: number) => number;
+} = {
   center: [0, 0, 0],
   worldRoot: null,
   camera: null,
+  surfaceAt: () => 0,
 };
 
-const snap = (at: Vec3): Vec3 => [Math.round(at[0] * 2) / 2, Math.round(at[1] * 2) / 2, 0];
+/** to the half meter across, keeping the height (the surface an object lands on) to the centimeter */
+const snap = (at: Vec3): Vec3 => [
+  Math.round(at[0] * 2) / 2,
+  Math.round(at[1] * 2) / 2,
+  Math.round(at[2] * 100) / 100,
+];
+/** builders (rooms, stairs, hills, holes, walls) stand on the floor itself, never on whatever is under the view */
+const onFloor = (at: Vec3): Vec3 => snap([at[0], at[1], 0]);
 
 function primitive(
   shape: PrimitiveParams["shape"],
@@ -81,7 +95,7 @@ export const BUILT_IN: PaletteEntry[] = [
     group: "Builders",
     icon: "home",
     make: (floor, at) =>
-      makeItem("room", defaultRoom(), { name: "Room", floor, position: snap(at) }),
+      makeItem("room", defaultRoom(), { name: "Room", floor, position: onFloor(at) }),
   },
   {
     key: "build:stairs",
@@ -89,7 +103,7 @@ export const BUILT_IN: PaletteEntry[] = [
     group: "Builders",
     icon: "grid",
     make: (floor, at) =>
-      makeItem("stairs", defaultStairs(), { name: "Stairs", floor, position: snap(at) }),
+      makeItem("stairs", defaultStairs(), { name: "Stairs", floor, position: onFloor(at) }),
   },
   {
     key: "build:hill",
@@ -100,7 +114,7 @@ export const BUILT_IN: PaletteEntry[] = [
       makeItem("hill", { ...defaultHill(), seed: Math.floor(Math.random() * 1000) }, {
         name: "Hill",
         floor,
-        position: snap(at),
+        position: onFloor(at),
       }),
   },
   {
@@ -108,8 +122,8 @@ export const BUILT_IN: PaletteEntry[] = [
     title: "Scatter clutter",
     group: "Builders",
     icon: "sparkle",
-    make: (floor, at) => scatterClutter(floor, at, 1)[0],
-    makeMany: (floor, at) => scatterClutter(floor, at, Math.floor(Math.random() * 100000)),
+    make: (floor, at) => scatterClutter(floor, onFloor(at), 1)[0],
+    makeMany: (floor, at) => scatterClutter(floor, onFloor(at), Math.floor(Math.random() * 100000)),
   },
   {
     key: "build:hole",
@@ -120,7 +134,7 @@ export const BUILT_IN: PaletteEntry[] = [
       makeItem("hole", { sizeX: 1.5, sizeY: 1.5, depth: 0.5 }, {
         name: "Hole",
         floor,
-        position: snap(at),
+        position: onFloor(at),
       }),
   },
   {
@@ -132,7 +146,7 @@ export const BUILT_IN: PaletteEntry[] = [
       makeItem("hole", { sizeX: 0.6, sizeY: 1.0, depth: 0.4, grate: defaultGrate() }, {
         name: "Drain grate",
         floor,
-        position: snap(at),
+        position: onFloor(at),
       }),
   },
   {
@@ -169,7 +183,7 @@ export const BUILT_IN: PaletteEntry[] = [
       makeItem("primitive", { shape: "box", color: PAINT.wall }, {
         name: "Wall",
         floor,
-        position: snap(at),
+        position: onFloor(at),
         scale: [4, 0.15, 2.5],
       }),
   },
