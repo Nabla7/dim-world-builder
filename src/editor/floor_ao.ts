@@ -7,10 +7,10 @@ import * as THREE from "three";
 const TEXEL = 0.08;
 /** the highest occluder that counts, above its floor */
 const REACH = 2.5;
-/** blur radius in texels: the soft spread of the occlusion around an item (~30 cm) */
-const BLUR = 4;
+/** blur radius in texels: the soft spread of the occlusion around an item (~25 cm, applied twice) */
+const BLUR = 3;
 /** how dark a fully covered spot gets (fraction of the sky light kept) */
-const KEEP = 0.35;
+const KEEP = 0.12;
 
 export interface FloorAO {
   /** the occlusion map (1 = open sky) */
@@ -109,7 +109,7 @@ export function bakeFloorAO(
   let cover: Float32Array = new Float32Array(width * height);
   for (let i = 0; i < cover.length; i++) {
     const h = pixels[i * 4] / 255;
-    cover[i] = h >= 1 ? 0 : 1 - 0.6 * h;
+    cover[i] = h >= 1 ? 0 : 1 - 0.4 * h;
   }
   cover = blur(blur(cover, width, height), width, height);
   const out = new Uint8Array(width * height * 4);

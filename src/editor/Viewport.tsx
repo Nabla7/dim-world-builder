@@ -457,8 +457,8 @@ function WorldLayer({ assets }: { assets: Record<string, MeshAsset> }) {
           }, shared);
           for (const [object, visible] of shown) object.visible = visible;
         }
-        (globalThis as unknown as { dimWorldBuilderAOms?: number }).dimWorldBuilderAOms =
-          performance.now() - start;
+        // for automation: how long the bake took, and the maps (to check them)
+        Object.assign(globalThis, { dimWorldBuilderAO: { ms: performance.now() - start, floors: aoByFloor.current } });
         live.viewer.requestRender();
       }, 250);
     };

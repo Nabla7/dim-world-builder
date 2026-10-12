@@ -238,7 +238,7 @@ function slabLook(
         float floorOcclusion = mix(1.0, texture2D(uFloorAO, clamp(aoUv, 0.0, 1.0)).r, slabUp());
         reflectedLight.indirectDiffuse *= floorOcclusion;
         reflectedLight.indirectSpecular *= floorOcclusion;
-        reflectedLight.directDiffuse *= mix(1.0, floorOcclusion, 0.35);`,
+        reflectedLight.directDiffuse *= mix(1.0, floorOcclusion, 0.5);`,
       );
   };
   material.customProgramCacheKey = () => `slabLook:${concrete}`;
