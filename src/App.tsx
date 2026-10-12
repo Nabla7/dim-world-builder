@@ -595,7 +595,7 @@ function ExportDialog({ open, onClose }: { open: boolean; onClose: () => void })
             <Text small muted>
               Writes{" "}
               {packageName}/ with scene.xml (MuJoCo), scene.json (entities, spawns, movers, plus views
-              and this project), nav_eval.json (the nav test), Python modules and meshes/.
+              and this project), annotations (the nav test), Python modules and meshes/.
             </Text>
           </div>
         )}

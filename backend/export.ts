@@ -48,17 +48,18 @@ export async function exportProject(
   // sim2's scene, plus (in extensions, which sim2 ignores) the views and the editor's project
   const sceneJson = {
     ...(scene.sceneJson as Record<string, unknown>),
+    annotations: navAnnotations(project),
     extensions: {
       [EXTENSION]: { views: (scene.viewsJson as { views: unknown[] }).views, project },
     },
   };
   await write("scene.json", JSON.stringify(sceneJson, null, 2) + "\n");
-  await write("nav_eval.json", JSON.stringify(navEvalFile(project), null, 2) + "\n");
   // earlier exports' files, now folded into scene.json (and dimos allows no __init__.py)
   const stale = [
     "movers.json",
     "views.json",
     "world.project.json",
+    "nav_eval.json",
     "world.json",
     "__init__.py",
     "__main__.py",
@@ -94,11 +95,38 @@ export async function exportProject(
 }
 
 /**
- * nav_eval.json (dimos.nav_eval.v1): navigation tests against this scene, kept apart from it since one scene can have many.
- * The editor's drawn test is the one named "default".
+ * The drawn nav test as generic scene annotations: the mapping walk is a path tagged nav:mapping, each goal a point
+ * tagged nav:goal (props: tolerance, timeout, order). Other tests can use other tags in the same scene.json.
  */
-export function navEvalFile(project: Project) {
-  return { format: "dimos.nav_eval.v1", scene: "scene.json", evals: [{ name: "default", ...navEval(project) }] };
+export function navAnnotations(project: Project) {
+  const plan = navEval(project);
+  const slug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+  const annotations: Record<string, unknown>[] = [];
+  if (plan.mapping_path.length >= 2) {
+    annotations.push({
+      id: "nav_mapping",
+      kind: "path",
+      label: "Mapping walk",
+      tags: ["nav:mapping"],
+      points: plan.mapping_path,
+      props: { start_spawn: plan.start_spawn },
+    });
+  }
+  const used = new Set<string>();
+  plan.goals.forEach((goal, order) => {
+    let id = `nav_goal_${slug(goal.name) || order + 1}`;
+    while (used.has(id)) id += "_";
+    used.add(id);
+    annotations.push({
+      id,
+      kind: "point",
+      label: goal.name,
+      tags: ["nav:goal"],
+      position: goal.position,
+      props: { tolerance: goal.tolerance, timeout: goal.timeout, order },
+    });
+  });
+  return annotations;
 }
 
 /** one navigation test in world coordinates (floor elevations applied) */
@@ -124,7 +152,7 @@ function readme(name: string, project: Project): string {
 
 A [dim-world-builder](https://github.com/jeff-hykin/dim-world-builder) world: ${project.items.length} items,
 ${project.floors.length} floor(s). \`scene.json\` is sim2's scene; its \`extensions.${EXTENSION}\` holds the views and the editor's
-project; \`nav_eval.json\` holds navigation tests (\`verify/nav_eval.py\` runs them).
+project; its \`annotations\` are labeled points, paths and areas (the nav test: \`verify/nav_eval.py\` runs it).
 
 \`\`\`sh
 uv pip install -e .                                          # into dimos's venv
@@ -143,7 +171,7 @@ function worldModule(name: string, project: Project): string {
   return `"""${name}: a dim-world-builder world for dimos sim2 (MuJoCo); \`python -m ${name}.world\` checks it.
 
 Files beside this one: scene.xml (MJCF), scene.json (dimos.scene.v1: entities, spawns, movers; its extensions.${EXTENSION}
-holds the remembered camera views and the editor's project), nav_eval.json (navigation tests), meshes/, textures/, scene_data.py (the SceneData module) and
+holds the remembered camera views and the editor's project; annotations: labeled points, paths, areas), meshes/, textures/, scene_data.py (the SceneData module) and
 blueprints.py (\`go2\`).
 ${project.items.length} items, ${project.floors.length} floor(s).
 """
@@ -169,13 +197,13 @@ ENTITIES: dict[str, dict[str, Any]] = _scene.get("entities", {})
 MOVERS: list[dict[str, Any]] = _scene.get("movers", [])
 # remembered camera views: each is a fixed <camera> in scene.xml named by its "camera" id
 VIEWS: list[dict[str, Any]] = _world.get("views", [])
-NAV_EVAL_JSON = SCENE_DIR / "nav_eval.json"
-# navigation tests (mapping path and goals each; verify/nav_eval.py runs them), by name
-NAV_EVALS: dict[str, dict[str, Any]] = (
-    {e["name"]: e for e in json.loads(NAV_EVAL_JSON.read_text()).get("evals", [])}
-    if NAV_EVAL_JSON.exists()
-    else {}
-)
+# labeled points, paths and areas (the nav test: a path tagged nav:mapping, points tagged nav:goal)
+ANNOTATIONS: list[dict[str, Any]] = _scene.get("annotations", [])
+
+
+def annotations(tag: str) -> list[dict[str, Any]]:
+    """The annotations carrying \`tag\`, e.g. annotations("nav:goal")."""
+    return [a for a in ANNOTATIONS if tag in a.get("tags", [])]
 
 
 def check() -> mujoco.MjModel:

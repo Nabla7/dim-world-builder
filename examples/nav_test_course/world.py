@@ -1,7 +1,7 @@
 """nav_test_course: a dim-world-builder world for dimos sim2 (MuJoCo); `python -m nav_test_course.world` checks it.
 
 Files beside this one: scene.xml (MJCF), scene.json (dimos.scene.v1: entities, spawns, movers; its extensions.dim_world_builder
-holds the remembered camera views and the editor's project), nav_eval.json (navigation tests), meshes/, textures/, scene_data.py (the SceneData module) and
+holds the remembered camera views and the editor's project; annotations: labeled points, paths, areas), meshes/, textures/, scene_data.py (the SceneData module) and
 blueprints.py (`go2`).
 11 items, 2 floor(s).
 """
@@ -27,13 +27,13 @@ ENTITIES: dict[str, dict[str, Any]] = _scene.get("entities", {})
 MOVERS: list[dict[str, Any]] = _scene.get("movers", [])
 # remembered camera views: each is a fixed <camera> in scene.xml named by its "camera" id
 VIEWS: list[dict[str, Any]] = _world.get("views", [])
-NAV_EVAL_JSON = SCENE_DIR / "nav_eval.json"
-# navigation tests (mapping path and goals each; verify/nav_eval.py runs them), by name
-NAV_EVALS: dict[str, dict[str, Any]] = (
-    {e["name"]: e for e in json.loads(NAV_EVAL_JSON.read_text()).get("evals", [])}
-    if NAV_EVAL_JSON.exists()
-    else {}
-)
+# labeled points, paths and areas (the nav test: a path tagged nav:mapping, points tagged nav:goal)
+ANNOTATIONS: list[dict[str, Any]] = _scene.get("annotations", [])
+
+
+def annotations(tag: str) -> list[dict[str, Any]]:
+    """The annotations carrying `tag`, e.g. annotations("nav:goal")."""
+    return [a for a in ANNOTATIONS if tag in a.get("tags", [])]
 
 
 def check() -> mujoco.MjModel:

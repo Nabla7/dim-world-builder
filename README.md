@@ -14,7 +14,7 @@ dtk run <world>.go2 --simulation mujoco --transport zenoh                 # a Go
 dtk run <blueprint> <world>.scene-data --scene-package ~/dimos_worlds/<world>   # SceneData beside any sim2 blueprint
 ```
 
-Export: `scene.xml`, `scene.json` (sim2; movers; views + project in `extensions`), `nav_eval.json` (named nav tests),
+Export: `scene.xml`, `scene.json` (sim2: movers; `annotations`: labeled points, paths, areas, e.g. the nav test; views + project in `extensions`),
 `world.py` / `blueprints.py` / `scene_data.py` (a namespace package), `meshes/`, `textures/`.
 Python: `from <world> import world; world.render_view("overview")`.
 `SceneData` answers `/scene_data_request` on `/scene_data` (meshes, lights, cameras) and announces itself on `/scene_info`;
@@ -24,7 +24,7 @@ Needs dimos branch `jeff/feat/sim2_world_builder`.
 ## Nav test
 
 ```sh
-python verify/nav_eval.py ~/dimos_worlds/<world> --blueprint unitree-go2-freewalk [--eval <name>]   # mapping walk, then goals
+python verify/nav_eval.py ~/dimos_worlds/<world> --blueprint unitree-go2-freewalk   # walks the nav:mapping path, then nav:goal points
 python verify/drive_go2.py examples/nav_test_course                                 # walls, crates, cart, stairs collide
 ```
 

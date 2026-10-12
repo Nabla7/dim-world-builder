@@ -1,4 +1,4 @@
-"""Score a navigation stack on a world's nav test (nav_eval.json, drawn in World Builder). Any robot, any nav stack.
+"""Score a navigation stack on a world's nav test (scene.json annotations, drawn in World Builder). Any robot, any nav stack.
 
 1. drive the robot along the mapping path with plain Twist commands (so the stack builds its map),
 2. send each goal as a PoseStamped and time how long the stack takes to get within the goal's tolerance.
@@ -153,6 +153,25 @@ def run_goals(robot: Robot, goals: list[dict[str, Any]]) -> list[dict[str, Any]]
     return results
 
 
+def plan_from(annotations: list[dict[str, Any]], mapping_tag: str, goal_tag: str) -> dict[str, Any]:
+    """The walk (the first path tagged mapping_tag) and the goals (points tagged goal_tag, by props.order)."""
+    paths = [a for a in annotations if a["kind"] == "path" and mapping_tag in a.get("tags", [])]
+    points = [a for a in annotations if a["kind"] == "point" and goal_tag in a.get("tags", [])]
+    points.sort(key=lambda a: a.get("props", {}).get("order", 0))
+    return {
+        "mapping_path": paths[0]["points"] if paths else [],
+        "goals": [
+            {
+                "name": a.get("label") or a["id"],
+                "position": a["position"],
+                "tolerance": a.get("props", {}).get("tolerance", 0.5),
+                "timeout": a.get("props", {}).get("timeout", 180),
+            }
+            for a in points
+        ],
+    }
+
+
 def build_blueprint(name: str, world: Path) -> Any:
     """Optional: run the robot here, in sim2, with this world loaded (any blueprint that honors --scene-package)."""
     from dimos.core.coordination.blueprint_config.parser import BlueprintConfigParser
@@ -186,13 +205,13 @@ def main() -> int:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument(
-        "world", type=Path, help="an exported world folder (scene.xml, scene.json, nav_eval.json)"
+        "world", type=Path, help="an exported world folder (scene.xml, scene.json with annotations)"
     )
     parser.add_argument(
-        "--nav-eval", type=Path, help="the nav tests file (default: <world>/nav_eval.json)"
+        "--mapping-tag", default="nav:mapping", help="the path annotation to walk first (by tag)"
     )
     parser.add_argument(
-        "--eval", default=None, help="which test in it, by name (default: the first)"
+        "--goal-tag", default="nav:goal", help="the point annotations to reach, in props.order"
     )
     parser.add_argument(
         "--cmd-vel", default="cmd_vel", help="Twist topic that drives the robot (mapping phase)"
@@ -215,15 +234,12 @@ def main() -> int:
     parser.add_argument("--report", type=Path)
     args = parser.parse_args()
 
-    tests_path = args.nav_eval or args.world / "nav_eval.json"
-    tests = json.loads(tests_path.read_text()).get("evals", [])
-    plan = next((t for t in tests if args.eval in (None, t["name"])), None)
-    if plan is None:
-        print(f"{tests_path} has no test named {args.eval!r} (it has {[t['name'] for t in tests]})")
-        return 1
+    annotations = json.loads((args.world / "scene.json").read_text()).get("annotations", [])
+    plan = plan_from(annotations, args.mapping_tag, args.goal_tag)
     if not plan["goals"] and not plan["mapping_path"]:
         print(
-            f"{tests_path} {plan['name']!r} has no mapping path or goals: draw them in World Builder's Nav test tab"
+            f"{args.world}/scene.json has no {args.mapping_tag} path or {args.goal_tag} points: "
+            "draw them in World Builder's Nav test tab"
         )
         return 1
     global_config.update(transport=args.transport)
