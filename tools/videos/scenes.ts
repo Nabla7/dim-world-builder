@@ -36,16 +36,23 @@ async function addFromPalette(demo: Demo, key: string, search?: string) {
 const selectedId = (demo: Demo) => demo.state<string>("s.selected");
 
 /**
- * drag a handle of the selected item's gizmo by (dx, dy) pixels: in Move the XY plane square (free on the floor),
- * in Rotate the yaw ring, in Scale the X handle box
+ * drag the selected item's gizmo: Move goes along the X arrow then the Y arrow (dx, dy in screen pixels along each),
+ * Rotate along the yaw ring, Scale from the center box (uniform)
  */
-async function dragSelected(demo: Demo, dx: number, dy: number, steps = 45) {
+async function dragSelected(demo: Demo, dx: number, dy: number, steps = 40) {
   const gizmo = await demo.state<string>("s.gizmo");
-  const handle: [number, number, number] = gizmo === "rotate"
-    ? [0.354, 0.354, 0]
-    : gizmo === "scale"
-    ? [0.5, 0, 0]
-    : [0.15, 0.15, 0];
+  if (gizmo === "translate") {
+    for (const [axis, amount] of [[[1, 0, 0], dx], [[0, 1, 0], dy]] as const) {
+      if (!amount) continue;
+      const from = await demo.gizmoOnScreen([axis[0] * 0.35, axis[1] * 0.35, 0]);
+      const ahead = await demo.gizmoOnScreen([axis[0] * 0.6, axis[1] * 0.6, 0]);
+      const length = Math.hypot(ahead[0] - from[0], ahead[1] - from[1]) || 1;
+      const unit = [(ahead[0] - from[0]) / length, (ahead[1] - from[1]) / length];
+      await demo.drag(from, [from[0] + unit[0] * amount, from[1] + unit[1] * amount], steps);
+    }
+    return;
+  }
+  const handle: [number, number, number] = gizmo === "rotate" ? [0.354, 0.354, 0] : [0, 0, 0];
   const [x, y] = await demo.gizmoOnScreen(handle);
   await demo.drag([x, y], [x + dx, y + dy], steps);
 }
@@ -74,7 +81,6 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
       "Collision on: the magenta wireframes are the convex pieces the robot collides with",
       2500,
     );
-    await demo.lookAt([0, 0, 0.5], [-1.6, -2.2, 1.6]);
     await demo.say(
       "The lidar and camera see the real shape; physics uses the convex decomposition",
       3000,
@@ -85,7 +91,6 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
 
   async "2_add_move_rotate_scale"(demo) {
     await fresh(demo, "transform_demo");
-    await demo.lookAt([0, 0, 0.5], [-5, -7, 5]);
     await demo.say(
       "Add things from the palette, then move, rotate and scale them with the gizmo",
       1500,
@@ -99,8 +104,8 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
     await dragSelected(demo, 120, -20);
     await demo.page.keyboard.press("r");
     await demo.say("Scale (R)", 400);
-    await dragSelected(demo, 90, -60);
-    await dragSelected(demo, -40, 30);
+    await dragSelected(demo, 40, -30);
+    await dragSelected(demo, -20, 15);
     await demo.page.keyboard.press("w");
     await demo.say("Or type exact numbers in the inspector", 600);
     const yaw = demo.app.locator("[data-testid=inspector] input").nth(4);
@@ -111,7 +116,7 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
     await addFromPalette(demo, "asset:office_chair", "chair");
     await dragSelected(demo, -220, 60);
     await demo.page.keyboard.press("r");
-    await dragSelected(demo, 80, -50);
+    await dragSelected(demo, 30, -20);
     await demo.page.keyboard.press("w");
     await demo.say("Ctrl+D duplicates, Delete removes, Ctrl+Z undoes", 600);
     await demo.page.keyboard.press("Control+d");
@@ -125,7 +130,6 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
 
   async "3_stairs"(demo) {
     await fresh(demo, "stairs_demo");
-    await demo.lookAt([1.2, 0, 0.6], [-2.5, -4.5, 3]);
     await demo.say("The staircase tool", 1000);
     await addFromPalette(demo, "build:stairs");
     await demo.say("Step height", 300);
@@ -151,7 +155,6 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
 
   async "4_hills"(demo) {
     await fresh(demo, "hill_demo");
-    await demo.lookAt([0, 0, 0], [-9, -11, 7]);
     await demo.say("Hills: natural bumpiness from fractal noise", 1000);
     await addFromPalette(demo, "build:hill");
     await demo.say("Bump height", 300);
@@ -172,7 +175,6 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
 
   async "5_asset_palette"(demo) {
     await fresh(demo, "palette_demo");
-    await demo.lookAt([0, 0, 0], [-6, -8, 6]);
     await demo.say("The palette: shapes, clutter, builders and a CC0 model library", 800);
     const sidebar = demo.app.locator("[data-testid=sidebar]");
     const box = await sidebar.boundingBox();
@@ -197,7 +199,7 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
     await place("shape:cone", -120, 120);
     await place("shape:beanbag", 60, 160);
     await demo.page.keyboard.press("r");
-    await dragSelected(demo, 70, -40, 25);
+    await dragSelected(demo, 30, -20, 25);
     await demo.page.keyboard.press("e");
     await dragSelected(demo, 100, 0, 25);
     await demo.page.keyboard.press("w");
@@ -215,7 +217,6 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
 
   async "6_floors"(demo) {
     await fresh(demo, "floors_demo");
-    await demo.lookAt([0, 0, 1.5], [-9, -12, 9]);
     await demo.say("Floors: build a level, add one above, edit one floor at a time", 800);
     await addFromPalette(demo, "build:room");
     await addFromPalette(demo, "shape:box");
@@ -248,7 +249,6 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
 
   async "7_rooms"(demo) {
     await fresh(demo, "rooms_demo");
-    await demo.lookAt([0, 0, 1], [-6, -9, 8]);
     await demo.say("Rooms: walls, doors and a ceiling in one item", 800);
     await addFromPalette(demo, "build:room");
     await demo.say("Width and depth", 300);
@@ -265,7 +265,7 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
     await demo.slide("Door width", 6);
     await demo.say("Resize with the scale gizmo too", 300);
     await demo.page.keyboard.press("r");
-    await dragSelected(demo, 80, -50);
+    await dragSelected(demo, 30, -20);
     await demo.page.keyboard.press("w");
     await demo.say("A second room, then remove it", 300);
     await addFromPalette(demo, "build:room");
@@ -277,7 +277,6 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
 
   async "8_moving_objects"(demo) {
     await fresh(demo, "movers_demo");
-    await demo.lookAt([0, 0, 0], [-5, -8, 7]);
     await demo.say("Moving objects: any item can ride a looping path", 800);
     await addFromPalette(demo, "shape:box");
     await demo.say("Make it move, then click points on the floor", 300);
@@ -299,6 +298,52 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
       "In the simulation it's a kinematic body: it shoves the robot and lidar sees it",
       2500,
     );
+  },
+
+  async "9_viewer_mode"(demo) {
+    // open the test course, export it from the app, run a simulated Go2 in the export, watch it in Viewer mode
+    await demo.app.selectOption("[data-testid=open-world]", { label: "Example: nav test course" });
+    await demo.page.waitForTimeout(1500);
+    await demo.say("Export the world for dimos", 600);
+    await demo.click("[data-testid=export]", 800);
+    await demo.click("[data-testid=export-go]");
+    await demo.app.waitForSelector("[data-testid=export-result]", { timeout: 60000 });
+    const dir = (await demo.app.locator("[data-testid=export-result] b").first().textContent())!
+      .trim();
+    await demo.say(`Exported to ${dir}`, 2500);
+    await demo.clickText("Done");
+    const python = flag("python") ?? `${Deno.env.get("HOME")}/repos/dimos_sim2/.venv/bin/python`;
+    const sim = new Deno.Command(python, {
+      args: [
+        new URL("../../verify/drive_go2.py", import.meta.url).pathname,
+        dir,
+        "--only",
+        "wall,mover",
+      ],
+      env: { PYTHONPATH: "" },
+      stdout: "null",
+      stderr: "null",
+    }).spawn();
+    try {
+      await demo.say("A simulated Go2 (dimos sim2) starts in the exported world…", 400);
+      await demo.click("[data-testid=mode] >> text=Viewer", 500);
+      await demo.lookAt([2, -3, 0], [-6, -14, 7]);
+      await demo.say(
+        "Viewer mode: the world lit and shadowed, the robot and moving cart live from the blueprint",
+        9000,
+      );
+      await demo.say("The Go2 walks into the room's wall: it stops there", 12000);
+      await demo.lookAt([1, -12, 0], [-4, -19, 5]);
+      await demo.say("The cart rides its path and shoves the Go2 aside", 4000);
+      await demo.click(
+        "[data-testid=viewer-overlay] [role=switch], [data-testid=viewer-overlay] input[type=checkbox]",
+        500,
+      );
+      await demo.say("With the robot's lidar on", 15000);
+    } finally {
+      sim.kill("SIGINT");
+      await sim.status;
+    }
   },
 };
 

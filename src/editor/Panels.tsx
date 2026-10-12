@@ -14,6 +14,7 @@ import {
   NumberInput,
   SearchInput,
   Segmented,
+  Select,
   Slider,
   Text,
   TextInput,
@@ -45,8 +46,10 @@ import {
   setActiveFloor,
   setDrawingPath,
   setMover,
+  setNavTool,
   updateFloor,
   updateItem,
+  updateNav,
   useEditor,
 } from "./store.ts";
 
@@ -737,6 +740,145 @@ export function Inspector({ assets }: { assets: MeshAsset[] }) {
           Remove
         </Button>
       </div>
+    </div>
+  );
+}
+
+// ── Nav test ──
+
+export function NavPanel() {
+  const project = useEditor((s) => s.project);
+  const tool = useEditor((s) => s.navTool);
+  const nav = project.nav ??
+    {
+      startSpawn: project.spawns[0]?.name ?? "default",
+      floor: project.activeFloor,
+      mappingPath: [],
+      goals: [],
+    };
+  const toggle = (which: "path" | "goal") => setNavTool(tool === which ? null : which);
+  return (
+    <div style={section} data-testid="nav-panel">
+      <Text small muted>
+        A navigation test for any robot and nav stack: the robot is first driven along the mapping
+        path (to build its map), then sent to each goal in turn. Exported as nav_eval.json;
+        verify/nav_eval.py runs and scores it.
+      </Text>
+      <Field label="Start at">
+        <Select
+          value={nav.startSpawn}
+          options={project.spawns.map((s) => s.name)}
+          onChange={(startSpawn: string) => updateNav((n) => ({ ...n, startSpawn }))}
+        />
+      </Field>
+      <p style={heading}>Mapping path</p>
+      <ButtonGroup>
+        <Button
+          size="sm"
+          icon="line"
+          pressed={tool === "path"}
+          onClick={() => toggle("path")}
+          data-testid="nav-draw-path"
+        >
+          {tool === "path" ? "Done drawing" : "Draw the path"}
+        </Button>
+        <Button
+          size="sm"
+          icon="eraser"
+          onClick={() => updateNav((n) => ({ ...n, mappingPath: [] }))}
+        >
+          Clear
+        </Button>
+      </ButtonGroup>
+      {tool === "path" && (
+        <Text small tone="warn">
+          Click on the ground, point after point, where the robot should walk.
+        </Text>
+      )}
+      <Text small muted>
+        {nav.mappingPath.length} points, {nav.mappingPath.slice(1).reduce(
+          (sum, p, i) =>
+            sum + Math.hypot(p[0] - nav.mappingPath[i][0], p[1] - nav.mappingPath[i][1]),
+          0,
+        ).toFixed(1)} m
+      </Text>
+      <p style={heading}>Goals</p>
+      <Button
+        size="sm"
+        icon="target"
+        pressed={tool === "goal"}
+        onClick={() => toggle("goal")}
+        data-testid="nav-add-goal"
+      >
+        {tool === "goal" ? "Done placing goals" : "Place goals"}
+      </Button>
+      {tool === "goal" && <Text small tone="warn">Click on the ground to place each goal.</Text>}
+      <List divided>
+        {nav.goals.map((goal) => (
+          <ListRow
+            key={goal.id}
+            icon="target"
+            title={goal.name}
+            subtitle={`${goal.position[0].toFixed(1)}, ${
+              goal.position[1].toFixed(1)
+            } · within ${goal.tolerance} m · ${goal.timeout} s`}
+            actions={
+              <IconButton
+                icon="close"
+                size="sm"
+                variant="ghost"
+                label={`Remove ${goal.name}`}
+                onClick={() =>
+                  updateNav((n) => ({ ...n, goals: n.goals.filter((g) => g.id !== goal.id) }))}
+              />
+            }
+          />
+        ))}
+      </List>
+      {nav.goals.length > 0 && (
+        <>
+          <Range
+            label="Goal tolerance"
+            value={nav.goals[0].tolerance}
+            min={0.1}
+            max={2}
+            step={0.05}
+            unit="m"
+            onChange={(tolerance) =>
+              updateNav(
+                (n) => ({ ...n, goals: n.goals.map((g) => ({ ...g, tolerance })) }),
+                "nav-tolerance",
+              )}
+          />
+          <Range
+            label="Time per goal"
+            value={nav.goals[0].timeout}
+            min={10}
+            max={600}
+            step={10}
+            unit="s"
+            onChange={(timeout) =>
+              updateNav(
+                (n) => ({ ...n, goals: n.goals.map((g) => ({ ...g, timeout })) }),
+                "nav-timeout",
+              )}
+          />
+        </>
+      )}
+      <p style={heading}>Spawns</p>
+      <List divided>
+        {project.spawns.map((spawn, i) => (
+          <ListRow
+            key={spawn.name}
+            icon="robot"
+            title={spawn.name}
+            subtitle={`${spawn.position[0].toFixed(1)}, ${spawn.position[1].toFixed(1)} · facing ${
+              Math.round((spawn.yaw * 180) / Math.PI)
+            }°`}
+            actions={i === 0 ? <Badge>default</Badge> : undefined}
+          />
+        ))}
+      </List>
     </div>
   );
 }

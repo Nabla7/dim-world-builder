@@ -3,7 +3,7 @@
 
 import { useSyncExternalStore } from "react";
 import { emptyProject } from "../world/defaults.ts";
-import type { Floor, Item, MoverPath, Project, Vec3 } from "../world/types.ts";
+import type { Floor, Item, MoverPath, NavPlan, Project, Vec3 } from "../world/types.ts";
 
 export type Gizmo = "translate" | "rotate" | "scale";
 export type Mode = "edit" | "view";
@@ -17,6 +17,8 @@ export interface EditorState {
   showCollision: boolean;
   /** the item whose mover path clicks on the ground extend */
   drawingPath: string | null;
+  /** clicks on the ground extend the nav test's mapping path, or add a goal */
+  navTool: "path" | "goal" | null;
   past: Project[];
   future: Project[];
   /** the last time the project changed, for autosave */
@@ -33,6 +35,7 @@ let state: EditorState = {
   snap: true,
   showCollision: false,
   drawingPath: null,
+  navTool: null,
   past: [],
   future: [],
   revision: 0,
@@ -108,12 +111,15 @@ export function loadProject(project: Project) {
   });
 }
 
-export const select = (selected: string | null) => set({ selected, drawingPath: null });
+export const select = (selected: string | null) =>
+  set({ selected, drawingPath: null, navTool: null });
+export const setNavTool = (navTool: "path" | "goal" | null) =>
+  set({ navTool, drawingPath: null, selected: navTool ? null : state.selected });
 export const setGizmo = (gizmo: Gizmo) => set({ gizmo });
 export const setMode = (mode: Mode) => set({ mode, drawingPath: null });
 export const setSnap = (snap: boolean) => set({ snap });
 export const setShowCollision = (showCollision: boolean) => set({ showCollision });
-export const setDrawingPath = (drawingPath: string | null) => set({ drawingPath });
+export const setDrawingPath = (drawingPath: string | null) => set({ drawingPath, navTool: null });
 
 export function selectedItem(): Item | null {
   return state.project.items.find((i) => i.id === state.selected) ?? null;
@@ -192,4 +198,45 @@ export function updateFloor(id: string, change: Partial<Floor>) {
 
 export function renameProject(name: string) {
   edit((p) => ({ ...p, name }), "name");
+}
+
+// ── the navigation test ──
+
+function navPlan(p: Project): NavPlan {
+  return p.nav ??
+    {
+      startSpawn: p.spawns[0]?.name ?? "default",
+      floor: p.activeFloor,
+      mappingPath: [],
+      goals: [],
+    };
+}
+
+export function updateNav(change: (nav: NavPlan) => NavPlan, coalesce?: string) {
+  edit((p) => ({ ...p, nav: change(navPlan(p)) }), coalesce);
+}
+
+/** a click on the ground while a nav tool is on */
+export function addNavPoint(point: Vec3) {
+  const tool = state.navTool;
+  const floor = state.project.activeFloor;
+  if (tool === "path") {
+    updateNav((nav) => ({
+      ...nav,
+      floor: nav.mappingPath.length ? nav.floor : floor,
+      mappingPath: [...nav.mappingPath, point],
+    }));
+  } else if (tool === "goal") {
+    updateNav((nav) => ({
+      ...nav,
+      goals: [...nav.goals, {
+        id: crypto.randomUUID().slice(0, 8),
+        name: `Goal ${nav.goals.length + 1}`,
+        floor,
+        position: point,
+        tolerance: 0.5,
+        timeout: 120,
+      }],
+    }));
+  }
 }

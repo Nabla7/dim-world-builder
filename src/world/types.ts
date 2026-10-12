@@ -119,6 +119,31 @@ export interface Spawn {
   yaw: number;
 }
 
+/** a place the navigation stack is asked to reach */
+export interface NavGoal {
+  id: string;
+  name: string;
+  floor: string;
+  position: Vec3;
+  /** reached when the robot's base is within this many meters (in x, y) */
+  tolerance: number;
+  /** seconds before the goal counts as failed */
+  timeout: number;
+}
+
+/**
+ * A navigation test: first the robot is driven along `mappingPath` (so the stack builds its map), then each goal is
+ * sent to the nav stack in turn. Robot- and stack-agnostic: the runner speaks plain Twist / odometry / PoseStamped.
+ */
+export interface NavPlan {
+  /** the spawn the robot starts at */
+  startSpawn: string;
+  floor: string;
+  /** floor-relative points the robot is driven through before any goal */
+  mappingPath: Vec3[];
+  goals: NavGoal[];
+}
+
 export interface Project {
   format: "dim-world-builder.project.v1";
   name: string;
@@ -127,6 +152,8 @@ export interface Project {
   spawns: Spawn[];
   /** the floor the editor adds to */
   activeFloor: string;
+  /** the navigation test, if one is drawn */
+  nav?: NavPlan;
 }
 
 /** A mesh the page and the exporter both know: a library asset or a cooked import. */

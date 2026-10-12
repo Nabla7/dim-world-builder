@@ -18,7 +18,7 @@ import { useSubscription } from "../ui.ts";
 import { buildWorld, type World } from "../world/geometry.ts";
 import type { Item, MeshAsset, Project, Quat, Vec3 } from "../world/types.ts";
 import { bodyObject, disposeObject, ghost } from "./three_world.ts";
-import { getState, select, setDrawingPath, updateItem, useEditor } from "./store.ts";
+import { addNavPoint, getState, select, setDrawingPath, updateItem, useEditor } from "./store.ts";
 import { themeColor } from "./theme_color.ts";
 import { view } from "./palette.ts";
 
@@ -47,6 +47,7 @@ export function Viewport({ assets }: { assets: Record<string, MeshAsset> }) {
       <WorldLayer assets={assets} />
       {mode === "edit" && <Gizmo />}
       {mode === "edit" && <MoverPaths />}
+      <NavOverlay />
       {mode === "view" && <LiveRobot />}
       <SceneControls />
     </Scene3D>
@@ -291,6 +292,13 @@ function Picker({ objects }: { objects: () => Map<string, THREE.Group> | undefin
       );
       raycaster.setFromCamera(ndc, viewer.camera);
       const state = getState();
+      if (state.navTool) {
+        const floor = state.project.floors.find((f) => f.id === state.project.activeFloor);
+        const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -(floor?.elevation ?? 0));
+        const hit = raycaster.ray.intersectPlane(plane, new THREE.Vector3());
+        if (hit) addNavPoint([Math.round(hit.x * 10) / 10, Math.round(hit.y * 10) / 10, 0]);
+        return;
+      }
       if (state.drawingPath) {
         const floor = state.project.floors.find((f) => f.id === state.project.activeFloor);
         const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -(floor?.elevation ?? 0));
@@ -324,7 +332,9 @@ function addWaypoint(id: string, point: Vec3) {
 }
 
 /** the generators take a gizmo scale as new dimensions; primitives and meshes keep it as their scale */
-function applyScale(item: Item, s: Vec3): Item {
+function applyScale(item: Item, raw: Vec3): Item {
+  // a wild drag can ask for any factor: keep each within 1/10..10x per drag
+  const s = raw.map((v) => Math.min(10, Math.max(0.1, Math.abs(v)))) as Vec3;
   switch (item.kind) {
     case "room":
       return {
@@ -379,6 +389,8 @@ function Gizmo() {
     const helper = controls.getHelper();
     viewer.scene.add(helper);
     viewer.setOnTop(helper, true);
+    // drawing on top moves the helper to its own layer; let the gizmo's own picking ray see every layer
+    controls.getRaycaster().layers.enableAll();
     controls.addEventListener("change", () => viewer.requestRender());
     controls.addEventListener("dragging-changed", (event) => {
       const dragging = Boolean((event as unknown as { value: boolean }).value);
@@ -397,9 +409,9 @@ function Gizmo() {
       updateItem(item.id, (current) => {
         let next: Item = {
           ...current,
-          position: [object.position.x, object.position.y, object.position.z - lift].map((v) =>
-            Math.round(v * 1000) / 1000
-          ) as Vec3,
+          // never below the floor it stands on
+          position: [object.position.x, object.position.y, Math.max(0, object.position.z - lift)]
+            .map((v) => Math.round(v * 1000) / 1000) as Vec3,
           rotation: object.quaternion.toArray() as Quat,
         };
         if (scaled) next = applyScale(next, scale);
@@ -407,6 +419,8 @@ function Gizmo() {
       });
     });
     controlsRef.current = controls;
+    (globalThis as unknown as { dimWorldBuilderGizmo?: TransformControls }).dimWorldBuilderGizmo =
+      controls;
     return () => {
       controls.detach();
       viewer.scene.remove(helper);
@@ -419,6 +433,9 @@ function Gizmo() {
     const controls = controlsRef.current;
     if (!controls || !viewer) return;
     controls.setMode(gizmo);
+    // things in a world turn about the vertical: rotate is the yaw ring (exact roll/pitch stay in the inspector)
+    controls.showX = gizmo !== "rotate";
+    controls.showY = gizmo !== "rotate";
     controls.setTranslationSnap(snap ? SNAP.translate : null);
     controls.setRotationSnap(snap ? SNAP.rotate : null);
     controls.setScaleSnap(snap ? SNAP.scale : null);
@@ -464,6 +481,85 @@ function MoverPaths() {
     return { root, dispose: () => disposeObject(root) };
   }, [project, selected, drawing]);
   useEffect(() => () => setDrawingPath(null), []);
+  return null;
+}
+
+/** the nav test (mapping path, goals) and the spawn points, drawn over the world */
+function NavOverlay() {
+  const project = useEditor((s) => s.project);
+  const tool = useEditor((s) => s.navTool);
+  useLayer(() => {
+    const root = new THREE.Group();
+    const lift = (floor: string) => project.floors.find((f) => f.id === floor)?.elevation ?? 0;
+    const spawnColor = themeColor("var(--info)");
+    for (const spawn of project.spawns) {
+      const arrow = new THREE.ArrowHelper(
+        new THREE.Vector3(Math.cos(spawn.yaw), Math.sin(spawn.yaw), 0),
+        new THREE.Vector3(
+          spawn.position[0],
+          spawn.position[1],
+          spawn.position[2] + lift(spawn.floor) + 0.05,
+        ),
+        0.7,
+        spawnColor,
+        0.25,
+        0.18,
+      );
+      root.add(arrow);
+    }
+    const nav = project.nav;
+    if (nav) {
+      const pathColor = themeColor(tool === "path" ? "var(--warn)" : "var(--primary)");
+      const points = nav.mappingPath.map((p) =>
+        new THREE.Vector3(p[0], p[1], p[2] + lift(nav.floor) + 0.04)
+      );
+      if (points.length > 1) {
+        const line = new THREE.Line(
+          new THREE.BufferGeometry().setFromPoints(points),
+          new THREE.LineDashedMaterial({ color: pathColor, dashSize: 0.25, gapSize: 0.15 }),
+        );
+        line.computeLineDistances();
+        root.add(line);
+      }
+      for (const p of points) {
+        const dot = new THREE.Mesh(
+          new THREE.SphereGeometry(0.07, 12, 6),
+          new THREE.MeshBasicMaterial({ color: pathColor }),
+        );
+        dot.position.copy(p);
+        root.add(dot);
+      }
+      const goalColor = themeColor("var(--ok)");
+      for (const goal of nav.goals) {
+        const base = new THREE.Vector3(
+          goal.position[0],
+          goal.position[1],
+          goal.position[2] + lift(goal.floor),
+        );
+        const ring = new THREE.Mesh(
+          new THREE.RingGeometry(goal.tolerance * 0.92, goal.tolerance, 48),
+          new THREE.MeshBasicMaterial({ color: goalColor, side: THREE.DoubleSide }),
+        );
+        ring.position.copy(base).setZ(base.z + 0.03);
+        const pole = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.02, 0.02, 1, 8).rotateX(Math.PI / 2),
+          new THREE.MeshBasicMaterial({ color: goalColor }),
+        );
+        pole.position.copy(base).setZ(base.z + 0.5);
+        const flag = new THREE.Mesh(
+          new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(0, 0, 1),
+            new THREE.Vector3(0.35, 0, 0.88),
+            new THREE.Vector3(0, 0, 0.76),
+          ]),
+          new THREE.MeshBasicMaterial({ color: goalColor, side: THREE.DoubleSide }),
+        );
+        flag.position.copy(base);
+        root.add(ring, pole, flag);
+      }
+    }
+    return { root, dispose: () => disposeObject(root) };
+  }, [project, tool]);
   return null;
 }
 

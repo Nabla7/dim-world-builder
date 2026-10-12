@@ -41,6 +41,7 @@ export async function exportProject(
   await write("scene.json", JSON.stringify(scene.sceneJson, null, 2) + "\n");
   await write("movers.json", JSON.stringify(scene.moversJson, null, 2) + "\n");
   await write("world.project.json", JSON.stringify(project, null, 2) + "\n");
+  await write("nav_eval.json", JSON.stringify(navEval(project), null, 2) + "\n");
   await write("__init__.py", pythonPackage(name, project));
   await write(
     "__main__.py",
@@ -61,6 +62,24 @@ export async function exportProject(
     files.push("visual.glb");
   }
   return { dir, name, files, bodies: world.bodies.length, movers: world.movers.length };
+}
+
+/** dimos.nav_eval.v1: the drawn navigation test in world coordinates (floor elevations applied) */
+export function navEval(project: Project) {
+  const lift = (floor: string) => project.floors.find((f) => f.id === floor)?.elevation ?? 0;
+  const spawnKey = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, "_");
+  const nav = project.nav;
+  return {
+    format: "dimos.nav_eval.v1",
+    start_spawn: nav ? spawnKey(nav.startSpawn) : "default",
+    mapping_path: nav ? nav.mappingPath.map((p) => [p[0], p[1], p[2] + lift(nav.floor)]) : [],
+    goals: (nav?.goals ?? []).map((g) => ({
+      name: g.name,
+      position: [g.position[0], g.position[1], g.position[2] + lift(g.floor)],
+      tolerance: g.tolerance,
+      timeout: g.timeout,
+    })),
+  };
 }
 
 function readme(name: string, project: Project): string {
