@@ -845,6 +845,20 @@ function applyScale(item: Item, raw: Vec3): Item {
 const round = (v: number, step = 0.05) => Math.max(step, Math.round(v / step) * step);
 
 /** translate / rotate / scale handles on the selected item; commits once per drag (one undo step) */
+/** the selection outline: white lines on each selected mesh's creases and silhouette-making edges */
+const OUTLINE = (() => {
+  const material = new THREE.LineBasicMaterial({ color: 0xffffff, toneMapped: false });
+  // nudged toward the camera, so lines on the surface win its depth test instead of flickering in and out
+  material.onBeforeCompile = (shader) => {
+    shader.vertexShader = shader.vertexShader.replace(
+      "#include <project_vertex>",
+      "#include <project_vertex>\ngl_Position.z -= 0.0008 * gl_Position.w;",
+    );
+  };
+  return material;
+})();
+const outlineEdges = new WeakMap<THREE.BufferGeometry, THREE.EdgesGeometry>();
+
 /** an item with its pose taken from its drawn object (after a gizmo drag) */
 function posedFrom(object: THREE.Object3D, item: Item): Item {
   const floor = getState().project.floors.find((f) => f.id === item.floor);
@@ -960,17 +974,31 @@ function Gizmo() {
       members.current = [];
       controls.attach(target);
     } else controls.detach();
-    // a box around each of several selected items, so the selection is plain to see
-    const boxes = new THREE.Group();
-    if (several.length > 1) {
-      const color = themeColor("var(--primary)");
-      for (const object of several) boxes.add(new THREE.BoxHelper(object, color));
+    // a crisp white outline on everything selected (nothing is added when nothing is)
+    const outlined: THREE.Mesh[] = [];
+    for (const object of several) {
+      object.traverse((child) => {
+        const mesh = child as THREE.Mesh;
+        if (!mesh.isMesh || (mesh as THREE.InstancedMesh).isInstancedMesh || !mesh.visible) return;
+        if (mesh.material instanceof THREE.MeshBasicMaterial || mesh.userData.outline) return;
+        outlined.push(mesh);
+      });
     }
-    viewer.scene.add(boxes);
+    // added after the traversal (adding while traversing would outline the outlines); edges cached per geometry
+    const shells = outlined.map((mesh) => {
+      let edges = outlineEdges.get(mesh.geometry);
+      if (!edges) {
+        outlineEdges.set(mesh.geometry, edges = new THREE.EdgesGeometry(mesh.geometry, 35));
+      }
+      const shell = new THREE.LineSegments(edges, OUTLINE);
+      shell.userData.outline = true;
+      shell.raycast = () => {};
+      mesh.add(shell);
+      return shell;
+    });
     viewer.requestRender();
     return () => {
-      viewer.scene.remove(boxes);
-      boxes.traverse((o) => (o as THREE.LineSegments).geometry?.dispose());
+      for (const shell of shells) shell.removeFromParent();
     };
   }, [viewer, selected, selection, gizmo, snap, project, drawing]);
   return null;
