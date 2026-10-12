@@ -56,3 +56,23 @@ export function openingAbove(
     position: [round((x0 + x1) / 2), round((y0 + y1) / 2), 0],
   });
 }
+
+/** a slab grown (never shrunk) to cover `hole` and `margin` around it */
+export function coveringSlab(
+  slab: NonNullable<Floor["slab"]>,
+  hole: Extract<Item, { kind: "hole" }>,
+  margin: number,
+): NonNullable<Floor["slab"]> {
+  const [cx, cy] = slab.center;
+  const x0 = Math.min(cx - slab.sizeX / 2, hole.position[0] - hole.params.sizeX / 2 - margin);
+  const x1 = Math.max(cx + slab.sizeX / 2, hole.position[0] + hole.params.sizeX / 2 + margin);
+  const y0 = Math.min(cy - slab.sizeY / 2, hole.position[1] - hole.params.sizeY / 2 - margin);
+  const y1 = Math.max(cy + slab.sizeY / 2, hole.position[1] + hole.params.sizeY / 2 + margin);
+  const round = (v: number) => Math.round(v * 100) / 100;
+  return {
+    ...slab,
+    sizeX: round(x1 - x0),
+    sizeY: round(y1 - y0),
+    center: [round((x0 + x1) / 2), round((y0 + y1) / 2)],
+  };
+}

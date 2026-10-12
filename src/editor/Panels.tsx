@@ -23,7 +23,7 @@ import {
 } from "../ui.ts";
 import { defaultGrate, PAINT } from "../world/defaults.ts";
 import { openingPreset } from "../world/geometry.ts";
-import { climbing, floorAbove, openingAbove } from "../world/stairs_fit.ts";
+import { climbing, coveringSlab, floorAbove, openingAbove } from "../world/stairs_fit.ts";
 import { NAV_GOAL, NAV_MAPPING } from "../world/annotations.ts";
 import { slug } from "../world/keys.ts";
 import type {
@@ -574,7 +574,14 @@ function StairsEditor({ item }: { item: Extract<Item, { kind: "stairs" }> }) {
               icon="minus"
               disabled={Boolean(opened) || !above.slab}
               data-testid="stairs-opening"
-              onClick={() => addItems([openingAbove(item, above)])}
+              onClick={() => {
+                const hole = openingAbove(item, above);
+                addItems([hole]);
+                // the floor above must reach past the top step, or the climb ends in the air
+                if (above.slab) {
+                  updateFloor(above.id, { slab: coveringSlab(above.slab, hole, 1.5) });
+                }
+              }}
             >
               {opened ? "Opening cut above" : `Cut an opening in ${above.name}`}
             </Button>
@@ -1295,6 +1302,7 @@ export function Inspector({ assets }: { assets: MeshAsset[] }) {
   const selected = useEditor((s) => s.selected);
   const item = useEditor((s) => s.project.items.find((i) => i.id === s.selected) ?? null);
   const floor = useEditor((s) => s.project.floors.find((f) => f.id === item?.floor));
+  const activeFloor = useEditor((s) => s.project.activeFloor);
   if (!selected || !item) {
     return (
       <div style={section}>
@@ -1336,6 +1344,22 @@ export function Inspector({ assets }: { assets: MeshAsset[] }) {
         value={item.position}
         onChange={(position) => update({ position })}
       />
+      <Button
+        size="sm"
+        icon="arrow-down"
+        data-testid="drop-to-surface"
+        disabled={item.floor !== activeFloor}
+        onClick={() =>
+          update({
+            position: [
+              item.position[0],
+              item.position[1],
+              view.surfaceAt(item.position[0], item.position[1], item.id),
+            ],
+          })}
+      >
+        Drop onto what's below
+      </Button>
       <Field label="Rotation (yaw)">
         <NumberInput
           value={deg(toYaw(item.rotation))}

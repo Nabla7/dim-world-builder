@@ -38,7 +38,7 @@ export const view: {
   worldRoot: Object3D | null;
   camera: CameraHandle | null;
   /** the height above the active floor of the top surface at (x, y): what a new object should stand on */
-  surfaceAt: (x: number, y: number) => number;
+  surfaceAt: (x: number, y: number, exclude?: string) => number;
 } = {
   center: [0, 0, 0],
   worldRoot: null,

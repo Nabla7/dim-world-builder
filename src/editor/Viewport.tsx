@@ -477,11 +477,13 @@ function WorldLayer({ assets }: { assets: Record<string, MeshAsset> }) {
     live.state.grass = hasGrass(root);
     // what a new object lands on: the highest surface of the active floor under (x, y), below head height (so not
     // a room's ceiling); the floor itself when nothing is there
-    view.surfaceAt = (x, y) => {
+    view.surfaceAt = (x, y, exclude) => {
       const floor = project.floors.find((f) => f.id === project.activeFloor);
       const base = floor?.elevation ?? 0;
       root.updateMatrixWorld();
-      const own = [...objects.values()].filter((o) => o.userData.floor === project.activeFloor);
+      const own = [...objects.values()].filter((o) =>
+        o.userData.floor === project.activeFloor && o.userData.itemId !== exclude
+      );
       const down = new THREE.Raycaster(
         new THREE.Vector3(x, y, base + 1.9),
         new THREE.Vector3(0, 0, -1),

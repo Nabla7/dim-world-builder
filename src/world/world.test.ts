@@ -24,7 +24,7 @@ import { testCourse } from "./examples.ts";
 import { keyedProject } from "./keys.ts";
 import { barCenters, grateShapes } from "./geometry.ts";
 import { defaultGrate } from "./defaults.ts";
-import { climbing, openingAbove } from "./stairs_fit.ts";
+import { climbing, coveringSlab, openingAbove } from "./stairs_fit.ts";
 import { exportAnnotations, withAnnotations } from "./annotations.ts";
 import { cameraLookAt } from "./geometry.ts";
 
@@ -388,5 +388,20 @@ describe("annotations", () => {
         Array.isArray(a.position)
       ),
     ).toBe(true);
+  });
+});
+
+describe("the floor above stairs", () => {
+  it("grows (never shrinks) to cover the stairs' opening and a margin", () => {
+    const slab = { thickness: 0.2, sizeX: 4, sizeY: 4, center: [0, 0] as [number, number] };
+    const hole = makeItem("hole", { sizeX: 2, sizeY: 1, depth: 0.2 }, {
+      name: "h",
+      floor: "up",
+      position: [3, 0, 0],
+    });
+    const grown = coveringSlab(slab, hole, 1);
+    expect(grown.center[0] - grown.sizeX / 2).toBeCloseTo(-2);
+    expect(grown.center[0] + grown.sizeX / 2).toBeCloseTo(5);
+    expect(grown.sizeY).toBeCloseTo(4);
   });
 });
