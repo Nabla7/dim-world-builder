@@ -37,6 +37,7 @@ import { assetEntries, BUILT_IN, type PaletteEntry, view } from "./palette.ts";
 import {
   addFloor,
   addItem,
+  addItems,
   duplicateItem,
   removeFloor,
   removeItem,
@@ -67,8 +68,9 @@ export function AddPanel({ assets, onImport }: { assets: MeshAsset[]; onImport: 
   const shown = entries.filter((e) => e.title.toLowerCase().includes(query.toLowerCase()));
   const groups = [...new Set(shown.map((e) => e.group))];
   const add = (entry: PaletteEntry) => {
-    const lift = 0;
-    addItem(entry.make(floor, [view.center[0], view.center[1], lift]));
+    const at: Vec3 = [view.center[0], view.center[1], 0];
+    if (entry.makeMany) addItems(entry.makeMany(floor, at));
+    else addItem(entry.make(floor, at));
   };
   return (
     <div style={section} data-testid="add-panel">
@@ -275,6 +277,23 @@ function StairsEditor({ item }: { item: Extract<Item, { kind: "stairs" }> }) {
       <Range label="Step depth" value={p.stepDepth} min={0.15} max={0.8} step={0.01} unit="m" onChange={(stepDepth) => set({ stepDepth })} />
       <Range label="Width" value={p.width} min={0.4} max={4} step={0.05} unit="m" onChange={(width) => set({ width })} />
       <Range label="Steps" value={p.steps} min={1} max={30} step={1} onChange={(steps) => set({ steps })} />
+      <Toggle
+        value={Boolean(p.openRisers)}
+        onChange={(openRisers: boolean) => set({ openRisers })}
+        label="Open risers (gaps between steps, ladder-like)"
+        data-testid="open-risers"
+      />
+      {p.openRisers && (
+        <Range
+          label="Tread thickness"
+          value={p.treadThickness ?? 0.04}
+          min={0.01}
+          max={Math.max(0.02, p.stepHeight * 0.9)}
+          step={0.005}
+          unit="m"
+          onChange={(treadThickness) => set({ treadThickness })}
+        />
+      )}
       <Text small muted>
         Rise {(p.steps * p.stepHeight).toFixed(2)} m over {(p.steps * p.stepDepth).toFixed(2)} m (slope{" "}
         {deg(Math.atan2(p.stepHeight, p.stepDepth))}°)

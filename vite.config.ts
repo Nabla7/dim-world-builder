@@ -13,7 +13,6 @@ export default defineConfig({
   server: {
     // `deno task dev` (:5173) next to `deno task serve` (:8787) and a running Desktop (:5555)
     proxy: {
-      "/api/notifications": desktop,
       "/api": backend,
       "/files": backend,
       "/theme.css": desktop,

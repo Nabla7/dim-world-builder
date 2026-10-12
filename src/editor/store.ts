@@ -107,6 +107,11 @@ export function addItem(item: Item) {
   set({ selected: item.id });
 }
 
+export function addItems(items: Item[]) {
+  edit((p) => ({ ...p, items: [...p.items, ...items] }));
+  set({ selected: null });
+}
+
 export function updateItem(id: string, change: (item: Item) => Item, coalesce?: string) {
   edit((p) => ({ ...p, items: p.items.map((i) => (i.id === id ? change(i) : i)) }), coalesce);
 }

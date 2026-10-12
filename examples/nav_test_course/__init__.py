@@ -40,6 +40,6 @@ def blueprint(robot: str = "unitree-go2-freewalk") -> Any:
     return get_blueprint_by_name(robot)
 
 
-if __name__ == "__main__":
+def main() -> None:
     model = check()
     print(f"{SCENE_XML}: {model.nbody} bodies, {model.ngeom} geoms, {len(MOVERS)} movers, spawns {sorted(SPAWNS)}")

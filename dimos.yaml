@@ -1,41 +1,44 @@
 # the app's contract with Desktop: https://github.com/jeff-hykin/dimos-desktop-mirror/blob/main/docs/create-apps/index.md
-title: Example (Deno)
+title: World Builder
 spec-version: v1.2
 uses:
-    "@dimos-gateway":
-        - GET /runs
-        - GET /msgs.js
-    "@desktop-gateway":
-        - POST /api/notifications
+    # viewer mode: the running simulation's TF (robot + moving objects) and lidar, through Desktop's zenoh-gateway
     "@zenoh-gateway": ">=0.5 <0.6"
-    dim-controller:
-        - GET api/status
-# spec v1.2: what the page may do on zenoh, as zenoh's ACL config (the topic boxes take any topic of these types)
+# spec v1.2: the page only reads; it never publishes (no command topics)
 zenoh:
     default_permission: deny
     read:
-        - id: odom
-          messages: [declare_subscriber, put] # subscribe, and receive its samples
-          key_exprs: ["dimos/**/geometry_msgs.PoseStamped"]
+        - id: live-world
+          messages: [declare_subscriber, put]
+          key_exprs:
+              - "dimos/**/tf2_msgs.TFMessage"
+              - "dimos/**/sensor_msgs.PointCloud2"
+              - "dimos/**/geometry_msgs.PoseStamped"
           permission: allow
-    write:
-        - id: drive
-          messages: [put] # the cmd_vel publisher and its deadman
-          key_exprs: ["dimos/**/geometry_msgs.Twist"]
-          permission: allow
+caches:
+    - url: https://dimos-desktop.cachix.org
+      key: "dimos-desktop.cachix.org-1:A4P35aGJGmCan92LWyamtSFXMqaVE+VRFYnrJ8QMTeQ="
 provides:
-    description: "Example (Deno): a showcase dimOS app; it keeps a list of notes"
+    description: "World Builder: makes 3D worlds (rooms, floors, stairs, hills, furniture, moving obstacles) for simulated robots and exports them for dimos sim2"
     endpoints:
-        - method: GET
-          path: api/hello
-          description: Who this app is, what dimos is running right now, and how many notes it holds
-          role: context
         - method: POST
-          path: api/notes
-          description: Add a note to the app's list (the person gets a notification)
+          path: api/export
+          description: Write a world project as a dimos sim2 scene folder (scene.xml, scene.json, movers.json, a Python package)
           params:
-              text:
+              project:
+                  type: object
+                  description: the world (dim-world-builder.project.v1)
+              parentDir:
                   type: string
-                  description: the note
+                  description: the folder to write <name>/ into (default ~/dimos_worlds)
+        - method: GET
+          path: api/library
+          description: Every placeable 3D asset (built-in library and cooked imports) with its size and collision pieces
+          role: context
+        - method: GET
+          path: api/projects
+          description: The names of the saved worlds
+          role: context
     private:
         - api/internal/*
+        - files/*

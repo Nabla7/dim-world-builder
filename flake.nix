@@ -1,101 +1,48 @@
 {
-    description = "dim-example-deno: a dimOS Desktop app with a Deno server and a React/Vite page (`nix build .#dimosApp` -> bin/dimos-app-server)";
+    description = "dim-world-builder: build worlds for simulated robots and export them for dimos sim2, as a dimOS Desktop app (`nix build .#dimosApp`)";
     # nixos-25.11's deno is 2.6.10, the version dimos pins for its cockpit
     inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+    nixConfig = {
+        extra-substituters = [ "https://dimos-desktop.cachix.org" ];
+        extra-trusted-public-keys = [ "dimos-desktop.cachix.org-1:A4P35aGJGmCan92LWyamtSFXMqaVE+VRFYnrJ8QMTeQ=" ];
+    };
     outputs = { self, nixpkgs }:
         let
             systems = [ "aarch64-darwin" "x86_64-darwin" "x86_64-linux" "aarch64-linux" ];
             forAll = f: nixpkgs.lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
-            # node_modules' hash, per system: npm's native packages (rollup, esbuild) differ by OS and CPU.
-            # After changing package.json / deno.lock: set the system's hash to "", run `nix build .#nodeModules`, paste the "got:" hash.
-            nodeModulesHash = {
-                aarch64-darwin = "sha256-ifUNFnq/7voD1xgcIHnituBJUb47zwiQj3+4PFrwY6w=";
-                x86_64-darwin = "sha256-ZcmKHTuHq6igocKkxtEPKxiV36FT8sTDGca7uZ8fKvs=";
-                x86_64-linux = "sha256-HdjOTxYuOXY/V3lWtz1eSlls+/uhXUAEvXBpzG0vMGY=";
-                aarch64-linux = "sha256-tCuxiMf26LGn1z+53TRDF4Y0k/Jj71i6TdsWOfbREuY=";
-            };
-            denoEnv = "export HOME=$TMPDIR DENO_DIR=$TMPDIR/deno DENO_NO_UPDATE_CHECK=1 DENO_NO_PROMPT=1";
-            # zenoh-deno from its release tarball: the module plus every platform's native library, loaded from beside
-            # the module, so the server needs no network (JSR carries the module but not the libraries). To update: the
-            # version and the tarball's hash (its line in the release's SHA256SUMS, as SRI), and backend/deno.json's jsr version.
-            zenohDenoRelease = rec {
-                version = "0.1.2";
-                url = "https://github.com/jeff-hykin/zenoh-deno/releases/download/v${version}/zenoh-deno-v${version}.tar.gz";
-                hash = "sha256-fmkmWoRVSJ/sgbIr98i+yV2lyZTPcaCh/FXkzv/sSE0=";
-            };
+            files = pkgs: paths: pkgs.lib.fileset.toSource { root = ./.; fileset = pkgs.lib.fileset.unions paths; };
+            # the server's start line: deno for the server, uv for the cooker (it fetches its own CPython and the locked
+            # wheels into the app's data folder on the first import, so nothing here is platform-specific but the binaries)
+            serverLine = target: server: frontend: ''
+                export PATH=${target.uv}/bin:$PATH
+                exec ${target.deno}/bin/deno run -A --no-lock ${server}/backend/main.ts --frontend ${frontend} --uv ${target.uv}/bin/uv "$@"
+            '';
+            # bin/dimos-app-server for <arch> Linux, written on any machine: its bash, deno and uv are the target's
+            linuxApp = pkgs: arch: server: frontend:
+                let linux = nixpkgs.legacyPackages."${arch}-linux"; in
+                pkgs.writeTextFile {
+                    name = "dimos-app-server-${arch}-linux";
+                    destination = "/bin/dimos-app-server";
+                    executable = true;
+                    text = "#!${linux.runtimeShell}\n${serverLine linux server frontend}\n";
+                };
         in {
-            packages = forAll (pkgs:
-                let
-                    files = paths: pkgs.lib.fileset.toSource { root = ./.; fileset = pkgs.lib.fileset.unions paths; };
-                    npmFiles = [ ./package.json ./deno.json ./deno.lock ./.npmrc ];
-                in rec {
-                    # `deno install --frozen`: the only derivation with network, so fixed-output (deno.lock pins every package)
-                    nodeModules = pkgs.stdenvNoCC.mkDerivation {
-                        name = "dim-example-deno-node-modules";
-                        src = files npmFiles;
-                        nativeBuildInputs = [ pkgs.deno ];
-                        buildPhase = ''
-                            ${denoEnv}
-                            export SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt
-                            deno install --frozen
-                            # deno's own cache of the install: not needed to run, and not byte-identical between installs
-                            rm -f node_modules/.deno/.setup-cache.bin
-                        '';
-                        installPhase = "cp -R node_modules $out";
-                        dontFixup = true;
-                        outputHashMode = "recursive";
-                        outputHashAlgo = "sha256";
-                        outputHash = nodeModulesHash.${pkgs.stdenv.hostPlatform.system};
-                    };
-                    # the server's jsr dependencies (backend/deno.json `vendor: true`): fixed-output, the same on every system.
-                    # After changing backend/deno.json or backend/deno.lock: set this to "", `nix build .#backendVendor`, paste the "got:".
-                    backendVendor = pkgs.stdenvNoCC.mkDerivation {
-                        name = "dim-example-deno-backend-vendor";
-                        src = files [ ./backend/deno.json ./backend/deno.lock ];
-                        nativeBuildInputs = [ pkgs.deno ];
-                        buildPhase = ''
-                            ${denoEnv}
-                            export SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt
-                            cd backend
-                            deno install --frozen
-                        '';
-                        installPhase = "cp -R vendor $out";
-                        dontFixup = true;
-                        outputHashMode = "recursive";
-                        outputHashAlgo = "sha256";
-                        outputHash = "sha256-ETEIfNndYne9wJyfDepVal42UpGyzItJ4uaO1Zi+mgE=";
-                    };
-                    zenohDeno = pkgs.runCommand "zenoh-deno-${zenohDenoRelease.version}" { } ''
-                        mkdir $out
-                        tar xzf ${pkgs.fetchurl { inherit (zenohDenoRelease) url hash; }} -C $out --strip-components=1
-                    '';
-                    # the server: its source plus that vendor folder, with zenoh-deno imported from the tarball instead of JSR
-                    backend = pkgs.runCommand "dim-example-deno-backend" { nativeBuildInputs = [ pkgs.jq ]; } ''
-                        cp -R ${files [ ./backend ]}/backend $out
-                        chmod -R u+w $out
-                        rm -rf $out/vendor
-                        cp -R ${backendVendor} $out/vendor
-                        jq --arg mod "file://${zenohDeno}/mod.ts" '.imports["@robotics/zenoh-deno"] = $mod' $out/deno.json > deno.json
-                        cp deno.json $out/deno.json
-                    '';
-                    # the page: `deno task build` (vite) against that node_modules, offline
-                    frontend = pkgs.stdenvNoCC.mkDerivation {
-                        name = "dim-example-deno-frontend";
-                        src = files (npmFiles ++ [ ./index.html ./vite.config.ts ./tsconfig.json ./src ]);
-                        nativeBuildInputs = [ pkgs.deno ];
-                        buildPhase = ''
-                            ${denoEnv}
-                            cp -R ${nodeModules} node_modules
-                            chmod -R u+w node_modules
-                            deno run -A --cached-only --node-modules-dir=manual npm:vite build
-                        '';
-                        installPhase = "cp -R dist $out";
-                    };
-                    # Desktop runs `nix build .#dimosApp`; a bin/dimos-app-server is started with DIMOS_APP and proxied at /apps/<name>/
-                    dimosApp = pkgs.writeShellScriptBin "dimos-app-server" ''
-                        exec ${pkgs.deno}/bin/deno run -A --no-lock --cached-only --config ${backend}/deno.json ${backend}/main.ts --frontend ${frontend} "$@"
-                    '';
-                    default = dimosApp;
-                });
+            packages = forAll (pkgs: rec {
+                # the page: vite's build of src/ (plain JS once built, so one build serves every target)
+                frontend = pkgs.buildNpmPackage {
+                    pname = "dim-world-builder-frontend";
+                    version = "0.1.0";
+                    src = files pkgs [ ./package.json ./package-lock.json ./index.html ./vite.config.ts ./tsconfig.json ./src ];
+                    # `nix build .#frontend` prints the right hash when package-lock.json changes
+                    npmDepsHash = "sha256-4rCVN+vm/WcRllXSm+In8rQda7zmrdbcY/OAF1d38Ck=";
+                    installPhase = "cp -r dist $out";
+                };
+                # the server and what it reads: the shared world model, the asset library, the cooker's locked project
+                server = files pkgs [ ./backend ./src/world ./assets ./cooker/pyproject.toml ./cooker/uv.lock ./cooker/cook.py ];
+                dimosApp = pkgs.writeShellScriptBin "dimos-app-server" (serverLine pkgs server frontend);
+                default = dimosApp;
+                dimosApp-aarch64-linux = linuxApp pkgs "aarch64" server frontend;
+                dimosApp-x86_64-linux = linuxApp pkgs "x86_64" server frontend;
+            });
         };
 }

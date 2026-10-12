@@ -21,6 +21,7 @@ import {
 } from "./ui.ts";
 import { emptyProject } from "./world/defaults.ts";
 import { testCourse } from "./world/examples.ts";
+import { clutterYard } from "./world/examples_clutter.ts";
 import type { MeshAsset } from "./world/types.ts";
 import { AddPanel, FloorsPanel, Inspector, ItemsPanel } from "./editor/Panels.tsx";
 import { Viewport } from "./editor/Viewport.tsx";
@@ -63,8 +64,8 @@ export function App() {
   useEffect(() => {
     refreshAssets();
     // #example opens the test course (handy for demos); otherwise the last world worked on
-    if (location.hash === "#example") {
-      loadProject(testCourse());
+    if (location.hash === "#example" || location.hash === "#clutter") {
+      loadProject(location.hash === "#example" ? testCourse() : clutterYard());
       return;
     }
     const last = localStorageGet("dim-world-builder.project");
@@ -116,7 +117,7 @@ export function App() {
       </header>
       <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
         {mode === "edit" && (
-          <aside style={{ width: 300, borderRight: "1px solid var(--border)", display: "flex", flexDirection: "column", background: "var(--surface)" }}>
+          <aside style={{ width: 330, borderRight: "1px solid var(--border)", display: "flex", flexDirection: "column", background: "var(--surface)" }}>
             <Tabs
               value={tab}
               onChange={(t: string) => setTab(t as Tab)}
@@ -251,6 +252,7 @@ function ProjectMenu() {
     { value: "", label: "Open…" },
     { value: "new", label: "New empty world" },
     { value: "example", label: "Example: nav test course" },
+    { value: "clutter", label: "Example: cluttered yard" },
     ...projects.map((p) => ({ value: `project:${p}`, label: p, group: "Saved" })),
   ];
   return (
@@ -265,6 +267,7 @@ function ProjectMenu() {
       onChange={(choice: string) => {
         if (choice === "new") loadProject(emptyProject(`world_${new Date().toISOString().slice(5, 10).replace("-", "")}`));
         else if (choice === "example") loadProject(testCourse());
+        else if (choice === "clutter") loadProject(clutterYard());
         else if (choice.startsWith("project:")) api.loadProject(choice.slice(8)).then(loadProject);
       }}
     />

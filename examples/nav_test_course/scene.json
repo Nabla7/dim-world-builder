@@ -2,68 +2,68 @@
   "format": "dimos.scene.v1",
   "id": "nav_test_course",
   "entities": {
-    "lab_room_651fdf": {
-      "body": "lab_room_651fdf",
+    "lab_room_9f67dd": {
+      "body": "lab_room_9f67dd",
       "label": "Lab room",
       "kind": "room",
       "movable": false
     },
-    "upper_room_b7931f": {
-      "body": "upper_room_b7931f",
+    "upper_room_40cf3f": {
+      "body": "upper_room_40cf3f",
       "label": "Upper room",
       "kind": "room",
       "movable": false
     },
-    "crate_d8db0e": {
-      "body": "crate_d8db0e",
+    "crate_79785a": {
+      "body": "crate_79785a",
       "label": "Crate",
       "kind": "box",
       "movable": false
     },
-    "cart_39be9b": {
-      "body": "cart_39be9b",
+    "cart_7fbf12": {
+      "body": "cart_7fbf12",
       "label": "Cart",
       "kind": "box",
       "movable": false
     },
-    "stairs_6b1787": {
-      "body": "stairs_6b1787",
+    "stairs_69afb0": {
+      "body": "stairs_69afb0",
       "label": "Stairs",
       "kind": "stairs",
       "movable": false
     },
-    "hill_ebc61a": {
-      "body": "hill_ebc61a",
+    "hill_64cf35": {
+      "body": "hill_64cf35",
       "label": "Hill",
       "kind": "hill",
       "movable": false
     },
-    "cone_a_b309b9": {
-      "body": "cone_a_b309b9",
+    "cone_a_1a2987": {
+      "body": "cone_a_1a2987",
       "label": "Cone A",
       "kind": "cone",
       "movable": false
     },
-    "cone_b_7081e6": {
-      "body": "cone_b_7081e6",
+    "cone_b_014d67": {
+      "body": "cone_b_014d67",
       "label": "Cone B",
       "kind": "cone",
       "movable": false
     },
-    "beanbag_b8077d": {
-      "body": "beanbag_b8077d",
+    "beanbag_3e3dd5": {
+      "body": "beanbag_3e3dd5",
       "label": "Beanbag",
       "kind": "beanbag",
       "movable": false
     },
-    "ramp_d86e63": {
-      "body": "ramp_d86e63",
+    "ramp_605cae": {
+      "body": "ramp_605cae",
       "label": "Ramp",
       "kind": "ramp",
       "movable": false
     },
-    "pillar_7eb0ac": {
-      "body": "pillar_7eb0ac",
+    "pillar_866216": {
+      "body": "pillar_866216",
       "label": "Pillar",
       "kind": "cylinder",
       "movable": false

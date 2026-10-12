@@ -36,6 +36,9 @@ export interface StairsParams {
   stepHeight: number;
   stepDepth: number;
   width: number;
+  /** thin treads with open gaps between them (no risers, like a ship's ladder) instead of solid blocks */
+  openRisers?: boolean;
+  treadThickness?: number;
   color: Rgb;
 }
 
@@ -58,7 +61,19 @@ export interface HillParams {
 }
 
 export interface PrimitiveParams {
-  shape: "box" | "cylinder" | "sphere" | "cone" | "ramp" | "beanbag";
+  shape:
+    | "box"
+    | "cylinder"
+    | "sphere"
+    | "cone"
+    | "ramp"
+    | "beanbag"
+    | "bowling_pin"
+    | "pipe"
+    | "soccer_ball"
+    | "step_stool"
+    | "ladder"
+    | "bucket";
   color: Rgb;
 }
 

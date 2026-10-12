@@ -15,7 +15,7 @@
   ],
   "items": [
     {
-      "id": "651fdfb03c9b",
+      "id": "9f67ddf787ab",
       "kind": "room",
       "params": {
         "width": 6,
@@ -58,7 +58,7 @@
       ]
     },
     {
-      "id": "b7931fe45257",
+      "id": "40cf3f55a7aa",
       "kind": "room",
       "params": {
         "width": 6,
@@ -101,7 +101,7 @@
       ]
     },
     {
-      "id": "d8db0e9ef3d6",
+      "id": "79785a219a5d",
       "kind": "primitive",
       "params": {
         "shape": "box",
@@ -131,7 +131,7 @@
       ]
     },
     {
-      "id": "39be9bb26bc1",
+      "id": "7fbf12a9330c",
       "kind": "primitive",
       "params": {
         "shape": "box",
@@ -178,7 +178,7 @@
       }
     },
     {
-      "id": "6b17879a5934",
+      "id": "69afb04a4665",
       "kind": "stairs",
       "params": {
         "steps": 6,
@@ -211,7 +211,7 @@
       ]
     },
     {
-      "id": "ebc61a0cd2cb",
+      "id": "64cf354627bb",
       "kind": "hill",
       "params": {
         "sizeX": 10,
@@ -249,7 +249,7 @@
       ]
     },
     {
-      "id": "b309b996f806",
+      "id": "1a2987381c20",
       "kind": "primitive",
       "params": {
         "shape": "cone",
@@ -279,7 +279,7 @@
       ]
     },
     {
-      "id": "7081e6d1bab8",
+      "id": "014d678664b8",
       "kind": "primitive",
       "params": {
         "shape": "cone",
@@ -309,7 +309,7 @@
       ]
     },
     {
-      "id": "b8077d7407a6",
+      "id": "3e3dd5c8c1d0",
       "kind": "primitive",
       "params": {
         "shape": "beanbag",
@@ -339,7 +339,7 @@
       ]
     },
     {
-      "id": "d86e6316473d",
+      "id": "605cae28931e",
       "kind": "primitive",
       "params": {
         "shape": "ramp",
@@ -369,7 +369,7 @@
       ]
     },
     {
-      "id": "7eb0ac6d26f4",
+      "id": "866216d3dd74",
       "kind": "primitive",
       "params": {
         "shape": "cylinder",

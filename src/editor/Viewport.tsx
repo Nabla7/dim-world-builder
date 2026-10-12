@@ -31,6 +31,7 @@ export function Viewport({ assets }: { assets: Record<string, MeshAsset> }) {
         };
         viewer.controls.addEventListener("change", track);
         track();
+        exposeForAutomation(viewer);
       }}
     >
       <Lighting />
@@ -41,6 +42,40 @@ export function Viewport({ assets }: { assets: Record<string, MeshAsset> }) {
       <SceneControls />
     </Scene3D>
   );
+}
+
+/**
+ * `window.dimWorldBuilder`: where things are on screen, for scripted demos and UI tests (page coordinates), and a way
+ * to aim the camera. Read-only for the project: edits still go through the UI.
+ */
+function exposeForAutomation(viewer: {
+  camera: THREE.PerspectiveCamera;
+  controls: { target: THREE.Vector3; update(): void };
+  renderer: THREE.WebGLRenderer;
+  requestRender(): void;
+}) {
+  const toScreen = (point: THREE.Vector3): [number, number] => {
+    const rect = viewer.renderer.domElement.getBoundingClientRect();
+    const ndc = point.clone().project(viewer.camera);
+    return [rect.left + ((ndc.x + 1) / 2) * rect.width, rect.top + ((1 - ndc.y) / 2) * rect.height];
+  };
+  Object.assign(globalThis, {
+    dimWorldBuilder: {
+      /** an item's origin (its base) on screen */
+      itemOnScreen(id: string): [number, number] | null {
+        const object = view.worldRoot?.children.find((o) => o.userData.itemId === id);
+        return object ? toScreen(object.getWorldPosition(new THREE.Vector3())) : null;
+      },
+      worldToScreen: (x: number, y: number, z: number) => toScreen(new THREE.Vector3(x, y, z)),
+      lookAt(target: [number, number, number], from: [number, number, number]) {
+        viewer.camera.position.set(...from);
+        viewer.controls.target.set(...target);
+        viewer.controls.update();
+        viewer.requestRender();
+      },
+      state: () => getState(),
+    },
+  });
 }
 
 /** sun + sky light with soft shadows, so the world reads as solid shapes, not flat colors */
@@ -88,6 +123,7 @@ function WorldLayer({ assets }: { assets: Record<string, MeshAsset> }) {
   const mode = useEditor((s) => s.mode);
   const world = useMemo(() => buildWorld(project, assets), [project, assets]);
   const worldRef = useRef<World>(world);
+  const framedName = useRef<string | null>(null);
   worldRef.current = world;
   const tf = useTf();
   const layer = useLayer(({ viewer }) => {
@@ -115,7 +151,16 @@ function WorldLayer({ assets }: { assets: Record<string, MeshAsset> }) {
     };
   }, [tf]);
   useEffect(() => {
-    const live = layer.current as unknown as { state: WorldLayerState; viewer: { requestRender(): void } } | null;
+    const live = layer.current as unknown as
+      | {
+        state: WorldLayerState;
+        viewer: {
+          requestRender(): void;
+          camera: THREE.PerspectiveCamera;
+          controls: { target: THREE.Vector3; update(): void };
+        };
+      }
+      | null;
     if (!live) return;
     const { root, objects } = live.state;
     for (const object of objects.values()) {
@@ -131,6 +176,22 @@ function WorldLayer({ assets }: { assets: Record<string, MeshAsset> }) {
       object.userData.pickable = editable && mode === "edit";
       objects.set(body.itemId, object);
       root.add(object);
+    }
+    // a different world was opened: frame all of it
+    if (framedName.current !== project.name && world.bodies.length) {
+      framedName.current = project.name;
+      const bounds = new THREE.Box3().setFromObject(root);
+      const center = bounds.getCenter(new THREE.Vector3());
+      const size = Math.max(4, bounds.getSize(new THREE.Vector3()).length());
+      const frame = () => {
+        live.viewer.controls.target.set(center.x, center.y, 0);
+        live.viewer.camera.position.set(center.x - size * 0.45, center.y - size * 0.6, size * 0.55);
+        live.viewer.controls.update();
+        live.viewer.requestRender();
+      };
+      // after the scene's own first camera placement
+      frame();
+      setTimeout(frame, 400);
     }
     live.viewer.requestRender();
   }, [world, assets, showCollision, mode, project.activeFloor, layer]);

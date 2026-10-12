@@ -1,0 +1,190 @@
+{
+  "format": "dimos.scene.v1",
+  "id": "clutter_yard",
+  "entities": {
+    "step_stool_392dd0": {
+      "body": "step_stool_392dd0",
+      "label": "Step stool",
+      "kind": "step_stool",
+      "movable": false
+    },
+    "pipe_a46be1": {
+      "body": "pipe_a46be1",
+      "label": "Pipe",
+      "kind": "pipe",
+      "movable": false
+    },
+    "soccer_ball_6facd1": {
+      "body": "soccer_ball_6facd1",
+      "label": "Soccer ball",
+      "kind": "soccer_ball",
+      "movable": false
+    },
+    "step_stool_b6fdbc": {
+      "body": "step_stool_b6fdbc",
+      "label": "Step stool",
+      "kind": "step_stool",
+      "movable": false
+    },
+    "step_stool_7da7e2": {
+      "body": "step_stool_7da7e2",
+      "label": "Step stool",
+      "kind": "step_stool",
+      "movable": false
+    },
+    "pipe_22815a": {
+      "body": "pipe_22815a",
+      "label": "Pipe",
+      "kind": "pipe",
+      "movable": false
+    },
+    "cone_bd4dcf": {
+      "body": "cone_bd4dcf",
+      "label": "Cone",
+      "kind": "cone",
+      "movable": false
+    },
+    "step_stool_06a45a": {
+      "body": "step_stool_06a45a",
+      "label": "Step stool",
+      "kind": "step_stool",
+      "movable": false
+    },
+    "soccer_ball_b35b7a": {
+      "body": "soccer_ball_b35b7a",
+      "label": "Soccer ball",
+      "kind": "soccer_ball",
+      "movable": false
+    },
+    "soccer_ball_71f976": {
+      "body": "soccer_ball_71f976",
+      "label": "Soccer ball",
+      "kind": "soccer_ball",
+      "movable": false
+    },
+    "cone_7567ff": {
+      "body": "cone_7567ff",
+      "label": "Cone",
+      "kind": "cone",
+      "movable": false
+    },
+    "bowling_pin_90cca2": {
+      "body": "bowling_pin_90cca2",
+      "label": "Bowling pin",
+      "kind": "bowling_pin",
+      "movable": false
+    },
+    "box_3653f8": {
+      "body": "box_3653f8",
+      "label": "Box",
+      "kind": "box",
+      "movable": false
+    },
+    "cone_de9b8b": {
+      "body": "cone_de9b8b",
+      "label": "Cone",
+      "kind": "cone",
+      "movable": false
+    },
+    "ladder_f51d01": {
+      "body": "ladder_f51d01",
+      "label": "Ladder",
+      "kind": "ladder",
+      "movable": false
+    },
+    "box_0f2056": {
+      "body": "box_0f2056",
+      "label": "Box",
+      "kind": "box",
+      "movable": false
+    },
+    "soccer_ball_209a1b": {
+      "body": "soccer_ball_209a1b",
+      "label": "Soccer ball",
+      "kind": "soccer_ball",
+      "movable": false
+    },
+    "cone_387f90": {
+      "body": "cone_387f90",
+      "label": "Cone",
+      "kind": "cone",
+      "movable": false
+    },
+    "step_stool_45e4e7": {
+      "body": "step_stool_45e4e7",
+      "label": "Step stool",
+      "kind": "step_stool",
+      "movable": false
+    },
+    "cone_2df408": {
+      "body": "cone_2df408",
+      "label": "Cone",
+      "kind": "cone",
+      "movable": false
+    },
+    "cone_fc8a8e": {
+      "body": "cone_fc8a8e",
+      "label": "Cone",
+      "kind": "cone",
+      "movable": false
+    },
+    "bowling_pin_6ad8bf": {
+      "body": "bowling_pin_6ad8bf",
+      "label": "Bowling pin",
+      "kind": "bowling_pin",
+      "movable": false
+    },
+    "ladder_105f0e": {
+      "body": "ladder_105f0e",
+      "label": "Ladder",
+      "kind": "ladder",
+      "movable": false
+    },
+    "open_stairs_6d8660": {
+      "body": "open_stairs_6d8660",
+      "label": "Open stairs",
+      "kind": "stairs",
+      "movable": false
+    },
+    "big_pipe_827c24": {
+      "body": "big_pipe_827c24",
+      "label": "Big pipe",
+      "kind": "pipe",
+      "movable": false
+    }
+  },
+  "spawns": {
+    "default": {
+      "position": [
+        -5,
+        0,
+        0
+      ],
+      "orientation": [
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    "start": {
+      "position": [
+        -5,
+        0,
+        0
+      ],
+      "orientation": [
+        0,
+        0,
+        0,
+        1
+      ]
+    }
+  },
+  "hidden_geom_groups": [
+    3
+  ],
+  "provenance": {
+    "tool": "dim-world-builder"
+  }
+}
