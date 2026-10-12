@@ -1264,8 +1264,11 @@ export function NavPanel() {
  * Remembered camera views: save where the camera is, glide back to one with a click. Each exports as a MuJoCo camera
  * named by its id, so a test or an agent can look from exactly there (render_view() in the exported package).
  */
+/** one shared empty list: a selector returning a fresh [] each call makes React re-render forever */
+const NO_VIEWS: CameraView[] = [];
+
 export function ViewsPanel() {
-  const views = useEditor((s) => s.project.views ?? []);
+  const views = useEditor((s) => s.project.views ?? NO_VIEWS);
   const [current, setCurrent] = useState<string | null>(null);
   const chosen = views.find((v) => v.key === current) ?? null;
   const go = (key: string) => {
