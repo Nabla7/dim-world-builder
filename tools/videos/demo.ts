@@ -92,8 +92,9 @@ export class Demo {
     await this.page.waitForTimeout(pause);
   }
 
+  /** click the element whose whole text is exactly `text` */
   async clickText(text: string, pause = 500) {
-    await this.click(`text=${text}`, pause);
+    await this.click(`text="${text}"`, pause);
   }
 
   async drag(from: [number, number], to: [number, number], steps = 40) {

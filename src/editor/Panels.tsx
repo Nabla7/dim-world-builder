@@ -83,7 +83,7 @@ export function AddPanel({ assets, onImport }: { assets: MeshAsset[]; onImport: 
   return (
     <div style={section} data-testid="add-panel">
       <SearchInput value={query} onChange={setQuery} placeholder="Search assets" />
-      <Button icon="upload" onClick={onImport}>Import a GLB…</Button>
+      <Button icon="upload" onClick={onImport} data-testid="import-open">Import a GLB…</Button>
       {groups.map((group) => (
         <div key={group}>
           <p style={heading}>{group}</p>

@@ -63,7 +63,7 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
     if (!glb) throw new Error("--glb <file> is needed for the import video");
     await fresh(demo, "import_demo");
     await demo.say("Import a 3D model: a CC0 armchair from Poly Haven (.glb)", 1800);
-    await demo.clickText("Import a GLB…");
+    await demo.click("[data-testid=import-open]");
     await demo.app.setInputFiles("[data-testid=import-file]", glb);
     await demo.page.waitForTimeout(600);
     await demo.say(
@@ -143,7 +143,7 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
     await demo.say("Number of steps", 300);
     await demo.slide("Steps", 5);
     await demo.say("Open risers: thin treads with gaps between them, like a ladder", 400);
-    await demo.click("[data-testid=open-risers]");
+    await demo.clickText("Open risers (gaps between steps, ladder-like)");
     await demo.page.waitForTimeout(800);
     await demo.slide("Tread thickness", 4);
     await demo.slide("Step height", 6);
@@ -257,8 +257,8 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
     await demo.say("Height", 300);
     await demo.slide("Height", -8);
     await demo.say("Ceiling off and on", 300);
-    await demo.click("[data-testid=room-ceiling]", 1200);
-    await demo.click("[data-testid=room-ceiling]", 900);
+    await demo.clickText("Ceiling", 1200);
+    await demo.clickText("Ceiling", 900);
     await demo.say("Add a door and move it along the wall", 300);
     await demo.clickText("Add a door");
     await demo.slide("Offset", 15);

@@ -149,10 +149,12 @@ export function App() {
             <Tabs
               value={tab}
               onChange={(t: string) => setTab(t as Tab)}
-              items={[{ value: "add", label: "Add" }, { value: "floors", label: "Floors" }, {
-                value: "items",
-                label: "Items",
-              }]}
+              items={[
+                { value: "add", label: "Add" },
+                { value: "floors", label: "Floors" },
+                { value: "items", label: "Items" },
+                { value: "nav", label: "Nav test" },
+              ]}
               style={{ padding: "0 8px" }}
             />
             <div

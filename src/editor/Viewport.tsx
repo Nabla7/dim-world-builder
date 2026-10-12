@@ -1,7 +1,7 @@
 // The 3D view: the world (as the exporter will write it), the transform gizmo, mover paths, and in viewer mode the
 // live robot and movers from a running blueprint.
 
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { TransformControls } from "three/examples/jsm/controls/TransformControls.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
@@ -191,6 +191,11 @@ function WorldLayer({ assets }: { assets: Record<string, MeshAsset> }) {
   const mode = useEditor((s) => s.mode);
   const world = useMemo(() => buildWorld(project, assets), [project, assets]);
   const worldRef = useRef<World>(world);
+  // stable, so the picker's pointer listeners aren't re-added (and a click's pointerdown forgotten) on every render
+  const pickable = useCallback(
+    () => (layer.current as unknown as { state: WorldLayerState } | null)?.state.objects,
+    [],
+  );
   const framed = useRef(-1);
   const opened = useEditor((s) => s.opened);
   worldRef.current = world;
@@ -265,11 +270,7 @@ function WorldLayer({ assets }: { assets: Record<string, MeshAsset> }) {
     }
     live.viewer.requestRender();
   }, [world, assets, showCollision, mode, project.activeFloor, layer]);
-  return (
-    <Picker
-      objects={() => (layer.current as unknown as { state: WorldLayerState } | null)?.state.objects}
-    />
-  );
+  return <Picker objects={pickable} />;
 }
 
 /** a click (not a drag) selects the item under it, or adds a mover waypoint while drawing a path */
@@ -380,6 +381,8 @@ function Gizmo() {
   const gizmo = useEditor((s) => s.gizmo);
   const snap = useEditor((s) => s.snap);
   const project = useEditor((s) => s.project);
+  // while clicking out a path, the gizmo would swallow clicks that land on it
+  const drawing = useEditor((s) => Boolean(s.drawingPath || s.navTool));
   const controlsRef = useRef<TransformControls | null>(null);
 
   useEffect(() => {
@@ -443,10 +446,10 @@ function Gizmo() {
     const target = selected
       ? viewer.scene.getObjectByName("world")?.children.find((o) => o.userData.itemId === selected)
       : undefined;
-    if (target) controls.attach(target);
+    if (target && !drawing) controls.attach(target);
     else controls.detach();
     viewer.requestRender();
-  }, [viewer, selected, gizmo, snap, project]);
+  }, [viewer, selected, gizmo, snap, project, drawing]);
   return null;
 }
 
