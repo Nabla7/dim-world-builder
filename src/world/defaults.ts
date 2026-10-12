@@ -1,6 +1,16 @@
 // New items with sensible sizes, and an empty project. Colors are data (the world's paint), not page styling.
 
-import type { Floor, HillParams, Item, Project, Quat, Rgb, RoomParams, StairsParams, Vec3 } from "./types.ts";
+import type {
+  Floor,
+  HillParams,
+  Item,
+  Project,
+  Quat,
+  Rgb,
+  RoomParams,
+  StairsParams,
+  Vec3,
+} from "./types.ts";
 
 export const PAINT = {
   concrete: [0.62, 0.62, 0.6] as Rgb,

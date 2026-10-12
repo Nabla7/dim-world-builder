@@ -38,7 +38,9 @@ export function toScene(world: World, name: string): SceneFiles {
     if (shape.mesh) {
       const meshName = `${body.name}_m${index}`;
       assets.push(
-        `    <mesh name="${meshName}" vertex="${vec(shape.mesh.vertices)}" face="${shape.mesh.faces.join(" ")}"/>`,
+        `    <mesh name="${meshName}" vertex="${vec(shape.mesh.vertices)}" face="${
+          shape.mesh.faces.join(" ")
+        }"/>`,
       );
       return meshName;
     }
@@ -49,7 +51,9 @@ export function toScene(world: World, name: string): SceneFiles {
       meshName = `asset_${counter++}`;
       meshNames.set(key, meshName);
       assets.push(
-        `    <mesh name="${meshName}" file="${attr(`${file.asset}/${file.file}`)}" scale="${vec(file.scale)}"/>`,
+        `    <mesh name="${meshName}" file="${attr(`${file.asset}/${file.file}`)}" scale="${
+          vec(file.scale)
+        }"/>`,
       );
       if (!meshFiles.has(file.asset)) meshFiles.set(file.asset, new Set());
       meshFiles.get(file.asset)!.add(file.file);
@@ -65,9 +69,9 @@ export function toScene(world: World, name: string): SceneFiles {
       const h = shape.hfield!;
       const hname = `${body.name}_h${index}`;
       assets.push(
-        `    <hfield name="${hname}" nrow="${h.nrow}" ncol="${h.ncol}" size="${vec(h.size)}" elevation="${
-          vec(h.elevation)
-        }"/>`,
+        `    <hfield name="${hname}" nrow="${h.nrow}" ncol="${h.ncol}" size="${
+          vec(h.size)
+        }" elevation="${vec(h.elevation)}"/>`,
       );
       parts.push(`hfield="${hname}"`);
     } else {
@@ -87,7 +91,9 @@ export function toScene(world: World, name: string): SceneFiles {
   const bodies = world.bodies.map((body) => {
     const geoms = body.shapes.map((shape, i) => geom(shape, body, i)).join("\n");
     const mocap = body.mocap ? ` mocap="true"` : "";
-    return `    <body name="${body.name}" pos="${vec(body.pos)}" quat="${wxyz(body.quat)}"${mocap}>\n${geoms}\n    </body>`;
+    return `    <body name="${body.name}" pos="${vec(body.pos)}" quat="${
+      wxyz(body.quat)
+    }"${mocap}>\n${geoms}\n    </body>`;
   });
 
   const xml = `<mujoco model="${attr(name)}">
@@ -128,7 +134,9 @@ ${bodies.join("\n")}
     format: "dimos.scene.v1",
     id: name,
     entities: Object.fromEntries(
-      world.bodies.map((b) => [b.name, { body: b.name, label: b.label, kind: b.kind, movable: false }]),
+      world.bodies.map((
+        b,
+      ) => [b.name, { body: b.name, label: b.label, kind: b.kind, movable: false }]),
     ),
     spawns,
     hidden_geom_groups: [HIDDEN_GROUP],

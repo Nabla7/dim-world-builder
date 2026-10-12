@@ -34,7 +34,12 @@ export interface Shape {
   size: number[];
   mesh?: InlineMesh;
   meshFile?: { asset: string; file: string; scale: Vec3 };
-  hfield?: { nrow: number; ncol: number; size: [number, number, number, number]; elevation: number[] };
+  hfield?: {
+    nrow: number;
+    ncol: number;
+    size: [number, number, number, number];
+    elevation: number[];
+  };
   rgba: Rgba;
   role: Role;
 }
@@ -71,7 +76,8 @@ const rgba = (color: Rgb, alpha = 1): Rgba => [color[0], color[1], color[2], alp
 
 /** MJCF-safe, unique-ish body name from an item's name and id */
 export function bodyName(item: Item): string {
-  const base = item.name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "") || item.kind;
+  const base = item.name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "") ||
+    item.kind;
   return `${base}_${item.id.slice(0, 6)}`;
 }
 
@@ -143,7 +149,6 @@ function beanbagMesh(sx: number, sy: number, sz: number, rings = 12, segments = 
   return { vertices, faces };
 }
 
-
 /** rotation of `angle` about a unit axis, as [x, y, z, w] */
 function axisAngle(axis: Vec3, angle: number): Quat {
   const half = Math.sin(angle / 2);
@@ -154,8 +159,19 @@ function rotatedBox(center: Vec3, size: Vec3, quat: Quat, color: Rgba, role: Rol
   return { ...box(center, size, color, role), quat };
 }
 
-function cylinderAlong(axis: "x" | "y" | "z", center: Vec3, radius: number, length: number, color: Rgba, role: Role = "both"): Shape {
-  const quat: Quat = axis === "z" ? IDENTITY : axis === "x" ? axisAngle([0, 1, 0], Math.PI / 2) : axisAngle([1, 0, 0], Math.PI / 2);
+function cylinderAlong(
+  axis: "x" | "y" | "z",
+  center: Vec3,
+  radius: number,
+  length: number,
+  color: Rgba,
+  role: Role = "both",
+): Shape {
+  const quat: Quat = axis === "z"
+    ? IDENTITY
+    : axis === "x"
+    ? axisAngle([0, 1, 0], Math.PI / 2)
+    : axisAngle([1, 0, 0], Math.PI / 2);
   return { type: "cylinder", pos: center, quat, size: [radius, length / 2], rgba: color, role };
 }
 
@@ -201,15 +217,38 @@ const visualMesh = (mesh: InlineMesh, color: Rgba): Shape => ({
 function bowlingPinShapes(sx: number, sy: number, sz: number, color: Rgba): Shape[] {
   const r = Math.max(sx, sy) / 2;
   const profile: [number, number][] = [
-    [0, 0], [0.55, 0], [0.8, 0.08], [1, 0.25], [0.95, 0.4], [0.62, 0.58], [0.42, 0.7], [0.5, 0.82], [0.55, 0.9],
-    [0.42, 0.97], [0, 1],
+    [0, 0],
+    [0.55, 0],
+    [0.8, 0.08],
+    [1, 0.25],
+    [0.95, 0.4],
+    [0.62, 0.58],
+    [0.42, 0.7],
+    [0.5, 0.82],
+    [0.55, 0.9],
+    [0.42, 0.97],
+    [0, 1],
   ];
   const pin = latheMesh(profile.map(([pr, pz]) => [pr * r, pz * sz]));
   return [
     visualMesh(pin, color),
-    { type: "ellipsoid", pos: [0, 0, 0.28 * sz], quat: IDENTITY, size: [r, r, 0.28 * sz], rgba: color, role: "collision" },
+    {
+      type: "ellipsoid",
+      pos: [0, 0, 0.28 * sz],
+      quat: IDENTITY,
+      size: [r, r, 0.28 * sz],
+      rgba: color,
+      role: "collision",
+    },
     cylinderAlong("z", [0, 0, 0.64 * sz], 0.5 * r, 0.2 * sz, color, "collision"),
-    { type: "sphere", pos: [0, 0, 0.87 * sz], quat: IDENTITY, size: [0.55 * r], rgba: color, role: "collision" },
+    {
+      type: "sphere",
+      pos: [0, 0, 0.87 * sz],
+      quat: IDENTITY,
+      size: [0.55 * r],
+      rgba: color,
+      role: "collision",
+    },
   ];
 }
 
@@ -219,7 +258,10 @@ function pipeShapes(sx: number, sy: number, sz: number, color: Rgba): Shape[] {
   const wall = Math.max(0.01, radius * 0.15);
   const inner = radius - wall;
   const half = sx / 2;
-  const tube = latheMesh([[inner, -half], [radius, -half], [radius, half], [inner, half], [inner, -half]], 28);
+  const tube = latheMesh([[inner, -half], [radius, -half], [radius, half], [inner, half], [
+    inner,
+    -half,
+  ]], 28);
   const shapes: Shape[] = [visualMesh(mapVertices(tube, (x, y, z) => [z, x, y + radius]), color)];
   const pieces = 14;
   const chord = 2 * radius * Math.sin(Math.PI / pieces) * 1.05;
@@ -269,8 +311,14 @@ function ladderShapes(sx: number, sy: number, sz: number, color: Rgba): Shape[] 
 /** an open-topped bucket / can: tapered walls you can see into, a solid cylinder to collide with */
 function bucketShapes(sx: number, sy: number, sz: number, color: Rgba): Shape[] {
   const r = Math.max(sx, sy) / 2;
-  const wall = latheMesh([[0, 0], [r * 0.82, 0], [r, sz], [r * 0.94, sz], [r * 0.77, 0.03 * sz], [0, 0.03 * sz]]);
-  return [visualMesh(wall, color), cylinderAlong("z", [0, 0, sz / 2], r * 0.92, sz, color, "collision")];
+  const wall = latheMesh([[0, 0], [r * 0.82, 0], [r, sz], [r * 0.94, sz], [r * 0.77, 0.03 * sz], [
+    0,
+    0.03 * sz,
+  ]]);
+  return [
+    visualMesh(wall, color),
+    cylinderAlong("z", [0, 0, sz / 2], r * 0.92, sz, color, "collision"),
+  ];
 }
 
 function primitiveShapes(params: PrimitiveParams, scale: Vec3): Shape[] {
@@ -323,7 +371,14 @@ function primitiveShapes(params: PrimitiveParams, scale: Vec3): Shape[] {
     case "pipe":
       return pipeShapes(sx, sy, sz, color);
     case "soccer_ball":
-      return [{ type: "sphere", pos: [0, 0, Math.max(sx, sy, sz) / 2], quat: IDENTITY, size: [Math.max(sx, sy, sz) / 2], rgba: color, role: "both" }];
+      return [{
+        type: "sphere",
+        pos: [0, 0, Math.max(sx, sy, sz) / 2],
+        quat: IDENTITY,
+        size: [Math.max(sx, sy, sz) / 2],
+        rgba: color,
+        role: "both",
+      }];
     case "step_stool":
       return stepStoolShapes(sx, sy, sz, color);
     case "ladder":
@@ -378,7 +433,11 @@ export function roomShapes(p: RoomParams): Shape[] {
       .map((d) => {
         const width = Math.min(Math.max(d.width, 0.1), w.length);
         const center = Math.min(Math.max(d.offset, -half + width / 2), half - width / 2);
-        return { start: center - width / 2, end: center + width / 2, height: Math.min(d.height, p.height) };
+        return {
+          start: center - width / 2,
+          end: center + width / 2,
+          height: Math.min(d.height, p.height),
+        };
       })
       .sort((a, b) => a.start - b.start);
     // full-height pieces between doors, then a lintel over each door
@@ -414,7 +473,13 @@ export function stairsShapes(p: StairsParams): Shape[] {
     const tread = Math.min(Math.max(p.treadThickness ?? 0.04, 0.01), p.stepHeight * 0.9);
     for (let i = 0; i < steps; i++) {
       const top = (i + 1) * p.stepHeight;
-      shapes.push(box([(i + 0.5) * p.stepDepth, 0, top - tread / 2], [p.stepDepth + 0.02, p.width, tread], color));
+      shapes.push(
+        box(
+          [(i + 0.5) * p.stepDepth, 0, top - tread / 2],
+          [p.stepDepth + 0.02, p.width, tread],
+          color,
+        ),
+      );
     }
     const run = steps * p.stepDepth;
     const rise = steps * p.stepHeight;
@@ -422,7 +487,14 @@ export function stairsShapes(p: StairsParams): Shape[] {
     const slope = axisAngle([0, 1, 0], -Math.atan2(rise, run));
     const depth = Math.min(0.2, p.stepHeight * 1.2);
     for (const side of [1, -1]) {
-      shapes.push(rotatedBox([run / 2, side * (p.width / 2 + 0.02), rise / 2 - depth / 2], [length, 0.04, depth], slope, color));
+      shapes.push(
+        rotatedBox(
+          [run / 2, side * (p.width / 2 + 0.02), rise / 2 - depth / 2],
+          [length, 0.04, depth],
+          slope,
+          color,
+        ),
+      );
     }
     return shapes;
   }
@@ -444,7 +516,13 @@ export function hillHeights(p: HillParams): { n: number; heights: Float32Array }
     for (let col = 0; col < n; col++) {
       const x = (col / (n - 1) - 0.5) * p.sizeX;
       const y = (row / (n - 1) - 0.5) * p.sizeY;
-      const v = fbm(x * scale + 1000, y * scale + 1000, Math.max(1, Math.round(p.octaves)), p.roughness, p.seed);
+      const v = fbm(
+        x * scale + 1000,
+        y * scale + 1000,
+        Math.max(1, Math.round(p.octaves)),
+        p.roughness,
+        p.seed,
+      );
       raw[row * n + col] = v;
       lo = Math.min(lo, v);
       hi = Math.max(hi, v);

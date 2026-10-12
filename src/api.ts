@@ -11,14 +11,23 @@ export async function json<T = unknown>(url: string, init?: RequestInit): Promis
 }
 
 const send = <T>(method: string, url: string, body: unknown) =>
-  json<T>(url, { method, headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+  json<T>(url, {
+    method,
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
 
 export const library = () => json<MeshAsset[]>("api/library");
 
 export const listProjects = () => json<{ projects: string[] }>("api/projects");
-export const loadProject = (name: string) => json<Project>(`api/internal/projects/${encodeURIComponent(name)}`);
+export const loadProject = (name: string) =>
+  json<Project>(`api/internal/projects/${encodeURIComponent(name)}`);
 export const saveProject = (project: Project) =>
-  send<{ saved: string }>("PUT", `api/internal/projects/${encodeURIComponent(project.name)}`, project);
+  send<{ saved: string }>(
+    "PUT",
+    `api/internal/projects/${encodeURIComponent(project.name)}`,
+    project,
+  );
 
 export interface ExportResult {
   dir: string;
@@ -31,7 +40,10 @@ export const exportWorld = (project: Project, parentDir: string) =>
   send<ExportResult>("POST", "api/export", { project, parentDir });
 
 export const uploadVisual = (dir: string, glb: ArrayBuffer) =>
-  json<{ written: string }>(`api/internal/visual?dir=${encodeURIComponent(dir)}`, { method: "POST", body: glb });
+  json<{ written: string }>(`api/internal/visual?dir=${encodeURIComponent(dir)}`, {
+    method: "POST",
+    body: glb,
+  });
 
 export interface DirListing {
   path: string;
@@ -40,7 +52,8 @@ export interface DirListing {
   dirs: string[];
   error?: string;
 }
-export const listDirs = (path: string) => json<DirListing>(`api/internal/dirs?path=${encodeURIComponent(path)}`);
+export const listDirs = (path: string) =>
+  json<DirListing>(`api/internal/dirs?path=${encodeURIComponent(path)}`);
 
 export interface CookJob {
   id: string;

@@ -5,7 +5,15 @@
 //   stairs lane(y = 6):   stairs starting 1.5 m ahead
 // plus a bumpy hill, a second floor, cones, a beanbag and a ramp.
 
-import { defaultHill, defaultRoom, defaultStairs, emptyProject, makeItem, PAINT, yaw } from "./defaults.ts";
+import {
+  defaultHill,
+  defaultRoom,
+  defaultStairs,
+  emptyProject,
+  makeItem,
+  PAINT,
+  yaw,
+} from "./defaults.ts";
 import type { Project } from "./types.ts";
 
 export function testCourse(): Project {

@@ -4,8 +4,16 @@
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { TransformControls } from "three/examples/jsm/controls/TransformControls.js";
-// deno-lint-ignore no-sloppy-imports
-import { PointCloud, RobotModel, Scene3D, SceneControls, TfFeed, useLayer, useTf, useViewer } from "../vendor/dimos-react/three.js";
+import {
+  PointCloud,
+  RobotModel,
+  Scene3D,
+  SceneControls,
+  TfFeed,
+  useLayer,
+  useTf,
+  useViewer,
+} from "../three_view.ts";
 import { buildWorld, type World } from "../world/geometry.ts";
 import type { Item, MeshAsset, Project, Quat, Vec3 } from "../world/types.ts";
 import { bodyObject, disposeObject, ghost } from "./three_world.ts";
@@ -87,7 +95,11 @@ function Lighting() {
     viewer.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     viewer.renderer.toneMappingExposure = 0.9;
     // physical light (white sun, cool sky, warm bounce): the world's look, not the page's skin
-    const sky = new THREE.HemisphereLight(new THREE.Color(0.85, 0.9, 1), new THREE.Color(0.45, 0.42, 0.38), 0.9);
+    const sky = new THREE.HemisphereLight(
+      new THREE.Color(0.85, 0.9, 1),
+      new THREE.Color(0.45, 0.42, 0.38),
+      0.9,
+    );
     sky.up.set(0, 0, 1);
     sky.position.set(0, 0, 50);
     const sun = new THREE.DirectionalLight(new THREE.Color(1, 0.97, 0.92), 1.6);
@@ -95,7 +107,13 @@ function Lighting() {
     sun.castShadow = true;
     sun.shadow.mapSize.set(4096, 4096);
     const extent = 40;
-    Object.assign(sun.shadow.camera, { left: -extent, right: extent, top: extent, bottom: -extent, far: 150 });
+    Object.assign(sun.shadow.camera, {
+      left: -extent,
+      right: extent,
+      top: extent,
+      bottom: -extent,
+      far: 150,
+    });
     sun.shadow.bias = -0.0005;
     sun.shadow.normalBias = 0.02;
     const ground = new THREE.Mesh(
@@ -195,7 +213,11 @@ function WorldLayer({ assets }: { assets: Record<string, MeshAsset> }) {
     }
     live.viewer.requestRender();
   }, [world, assets, showCollision, mode, project.activeFloor, layer]);
-  return <Picker objects={() => (layer.current as unknown as { state: WorldLayerState } | null)?.state.objects} />;
+  return (
+    <Picker
+      objects={() => (layer.current as unknown as { state: WorldLayerState } | null)?.state.objects}
+    />
+  );
 }
 
 /** a click (not a drag) selects the item under it, or adds a mover waypoint while drawing a path */
@@ -243,7 +265,8 @@ function Picker({ objects }: { objects: () => Map<string, THREE.Group> | undefin
 
 function addWaypoint(id: string, point: Vec3) {
   updateItem(id, (item) => {
-    const mover = item.mover ?? { waypoints: [], speed: 0.5, mode: "loop" as const, heading: "path" as const };
+    const mover = item.mover ??
+      { waypoints: [], speed: 0.5, mode: "loop" as const, heading: "path" as const };
     const snapped = point.map((v) => Math.round(v * 10) / 10) as Vec3;
     return { ...item, mover: { ...mover, waypoints: [...mover.waypoints, snapped] } };
   });
@@ -373,9 +396,17 @@ function MoverPaths() {
     if (mover.mode === "loop" && points.length > 2) points.push(points[0].clone());
     const root = new THREE.Group();
     const color = themeColor(drawing ? "var(--warn)" : "var(--primary)");
-    root.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), new THREE.LineBasicMaterial({ color })));
+    root.add(
+      new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints(points),
+        new THREE.LineBasicMaterial({ color }),
+      ),
+    );
     for (const p of points) {
-      const dot = new THREE.Mesh(new THREE.SphereGeometry(0.09, 16, 8), new THREE.MeshBasicMaterial({ color }));
+      const dot = new THREE.Mesh(
+        new THREE.SphereGeometry(0.09, 16, 8),
+        new THREE.MeshBasicMaterial({ color }),
+      );
       dot.position.copy(p);
       root.add(dot);
     }
@@ -392,7 +423,9 @@ function LiveRobot() {
     <>
       <TfFeed />
       <RobotModel kind="dog" frame="go2/base" />
-      {showLidar && <PointCloud topic="dimos/pointcloud/sensor_msgs.PointCloud2" style="voxel" size={0.04} />}
+      {showLidar && (
+        <PointCloud topic="dimos/pointcloud/sensor_msgs.PointCloud2" style="voxel" size={0.04} />
+      )}
     </>
   );
 }

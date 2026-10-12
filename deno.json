@@ -6,7 +6,8 @@
     "test": "deno run -A npm:vitest run",
     "check": "deno run -A npm:typescript/tsc --noEmit && deno check --config backend/deno.json backend/main.ts",
     "serve": "deno run -A --watch backend/main.ts --port 8787",
-    "vendor-dimos-react": "deno run -A --no-lock tools/vendor_dimos_react.ts"
+    "vendor-dimos-react": "deno run -A --no-lock tools/vendor_dimos_react.ts",
+    "examples": "deno run -A tools/export_example.ts"
   },
   "fmt": {
     "lineWidth": 100,
@@ -14,15 +15,18 @@
       "dist/",
       "icon.svg",
       "dimos.yaml",
-      "src/dim-app/",
-      "src/vendor/dimos-react/"
+      "src/vendor/dimos-react/",
+      "assets/",
+      "examples/",
+      "package-lock.json"
     ]
   },
   "lint": {
     "exclude": [
       "dist/",
-      "src/dim-app/",
-      "src/vendor/dimos-react/"
+      "src/vendor/dimos-react/",
+      "assets/",
+      "examples/"
     ],
     "rules": {
       "tags": [

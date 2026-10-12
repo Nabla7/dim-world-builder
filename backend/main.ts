@@ -61,7 +61,12 @@ async function assets(): Promise<{ list: MeshAsset[]; dirs: Record<string, strin
       if (!entry.isDirectory) continue;
       const meta = await readJson<MeshAsset | null>(`${importsDir}/${entry.name}/meta.json`, null);
       if (!meta) continue;
-      list.push({ ...meta, id: entry.name, category: "imported", base: `files/imports/${entry.name}` });
+      list.push({
+        ...meta,
+        id: entry.name,
+        category: "imported",
+        base: `files/imports/${entry.name}`,
+      });
       dirs[entry.name] = `${importsDir}/${entry.name}`;
     }
   } catch {
@@ -139,7 +144,9 @@ async function cook(job: CookJob, input: string, targetHeight: number | null) {
   await Deno.remove(input).catch(() => {});
   if (status.success) {
     const meta = await readJson<MeshAsset | null>(`${out}/meta.json`, null);
-    job.asset = meta ? { ...meta, id: job.id, category: "imported", base: `files/imports/${job.id}` } : undefined;
+    job.asset = meta
+      ? { ...meta, id: job.id, category: "imported", base: `files/imports/${job.id}` }
+      : undefined;
     job.state = job.asset ? "done" : "failed";
     job.stage = job.asset ? "cooked" : "no meta.json written";
     job.progress = 1;
@@ -187,9 +194,17 @@ async function api(request: Request, url: URL): Promise<Response | null> {
     const { project, parentDir } = await request.json() as { project: Project; parentDir?: string };
     const parent = (parentDir || `${home}/dimos_worlds`).replace(/^~(?=$|\/)/, home);
     const { list, dirs } = await assets();
-    const result = await exportProject(project, Object.fromEntries(list.map((a) => [a.id, a])), dirs, parent);
+    const result = await exportProject(
+      project,
+      Object.fromEntries(list.map((a) => [a.id, a])),
+      dirs,
+      parent,
+    );
     await Deno.mkdir(projectsDir, { recursive: true });
-    await Deno.writeTextFile(`${projectsDir}/${result.name}.json`, JSON.stringify(project, null, 2));
+    await Deno.writeTextFile(
+      `${projectsDir}/${result.name}.json`,
+      JSON.stringify(project, null, 2),
+    );
     return json(result);
   }
   if (route === "POST /api/internal/visual") {
@@ -253,7 +268,9 @@ async function file(dir: string, path: string): Promise<Response> {
   try {
     const handle = await Deno.open(`${dir}/${clean}`);
     return new Response(handle.readable, {
-      headers: { "content-type": types[clean.split(".").pop() ?? ""] ?? "application/octet-stream" },
+      headers: {
+        "content-type": types[clean.split(".").pop() ?? ""] ?? "application/octet-stream",
+      },
     });
   } catch {
     return new Response("not found", { status: 404 });
@@ -266,8 +283,12 @@ async function serve(request: Request): Promise<Response> {
   try {
     const answer = await api(request, url);
     if (answer) return answer;
-    if (path.startsWith("/files/library/")) return await file(libraryDir, path.slice("/files/library/".length));
-    if (path.startsWith("/files/imports/")) return await file(importsDir, path.slice("/files/imports/".length));
+    if (path.startsWith("/files/library/")) {
+      return await file(libraryDir, path.slice("/files/library/".length));
+    }
+    if (path.startsWith("/files/imports/")) {
+      return await file(importsDir, path.slice("/files/imports/".length));
+    }
     return await file(frontend, path);
   } catch (error) {
     return json({ error: String(error) }, 500);
@@ -284,7 +305,11 @@ if (app.socket) {
   } catch {
     // not there
   }
-  Deno.serve({ path: app.socket, transport: "unix", onListen: () => console.error(`listening on ${app.socket}`) }, serve);
+  Deno.serve({
+    path: app.socket,
+    transport: "unix",
+    onListen: () => console.error(`listening on ${app.socket}`),
+  }, serve);
 } else {
   // outside Desktop: `deno task serve` serves on a port (http://localhost:8787/)
   Deno.serve({ port: Number(flag("port") ?? 8787) }, serve);

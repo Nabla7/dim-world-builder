@@ -62,7 +62,9 @@ let coalesceKey: string | null = null;
 export function edit(change: (project: Project) => Project, coalesce?: string) {
   const next = change(state.project);
   if (next === state.project) return;
-  const past = coalesce && coalesce === coalesceKey ? state.past : [...state.past.slice(-99), state.project];
+  const past = coalesce && coalesce === coalesceKey
+    ? state.past
+    : [...state.past.slice(-99), state.project];
   coalesceKey = coalesce ?? null;
   set({ project: next, past, future: [], revision: state.revision + 1 });
 }
@@ -83,12 +85,24 @@ export function redo() {
   const next = state.future[0];
   if (!next) return;
   coalesceKey = null;
-  set({ project: next, past: [...state.past, state.project], future: state.future.slice(1), revision: state.revision + 1 });
+  set({
+    project: next,
+    past: [...state.past, state.project],
+    future: state.future.slice(1),
+    revision: state.revision + 1,
+  });
 }
 
 export function loadProject(project: Project) {
   coalesceKey = null;
-  set({ project, selected: null, past: [], future: [], drawingPath: null, revision: state.revision + 1 });
+  set({
+    project,
+    selected: null,
+    past: [],
+    future: [],
+    drawingPath: null,
+    revision: state.revision + 1,
+  });
 }
 
 export const select = (selected: string | null) => set({ selected, drawingPath: null });
@@ -167,7 +181,10 @@ export function removeFloor(id: string) {
 }
 
 export function updateFloor(id: string, change: Partial<Floor>) {
-  edit((p) => ({ ...p, floors: p.floors.map((f) => (f.id === id ? { ...f, ...change } : f)) }), `floor-${id}`);
+  edit(
+    (p) => ({ ...p, floors: p.floors.map((f) => (f.id === id ? { ...f, ...change } : f)) }),
+    `floor-${id}`,
+  );
 }
 
 export function renameProject(name: string) {

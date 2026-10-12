@@ -50,7 +50,12 @@ import {
   useEditor,
 } from "./store.ts";
 
-const section: React.CSSProperties = { display: "flex", flexDirection: "column", gap: 10, padding: 12 };
+const section: React.CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: 10,
+  padding: 12,
+};
 const heading: React.CSSProperties = {
   fontSize: 11,
   textTransform: "var(--label-case)" as React.CSSProperties["textTransform"],
@@ -87,7 +92,13 @@ export function AddPanel({ assets, onImport }: { assets: MeshAsset[]; onImport: 
                 data-testid={`add-${entry.key}`}
                 icon={entry.thumb ? undefined : entry.icon}
                 media={entry.thumb
-                  ? <img src={entry.thumb} alt="" style={{ width: 52, height: 52, objectFit: "contain" }} />
+                  ? (
+                    <img
+                      src={entry.thumb}
+                      alt=""
+                      style={{ width: 52, height: 52, objectFit: "contain" }}
+                    />
+                  )
                   : undefined}
                 onClick={() => add(entry)}
               />
@@ -118,7 +129,9 @@ export function FloorsPanel() {
             icon="layers"
             data-testid={`floor-${floor.id}`}
             title={floor.name}
-            subtitle={`${floor.elevation.toFixed(2)} m · ${items.filter((i) => i.floor === floor.id).length} items`}
+            subtitle={`${floor.elevation.toFixed(2)} m · ${
+              items.filter((i) => i.floor === floor.id).length
+            } items`}
             selected={floor.id === active}
             onClick={() => setActiveFloor(floor.id)}
             actions={floors.length > 1
@@ -143,14 +156,19 @@ export function FloorsPanel() {
         <div key={floor.id} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <p style={heading}>Selected floor</p>
           <Field label="Name">
-            <TextInput value={floor.name} onChange={(name: string) => updateFloor(floor.id, { name })} />
+            <TextInput
+              value={floor.name}
+              onChange={(name: string) =>
+                updateFloor(floor.id, { name })}
+            />
           </Field>
           <Field label="Elevation">
             <NumberInput
               value={floor.elevation}
               step={0.1}
               unit="m"
-              onChange={(elevation: number) => updateFloor(floor.id, { elevation })}
+              onChange={(elevation: number) =>
+                updateFloor(floor.id, { elevation })}
             />
           </Field>
         </div>
@@ -168,7 +186,9 @@ export function ItemsPanel() {
   const onFloor = items.filter((i) => i.floor === active);
   return (
     <div style={section}>
-      {onFloor.length === 0 && <Text small muted>Nothing on this floor yet: add something from Add.</Text>}
+      {onFloor.length === 0 && (
+        <Text small muted>Nothing on this floor yet: add something from Add.</Text>
+      )}
       <List divided>
         {onFloor.map((item) => (
           <ListRow
@@ -187,7 +207,8 @@ export function ItemsPanel() {
 
 // ── Inspector ──
 
-const toYaw = (q: Quat) => Math.atan2(2 * (q[3] * q[2] + q[0] * q[1]), 1 - 2 * (q[1] * q[1] + q[2] * q[2]));
+const toYaw = (q: Quat) =>
+  Math.atan2(2 * (q[3] * q[2] + q[0] * q[1]), 1 - 2 * (q[1] * q[1] + q[2] * q[2]));
 const fromYaw = (yaw: number): Quat => [0, 0, Math.sin(yaw / 2), Math.cos(yaw / 2)];
 const deg = (rad: number) => Math.round((rad * 180) / Math.PI * 10) / 10;
 
@@ -234,7 +255,9 @@ function Swatches({ value, onChange }: { value: Rgb; onChange: (c: Rgb) => void 
             borderRadius: "var(--radius-sm)",
             // the world's paint, shown as itself
             background: new THREE.Color(...color).getStyle(),
-            border: color.every((c, i) => c === value[i]) ? "2px solid var(--primary)" : "1px solid var(--border)",
+            border: color.every((c, i) => c === value[i])
+              ? "2px solid var(--primary)"
+              : "1px solid var(--border)",
             cursor: "pointer",
           }}
         />
@@ -270,13 +293,48 @@ function Range({ label, value, min, max, step, unit, onChange }: {
 function StairsEditor({ item }: { item: Extract<Item, { kind: "stairs" }> }) {
   const p = item.params;
   const set = (change: Partial<StairsParams>) =>
-    updateItem(item.id, (i) => ({ ...i, params: { ...p, ...change } } as Item), `stairs-${item.id}`);
+    updateItem(
+      item.id,
+      (i) => ({ ...i, params: { ...p, ...change } } as Item),
+      `stairs-${item.id}`,
+    );
   return (
     <>
-      <Range label="Step height" value={p.stepHeight} min={0.05} max={0.4} step={0.01} unit="m" onChange={(stepHeight) => set({ stepHeight })} />
-      <Range label="Step depth" value={p.stepDepth} min={0.15} max={0.8} step={0.01} unit="m" onChange={(stepDepth) => set({ stepDepth })} />
-      <Range label="Width" value={p.width} min={0.4} max={4} step={0.05} unit="m" onChange={(width) => set({ width })} />
-      <Range label="Steps" value={p.steps} min={1} max={30} step={1} onChange={(steps) => set({ steps })} />
+      <Range
+        label="Step height"
+        value={p.stepHeight}
+        min={0.05}
+        max={0.4}
+        step={0.01}
+        unit="m"
+        onChange={(stepHeight) => set({ stepHeight })}
+      />
+      <Range
+        label="Step depth"
+        value={p.stepDepth}
+        min={0.15}
+        max={0.8}
+        step={0.01}
+        unit="m"
+        onChange={(stepDepth) => set({ stepDepth })}
+      />
+      <Range
+        label="Width"
+        value={p.width}
+        min={0.4}
+        max={4}
+        step={0.05}
+        unit="m"
+        onChange={(width) => set({ width })}
+      />
+      <Range
+        label="Steps"
+        value={p.steps}
+        min={1}
+        max={30}
+        step={1}
+        onChange={(steps) => set({ steps })}
+      />
       <Toggle
         value={Boolean(p.openRisers)}
         onChange={(openRisers: boolean) => set({ openRisers })}
@@ -295,8 +353,8 @@ function StairsEditor({ item }: { item: Extract<Item, { kind: "stairs" }> }) {
         />
       )}
       <Text small muted>
-        Rise {(p.steps * p.stepHeight).toFixed(2)} m over {(p.steps * p.stepDepth).toFixed(2)} m (slope{" "}
-        {deg(Math.atan2(p.stepHeight, p.stepDepth))}°)
+        Rise {(p.steps * p.stepHeight).toFixed(2)} m over {(p.steps * p.stepDepth).toFixed(2)}{" "}
+        m (slope {deg(Math.atan2(p.stepHeight, p.stepDepth))}°)
       </Text>
       <Swatches value={p.color} onChange={(color) => set({ color })} />
     </>
@@ -309,20 +367,80 @@ function HillEditor({ item }: { item: Extract<Item, { kind: "hill" }> }) {
     updateItem(item.id, (i) => ({ ...i, params: { ...p, ...change } } as Item), `hill-${item.id}`);
   return (
     <>
-      <Range label="Bump height" value={p.amplitude} min={0.05} max={3} step={0.05} unit="m" onChange={(amplitude) => set({ amplitude })} />
-      <Range label="Roughness" value={p.roughness} min={0} max={0.9} step={0.05} onChange={(roughness) => set({ roughness })} />
-      <Range label="Bumpiness" value={p.frequency} min={0.5} max={10} step={0.25} onChange={(frequency) => set({ frequency })} />
-      <Range label="Detail (octaves)" value={p.octaves} min={1} max={7} step={1} onChange={(octaves) => set({ octaves })} />
-      <Range label="Size X" value={p.sizeX} min={2} max={60} step={0.5} unit="m" onChange={(sizeX) => set({ sizeX })} />
-      <Range label="Size Y" value={p.sizeY} min={2} max={60} step={0.5} unit="m" onChange={(sizeY) => set({ sizeY })} />
-      <Range label="Resolution" value={p.resolution} min={16} max={192} step={8} onChange={(resolution) => set({ resolution })} />
+      <Range
+        label="Bump height"
+        value={p.amplitude}
+        min={0.05}
+        max={3}
+        step={0.05}
+        unit="m"
+        onChange={(amplitude) => set({ amplitude })}
+      />
+      <Range
+        label="Roughness"
+        value={p.roughness}
+        min={0}
+        max={0.9}
+        step={0.05}
+        onChange={(roughness) => set({ roughness })}
+      />
+      <Range
+        label="Bumpiness"
+        value={p.frequency}
+        min={0.5}
+        max={10}
+        step={0.25}
+        onChange={(frequency) => set({ frequency })}
+      />
+      <Range
+        label="Detail (octaves)"
+        value={p.octaves}
+        min={1}
+        max={7}
+        step={1}
+        onChange={(octaves) => set({ octaves })}
+      />
+      <Range
+        label="Size X"
+        value={p.sizeX}
+        min={2}
+        max={60}
+        step={0.5}
+        unit="m"
+        onChange={(sizeX) => set({ sizeX })}
+      />
+      <Range
+        label="Size Y"
+        value={p.sizeY}
+        min={2}
+        max={60}
+        step={0.5}
+        unit="m"
+        onChange={(sizeY) => set({ sizeY })}
+      />
+      <Range
+        label="Resolution"
+        value={p.resolution}
+        min={16}
+        max={192}
+        step={8}
+        onChange={(resolution) => set({ resolution })}
+      />
       <Field label="Seed">
         <div style={{ display: "flex", gap: 6 }}>
           <NumberInput value={p.seed} step={1} onChange={(seed: number) => set({ seed })} />
-          <IconButton icon="refresh" label="New seed" onClick={() => set({ seed: Math.floor(Math.random() * 10000) })} />
+          <IconButton
+            icon="refresh"
+            label="New seed"
+            onClick={() => set({ seed: Math.floor(Math.random() * 10000) })}
+          />
         </div>
       </Field>
-      <Toggle value={p.edgeFade} onChange={(edgeFade: boolean) => set({ edgeFade })} label="Fade to the ground at the edges" />
+      <Toggle
+        value={p.edgeFade}
+        onChange={(edgeFade: boolean) => set({ edgeFade })}
+        label="Fade to the ground at the edges"
+      />
       <Swatches value={p.color} onChange={(color) => set({ color })} />
     </>
   );
@@ -336,30 +454,114 @@ function RoomEditor({ item }: { item: Extract<Item, { kind: "room" }> }) {
     set({ doors: p.doors.map((d, i) => (i === index ? { ...d, ...change } : d)) });
   return (
     <>
-      <Range label="Width (x)" value={p.width} min={1} max={30} step={0.1} unit="m" onChange={(width) => set({ width })} />
-      <Range label="Depth (y)" value={p.depth} min={1} max={30} step={0.1} unit="m" onChange={(depth) => set({ depth })} />
-      <Range label="Height" value={p.height} min={1} max={8} step={0.05} unit="m" onChange={(height) => set({ height })} />
-      <Range label="Wall thickness" value={p.wallThickness} min={0.05} max={0.5} step={0.01} unit="m" onChange={(wallThickness) => set({ wallThickness })} />
-      <Toggle value={p.ceiling} onChange={(ceiling: boolean) => set({ ceiling })} label="Ceiling" data-testid="room-ceiling" />
+      <Range
+        label="Width (x)"
+        value={p.width}
+        min={1}
+        max={30}
+        step={0.1}
+        unit="m"
+        onChange={(width) => set({ width })}
+      />
+      <Range
+        label="Depth (y)"
+        value={p.depth}
+        min={1}
+        max={30}
+        step={0.1}
+        unit="m"
+        onChange={(depth) => set({ depth })}
+      />
+      <Range
+        label="Height"
+        value={p.height}
+        min={1}
+        max={8}
+        step={0.05}
+        unit="m"
+        onChange={(height) => set({ height })}
+      />
+      <Range
+        label="Wall thickness"
+        value={p.wallThickness}
+        min={0.05}
+        max={0.5}
+        step={0.01}
+        unit="m"
+        onChange={(wallThickness) => set({ wallThickness })}
+      />
+      <Toggle
+        value={p.ceiling}
+        onChange={(ceiling: boolean) => set({ ceiling })}
+        label="Ceiling"
+        data-testid="room-ceiling"
+      />
       <Toggle value={p.floor} onChange={(floor: boolean) => set({ floor })} label="Floor slab" />
       <p style={heading}>Doors</p>
       {p.doors.map((door, index) => (
-        <div key={index} style={{ display: "flex", flexDirection: "column", gap: 6, paddingBottom: 6, borderBottom: "1px solid var(--hair)" }}>
+        <div
+          key={index}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 6,
+            paddingBottom: 6,
+            borderBottom: "1px solid var(--hair)",
+          }}
+        >
           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
             <Segmented
               size="sm"
               value={door.wall}
-              items={["north", "south", "east", "west"].map((w) => ({ value: w, label: w[0].toUpperCase() }))}
+              items={["north", "south", "east", "west"].map((w) => ({
+                value: w,
+                label: w[0].toUpperCase(),
+              }))}
               onChange={(wall: string) => setDoor(index, { wall: wall as DoorOpening["wall"] })}
             />
-            <IconButton icon="trash" size="sm" variant="ghost" label="Remove door" onClick={() => set({ doors: p.doors.filter((_, i) => i !== index) })} />
+            <IconButton
+              icon="trash"
+              size="sm"
+              variant="ghost"
+              label="Remove door"
+              onClick={() => set({ doors: p.doors.filter((_, i) => i !== index) })}
+            />
           </div>
-          <Range label="Offset" value={door.offset} min={-10} max={10} step={0.1} unit="m" onChange={(offset) => setDoor(index, { offset })} />
-          <Range label="Door width" value={door.width} min={0.5} max={4} step={0.05} unit="m" onChange={(width) => setDoor(index, { width })} />
-          <Range label="Door height" value={door.height} min={1} max={p.height} step={0.05} unit="m" onChange={(height) => setDoor(index, { height })} />
+          <Range
+            label="Offset"
+            value={door.offset}
+            min={-10}
+            max={10}
+            step={0.1}
+            unit="m"
+            onChange={(offset) => setDoor(index, { offset })}
+          />
+          <Range
+            label="Door width"
+            value={door.width}
+            min={0.5}
+            max={4}
+            step={0.05}
+            unit="m"
+            onChange={(width) => setDoor(index, { width })}
+          />
+          <Range
+            label="Door height"
+            value={door.height}
+            min={1}
+            max={p.height}
+            step={0.05}
+            unit="m"
+            onChange={(height) => setDoor(index, { height })}
+          />
         </div>
       ))}
-      <Button size="sm" icon="plus" onClick={() => set({ doors: [...p.doors, { wall: "north", offset: 0, width: 1, height: 2.1 }] })}>
+      <Button
+        size="sm"
+        icon="plus"
+        onClick={() =>
+          set({ doors: [...p.doors, { wall: "north", offset: 0, width: 1, height: 2.1 }] })}
+      >
         Add a door
       </Button>
       <Swatches value={p.color} onChange={(color) => set({ color })} />
@@ -376,7 +578,12 @@ function MoverEditor({ item }: { item: Item }) {
         icon="activity"
         data-testid="make-mover"
         onClick={() => {
-          setMover(item.id, { waypoints: [[item.position[0], item.position[1], item.position[2]]], speed: 0.5, mode: "loop", heading: "path" });
+          setMover(item.id, {
+            waypoints: [[item.position[0], item.position[1], item.position[2]]],
+            speed: 0.5,
+            mode: "loop",
+            heading: "path",
+          });
           setDrawingPath(item.id);
         }}
       >
@@ -397,11 +604,29 @@ function MoverEditor({ item }: { item: Item }) {
         >
           {drawing ? "Done adding points" : "Click to add points"}
         </Button>
-        <Button size="sm" icon="eraser" onClick={() => set({ waypoints: mover.waypoints.slice(0, 1) })}>Clear</Button>
-        <Button size="sm" icon="close" variant="ghost" onClick={() => setMover(item.id, undefined)}>Stop moving</Button>
+        <Button
+          size="sm"
+          icon="eraser"
+          onClick={() => set({ waypoints: mover.waypoints.slice(0, 1) })}
+        >
+          Clear
+        </Button>
+        <Button size="sm" icon="close" variant="ghost" onClick={() => setMover(item.id, undefined)}>
+          Stop moving
+        </Button>
       </ButtonGroup>
-      {drawing && <Text small tone="warn">Click on the ground to add the next point of the path.</Text>}
-      <Range label="Speed" value={mover.speed} min={0.05} max={3} step={0.05} unit="m/s" onChange={(speed) => set({ speed })} />
+      {drawing && (
+        <Text small tone="warn">Click on the ground to add the next point of the path.</Text>
+      )}
+      <Range
+        label="Speed"
+        value={mover.speed}
+        min={0.05}
+        max={3}
+        step={0.05}
+        unit="m/s"
+        onChange={(speed) => set({ speed })}
+      />
       <Field label="Path">
         <Segmented
           size="sm"
@@ -425,12 +650,21 @@ function MoverEditor({ item }: { item: Item }) {
             icon="pin"
             title={`Point ${i + 1}`}
             subtitle={w.map((v) => v.toFixed(1)).join(", ")}
-            actions={<IconButton icon="close" size="sm" variant="ghost" label="Remove point" onClick={() => set({ waypoints: mover.waypoints.filter((_, j) => j !== i) })} />}
+            actions={
+              <IconButton
+                icon="close"
+                size="sm"
+                variant="ghost"
+                label="Remove point"
+                onClick={() => set({ waypoints: mover.waypoints.filter((_, j) => j !== i) })}
+              />
+            }
           />
         ))}
       </List>
       <Text small muted>
-        In the simulation it is a kinematic body: it shoves the robot and is never pushed back; lidar sees it.
+        In the simulation it is a kinematic body: it shoves the robot and is never pushed back;
+        lidar sees it.
       </Text>
     </>
   );
@@ -443,7 +677,8 @@ export function Inspector({ assets }: { assets: MeshAsset[] }) {
     return (
       <div style={section}>
         <Text small muted>
-          Select something to edit it. W / E / R: move, rotate, scale · Delete: remove · Ctrl+D: duplicate · Ctrl+Z: undo.
+          Select something to edit it. W / E / R: move, rotate, scale · Delete: remove · Ctrl+D:
+          duplicate · Ctrl+Z: undo.
         </Text>
       </div>
     );
@@ -455,7 +690,11 @@ export function Inspector({ assets }: { assets: MeshAsset[] }) {
     <div style={section} data-testid="inspector">
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <Icon name={item.kind === "room" ? "home" : "cube"} />
-        <TextInput value={item.name} onChange={(name: string) => update({ name }, "name")} aria-label="Name" />
+        <TextInput
+          value={item.name}
+          onChange={(name: string) => update({ name }, "name")}
+          aria-label="Name"
+        />
       </div>
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
         <Badge>{item.kind === "primitive" ? item.params.shape : item.kind}</Badge>
@@ -464,7 +703,12 @@ export function Inspector({ assets }: { assets: MeshAsset[] }) {
       </div>
       <Vec label="Position" value={item.position} onChange={(position) => update({ position })} />
       <Field label="Rotation (yaw)">
-        <NumberInput value={deg(toYaw(item.rotation))} step={15} unit="°" onChange={(v: number) => update({ rotation: fromYaw((v * Math.PI) / 180) })} />
+        <NumberInput
+          value={deg(toYaw(item.rotation))}
+          step={15}
+          unit="°"
+          onChange={(v: number) => update({ rotation: fromYaw((v * Math.PI) / 180) })}
+        />
       </Field>
       {(item.kind === "primitive" || item.kind === "mesh") && (
         <Vec
@@ -476,7 +720,11 @@ export function Inspector({ assets }: { assets: MeshAsset[] }) {
         />
       )}
       {item.kind === "primitive" && (
-        <Swatches value={item.params.color} onChange={(color) => update({ params: { ...item.params, color } } as Partial<Item>, "color")} />
+        <Swatches
+          value={item.params.color}
+          onChange={(color) =>
+            update({ params: { ...item.params, color } } as Partial<Item>, "color")}
+        />
       )}
       {item.kind === "stairs" && <StairsEditor item={item} />}
       {item.kind === "hill" && <HillEditor item={item} />}
@@ -485,7 +733,9 @@ export function Inspector({ assets }: { assets: MeshAsset[] }) {
       <MoverEditor item={item} />
       <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
         <Button size="sm" icon="copy" onClick={() => duplicateItem(item.id)}>Duplicate</Button>
-        <Button size="sm" icon="trash" variant="danger" onClick={() => removeItem(item.id)}>Remove</Button>
+        <Button size="sm" icon="trash" variant="danger" onClick={() => removeItem(item.id)}>
+          Remove
+        </Button>
       </div>
     </div>
   );

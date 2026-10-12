@@ -1,6 +1,14 @@
 // What the Add panel offers, and how each choice becomes an item placed where the camera looks.
 
-import { defaultHill, defaultRoom, defaultStairs, makeItem, PAINT, seeded, yaw } from "../world/defaults.ts";
+import {
+  defaultHill,
+  defaultRoom,
+  defaultStairs,
+  makeItem,
+  PAINT,
+  seeded,
+  yaw,
+} from "../world/defaults.ts";
 import type { Object3D } from "three";
 import type { Item, MeshAsset, PrimitiveParams, Vec3 } from "../world/types.ts";
 
@@ -16,7 +24,10 @@ export interface PaletteEntry {
 }
 
 /** the ground point the camera orbits and the drawn world, set by the viewport */
-export const view: { center: Vec3; worldRoot: Object3D | null } = { center: [0, 0, 0], worldRoot: null };
+export const view: { center: Vec3; worldRoot: Object3D | null } = {
+  center: [0, 0, 0],
+  worldRoot: null,
+};
 
 const snap = (at: Vec3): Vec3 => [Math.round(at[0] * 2) / 2, Math.round(at[1] * 2) / 2, 0];
 
@@ -32,7 +43,8 @@ function primitive(
     title,
     group: "Shapes",
     icon,
-    make: (floor, at) => makeItem("primitive", { shape, color }, { name: title, floor, position: snap(at), scale }),
+    make: (floor, at) =>
+      makeItem("primitive", { shape, color }, { name: title, floor, position: snap(at), scale }),
   };
 }
 
@@ -54,14 +66,16 @@ export const BUILT_IN: PaletteEntry[] = [
     title: "Room",
     group: "Builders",
     icon: "home",
-    make: (floor, at) => makeItem("room", defaultRoom(), { name: "Room", floor, position: snap(at) }),
+    make: (floor, at) =>
+      makeItem("room", defaultRoom(), { name: "Room", floor, position: snap(at) }),
   },
   {
     key: "build:stairs",
     title: "Staircase",
     group: "Builders",
     icon: "grid",
-    make: (floor, at) => makeItem("stairs", defaultStairs(), { name: "Stairs", floor, position: snap(at) }),
+    make: (floor, at) =>
+      makeItem("stairs", defaultStairs(), { name: "Stairs", floor, position: snap(at) }),
   },
   {
     key: "build:hill",
@@ -111,7 +125,13 @@ const CLUTTER: [PrimitiveParams["shape"], Vec3, PrimitiveParams["color"]][] = [
 ];
 
 /** a seeded mess of clutter in a ~6 m disc around `at`, each piece a normal item you can move after */
-export function scatterClutter(floor: string, at: Vec3, seed: number, count = 14, radius = 3): Item[] {
+export function scatterClutter(
+  floor: string,
+  at: Vec3,
+  seed: number,
+  count = 14,
+  radius = 3,
+): Item[] {
   const random = seeded(seed);
   const items: Item[] = [];
   for (let i = 0; i < count; i++) {
@@ -144,7 +164,10 @@ export function assetEntries(assets: MeshAsset[]): PaletteEntry[] {
     group: asset.category === "imported" ? "Imported" : titleCase(asset.category || "Library"),
     thumb: `${asset.base}/thumb.png`,
     make: (floor, at) =>
-      makeItem("mesh", { source: asset.category === "imported" ? "import" : "library", asset: asset.id }, {
+      makeItem("mesh", {
+        source: asset.category === "imported" ? "import" : "library",
+        asset: asset.id,
+      }, {
         name: asset.name,
         floor,
         position: snap(at),

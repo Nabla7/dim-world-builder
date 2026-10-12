@@ -1,5 +1,6 @@
 /// <reference types="vitest/config" />
 import react from "@vitejs/plugin-react";
+import process from "node:process";
 import { defineConfig } from "vite";
 
 // Desktop serves the page at /apps/<name>/, so every URL in the build is relative ("./").

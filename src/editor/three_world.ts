@@ -150,7 +150,12 @@ export function bodyObject(
     const mesh = shape.role === "collision"
       ? new THREE.Mesh(
         geo,
-        new THREE.MeshBasicMaterial({ color: style.collisionColor, wireframe: true, transparent: true, opacity: 0.8 }),
+        new THREE.MeshBasicMaterial({
+          color: style.collisionColor,
+          wireframe: true,
+          transparent: true,
+          opacity: 0.8,
+        }),
       )
       : new THREE.Mesh(geo, material(shape));
     mesh.castShadow = shape.role !== "collision";

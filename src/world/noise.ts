@@ -22,7 +22,13 @@ function valueNoise(x: number, y: number, seed: number): number {
 }
 
 /** fBm in 0..1: octaves of value noise, each twice the frequency and `roughness` times the weight. */
-export function fbm(x: number, y: number, octaves: number, roughness: number, seed: number): number {
+export function fbm(
+  x: number,
+  y: number,
+  octaves: number,
+  roughness: number,
+  seed: number,
+): number {
   let sum = 0;
   let weight = 1;
   let total = 0;

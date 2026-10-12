@@ -42,7 +42,10 @@ export async function exportProject(
   await write("movers.json", JSON.stringify(scene.moversJson, null, 2) + "\n");
   await write("world.project.json", JSON.stringify(project, null, 2) + "\n");
   await write("__init__.py", pythonPackage(name, project));
-  await write("__main__.py", `"""python -m ${name}: compile the world with MuJoCo and summarize it."""\nfrom . import main\n\nmain()\n`);
+  await write(
+    "__main__.py",
+    `"""python -m ${name}: compile the world with MuJoCo and summarize it."""\nfrom . import main\n\nmain()\n`,
+  );
   await write("README.md", readme(name, project));
   for (const [asset, meshFiles] of scene.meshFiles) {
     const source = assetDirs[asset];

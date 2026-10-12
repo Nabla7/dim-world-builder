@@ -16,7 +16,13 @@ export function clutterYard(): Project {
       rotation: yaw(0.3),
       scale: [2.4, 0.45, 0.06],
     }),
-    makeItem("stairs", { ...defaultStairs(), steps: 5, stepHeight: 0.18, openRisers: true, treadThickness: 0.04 }, {
+    makeItem("stairs", {
+      ...defaultStairs(),
+      steps: 5,
+      stepHeight: 0.18,
+      openRisers: true,
+      treadThickness: 0.04,
+    }, {
       name: "Open stairs",
       floor: ground,
       position: [5, 0, 0],

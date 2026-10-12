@@ -25,7 +25,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # x86_64-linux, aarch64-linux, aarch64-darwin: each has its own node_modules hash in flake.nix
+        # what Desktop builds on each kind of machine (the page is one npm build: one npmDepsHash for all)
         os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
