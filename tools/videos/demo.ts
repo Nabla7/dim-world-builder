@@ -119,6 +119,20 @@ export class Demo {
     return this.toPage(point);
   }
 
+  /** a point on the selected item's gizmo (gizmo units: its arrows and rings reach 0.5), in page coordinates */
+  async gizmoOnScreen(local: [number, number, number]): Promise<[number, number]> {
+    const id = await this.state<string>("s.selected");
+    const point = await this.app.evaluate(
+      ([itemId, l]) =>
+        (globalThis as unknown as {
+          dimWorldBuilder: { gizmoOnScreen(id: string, l: number[]): [number, number] | null };
+        }).dimWorldBuilder.gizmoOnScreen(itemId as string, l as number[]),
+      [id, local] as [string, number[]],
+    );
+    if (!point) throw new Error("nothing selected");
+    return this.toPage(point);
+  }
+
   async worldToScreen(x: number, y: number, z: number): Promise<[number, number]> {
     const point = await this.app.evaluate(
       ([px, py, pz]) =>

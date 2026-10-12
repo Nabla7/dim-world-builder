@@ -77,6 +77,24 @@ function exposeForAutomation(viewer: {
         return object ? toScreen(object.getWorldPosition(new THREE.Vector3())) : null;
       },
       worldToScreen: (x: number, y: number, z: number) => toScreen(new THREE.Vector3(x, y, z)),
+      /**
+       * A point on the gizmo of the selected item, in the gizmo's own units (its arrows/rings reach 0.5), e.g.
+       * [0.3, 0, 0] on the X arrow, [0.15, 0.15, 0] on the XY plane handle, [0.35, 0.35, 0] on the Z ring.
+       * Uses TransformControls' own on-screen sizing: distance * min(1.9 tan(fov/2), 7) / 4.
+       */
+      gizmoOnScreen(id: string, local: [number, number, number]): [number, number] | null {
+        const object = view.worldRoot?.children.find((o) => o.userData.itemId === id);
+        if (!object) return null;
+        viewer.camera.updateMatrixWorld();
+        const origin = object.getWorldPosition(new THREE.Vector3());
+        const factor = origin.distanceTo(viewer.camera.position) *
+          Math.min(1.9 * Math.tan((Math.PI * viewer.camera.fov) / 360) / viewer.camera.zoom, 7) / 4;
+        const offset = new THREE.Vector3(...local).applyQuaternion(
+          object.getWorldQuaternion(new THREE.Quaternion()),
+        )
+          .multiplyScalar(factor);
+        return toScreen(origin.add(offset));
+      },
       lookAt(target: [number, number, number], from: [number, number, number]) {
         const place = () => {
           viewer.camera.position.set(...from);

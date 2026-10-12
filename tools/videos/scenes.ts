@@ -35,9 +35,18 @@ async function addFromPalette(demo: Demo, key: string, search?: string) {
 
 const selectedId = (demo: Demo) => demo.state<string>("s.selected");
 
-/** drag the gizmo's center handle (free move / trackball / uniform scale) by (dx, dy) pixels */
+/**
+ * drag a handle of the selected item's gizmo by (dx, dy) pixels: in Move the XY plane square (free on the floor),
+ * in Rotate the yaw ring, in Scale the X handle box
+ */
 async function dragSelected(demo: Demo, dx: number, dy: number, steps = 45) {
-  const [x, y] = await demo.itemOnScreen(await selectedId(demo));
+  const gizmo = await demo.state<string>("s.gizmo");
+  const handle: [number, number, number] = gizmo === "rotate"
+    ? [0.354, 0.354, 0]
+    : gizmo === "scale"
+    ? [0.5, 0, 0]
+    : [0.15, 0.15, 0];
+  const [x, y] = await demo.gizmoOnScreen(handle);
   await demo.drag([x, y], [x + dx, y + dy], steps);
 }
 
