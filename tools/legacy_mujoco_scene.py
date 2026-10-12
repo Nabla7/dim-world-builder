@@ -2,7 +2,8 @@
 
 That sim inserts the robot into a scene XML and loads every file from one flat {basename: bytes} map, and it spawns
 the robot at the origin. So this writes <out>/scene_<name>.xml plus <out>/meshes and <out>/textures with unique
-basenames, drops moving (mocap) bodies, and shifts the world so its default spawn is at the origin.
+basenames, drops moving (mocap) bodies, shifts the world so its default spawn is at the origin, and tones the
+lighting down for that sim's renderer.
 
     python tools/legacy_mujoco_scene.py ~/dimos_worlds/office_555 <dimos>/data/mujoco_office_555 office_555
 """
@@ -44,6 +45,8 @@ def convert(world: Path, out: Path, name: str) -> Path:
             shutil.copyfile(world / "textures" / file, out / "textures" / flat)
             texture.set("file", flat)
 
+    tame_lighting(root)
+
     worldbody = root.find("worldbody")
     if worldbody is None:
         raise ValueError(f"{world / 'scene.xml'} has no <worldbody>")
@@ -58,6 +61,23 @@ def convert(world: Path, out: Path, name: str) -> Path:
     ET.indent(root)
     xml.write_text(ET.tostring(root, encoding="unicode") + "\n")
     return xml
+
+
+def tame_lighting(root: ET.Element) -> None:
+    """The older sim draws with no tone mapping and a bright headlight, so the sun, the room lights and the headlight
+    add up to white. Dim the headlight, give the sun the sky's fill, and turn the room lights down."""
+    visual = root.find("visual")
+    headlight = visual.find("headlight") if visual is not None else None
+    if headlight is not None:
+        headlight.set("ambient", "0.12 0.12 0.12")
+        headlight.set("diffuse", "0.12 0.12 0.12")
+        headlight.set("specular", "0 0 0")
+    for light in root.iter("light"):
+        if light.get("name") == "sun":
+            light.set("diffuse", "0.55 0.53 0.5")
+            light.set("ambient", "0.28 0.28 0.3")
+        elif light.get("diffuse"):
+            light.set("diffuse", " ".join(f"{float(v) * 0.3:.3g}" for v in light.get("diffuse", "").split()))
 
 
 def main() -> None:
