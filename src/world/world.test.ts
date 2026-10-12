@@ -246,3 +246,16 @@ describe("drain grates", () => {
     expect(bar.size[2] * 2).toBeCloseTo(0.02);
   });
 });
+
+describe("hill look in the export", () => {
+  it("gives a hill the speckled grass material, keeping its heights", () => {
+    const project = emptyProject("grass");
+    project.items = [makeItem("hill", defaultHill(), { name: "Hill", floor: project.floors[0].id, position: [0, 0, 0] })];
+    const world = buildWorld(project, {});
+    const { xml } = toScene(world, "grass");
+    expect(xml).toMatch(/<texture name="grass_0" type="2d" builtin="flat"[^>]*mark="random"/);
+    expect(xml).toMatch(/type="hfield" hfield="[^"]+" material="grass_0"/);
+    const shape = world.bodies.flatMap((b) => b.shapes).find((s) => s.type === "hfield")!;
+    expect(xml).toContain(`elevation="${shape.hfield!.elevation.map((v) => String(Math.round(v * 1e6) / 1e6)).join(" ")}"`);
+  });
+});

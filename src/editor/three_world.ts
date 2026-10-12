@@ -52,6 +52,10 @@ export interface WorldStyle {
 
 function material(shape: Shape): THREE.MeshStandardMaterial {
   const [r, g, b, a] = shape.rgba;
+  if (shape.type === "hfield") {
+    // its colors are per facet (lowPolyGround)
+    return new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.95, metalness: 0 });
+  }
   return new THREE.MeshStandardMaterial({
     color: new THREE.Color().setRGB(r, g, b, THREE.SRGBColorSpace),
     roughness: 0.85,
@@ -87,18 +91,130 @@ function geometry(shape: Shape): THREE.BufferGeometry | null {
       flat.computeVertexNormals();
       return flat;
     }
-    case "hfield": {
-      const h = shape.hfield!;
-      const geo = new THREE.PlaneGeometry(h.size[0] * 2, h.size[1] * 2, h.ncol - 1, h.nrow - 1);
-      const position = geo.getAttribute("position");
-      // PlaneGeometry's first row is +y, like MuJoCo's hfield data
-      for (let i = 0; i < position.count; i++) {
-        position.setZ(i, h.elevation[i] * h.size[2]);
+    case "hfield":
+      return lowPolyGround(shape);
+  }
+}
+
+/** display triangles about this wide (m): the height field's own samples are finer, for physics */
+const GROUND_FACET = 0.35;
+
+/** a stable 0..1 per point, for color jitter that doesn't flicker between rebuilds */
+function hash(x: number, y: number): number {
+  const v = Math.sin(x * 127.1 + y * 311.7) * 43758.5453;
+  return v - Math.floor(v);
+}
+
+/**
+ * A height field drawn low-poly: every few samples (GROUND_FACET apart, always the edges), flat-shaded triangles, each
+ * its own shade of the field's color (lighter on crests). The samples it keeps sit at their exact heights; physics and
+ * lidar use the full field.
+ */
+function lowPolyGround(shape: Shape): THREE.BufferGeometry {
+  const h = shape.hfield!;
+  const [sx, sy, top] = h.size;
+  const step = Math.max(1, Math.round(GROUND_FACET / ((2 * sx) / (h.ncol - 1))));
+  const pick = (n: number) => {
+    const out: number[] = [];
+    for (let i = 0; i < n - 1; i += step) out.push(i);
+    out.push(n - 1);
+    return out;
+  };
+  const rows = pick(h.nrow);
+  const cols = pick(h.ncol);
+  // row 0 is +y and column 0 is -x, like MuJoCo's hfield data
+  const point = (row: number, col: number): [number, number, number] => [
+    -sx + (col / (h.ncol - 1)) * 2 * sx,
+    sy - (row / (h.nrow - 1)) * 2 * sy,
+    h.elevation[row * h.ncol + col] * top,
+  ];
+  const base = new THREE.Color().setRGB(shape.rgba[0], shape.rgba[1], shape.rgba[2], THREE.SRGBColorSpace);
+  const hsl = base.getHSL({ h: 0, s: 0, l: 0 }, THREE.SRGBColorSpace);
+  const positions: number[] = [];
+  const colors: number[] = [];
+  const shade = new THREE.Color();
+  const triangle = (a: number[], b: number[], c: number[]) => {
+    const cx = (a[0] + b[0] + c[0]) / 3;
+    const cy = (a[1] + b[1] + c[1]) / 3;
+    const cz = (a[2] + b[2] + c[2]) / 3;
+    const jitter = hash(cx, cy) - 0.5;
+    const crest = top > 0 ? cz / top : 0;
+    shade.setHSL(
+      hsl.h + (hash(cy, cx) - 0.5) * 0.04,
+      Math.min(1, hsl.s * (1.05 + jitter * 0.2)),
+      Math.min(0.9, Math.max(0.05, hsl.l * (0.92 + jitter * 0.16 + crest * 0.18))),
+      THREE.SRGBColorSpace,
+    );
+    for (const v of [a, b, c]) {
+      positions.push(v[0], v[1], v[2]);
+      colors.push(shade.r, shade.g, shade.b);
+    }
+  };
+  for (let r = 0; r + 1 < rows.length; r++) {
+    for (let c = 0; c + 1 < cols.length; c++) {
+      const p00 = point(rows[r], cols[c]);
+      const p01 = point(rows[r], cols[c + 1]);
+      const p10 = point(rows[r + 1], cols[c]);
+      const p11 = point(rows[r + 1], cols[c + 1]);
+      // alternate the diagonal, so the facets don't all lean one way; counter-clockwise from above
+      if ((r + c) % 2 === 0) {
+        triangle(p00, p10, p11);
+        triangle(p00, p11, p01);
+      } else {
+        triangle(p00, p10, p01);
+        triangle(p01, p10, p11);
       }
-      geo.computeVertexNormals();
-      return geo;
     }
   }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  geo.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+  geo.computeVertexNormals();
+  return geo;
+}
+
+const livelyCache = new Map<THREE.Material, THREE.Material>();
+
+/** foliage darker underneath and lighter on top (a cheap stand-in for light through leaves), once per geometry */
+function shadeCanopy(geometry: THREE.BufferGeometry) {
+  if (geometry.getAttribute("color")) return;
+  const position = geometry.getAttribute("position");
+  geometry.computeBoundingBox();
+  const { min, max } = geometry.boundingBox!;
+  const span = Math.max(1e-6, max.z - min.z);
+  const colors = new Float32Array(position.count * 3);
+  for (let i = 0; i < position.count; i++) {
+    const shade = 0.7 + 0.45 * ((position.getZ(i) - min.z) / span);
+    colors[i * 3] = colors[i * 3 + 1] = colors[i * 3 + 2] = shade;
+  }
+  geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+}
+
+/**
+ * A library model's material, faceted and a little livelier: foliage (green) more saturated and a touch lighter, so
+ * low-poly canopies read as leaves rather than dark blobs. Shared per source material.
+ */
+function livelier<M extends THREE.Material | THREE.Material[]>(material: M): M {
+  if (Array.isArray(material)) return material.map((m) => livelier(m)) as M;
+  const source = material as THREE.Material;
+  let made = livelyCache.get(source);
+  if (!made) {
+    made = source.clone();
+    const standard = made as THREE.MeshStandardMaterial;
+    if (standard.color) {
+      standard.flatShading = true;
+      standard.roughness = Math.max(standard.roughness ?? 1, 0.8);
+      const hsl = standard.color.getHSL({ h: 0, s: 0, l: 0 }, THREE.SRGBColorSpace);
+      const green = hsl.h > 0.17 && hsl.h < 0.45 && hsl.s > 0.12;
+      if (green) {
+        standard.color.setHSL(hsl.h, Math.min(1, hsl.s * 1.3), Math.min(0.75, hsl.l * 1.12), THREE.SRGBColorSpace);
+        standard.vertexColors = true;
+        standard.userData.foliage = true;
+      }
+    }
+    livelyCache.set(source, made);
+  }
+  return made as M;
 }
 
 function place(object: THREE.Object3D, shape: Shape) {
@@ -151,6 +267,8 @@ export function bodyObject(
             if (child instanceof THREE.Mesh) {
               child.castShadow = true;
               child.receiveShadow = true;
+              child.material = livelier(child.material);
+              if ((child.material as THREE.Material).userData.foliage) shadeCanopy(child.geometry);
             }
           });
           holder.add(visual);

@@ -162,13 +162,14 @@ function Lighting() {
     const root = new THREE.Group();
     viewer.renderer.shadowMap.enabled = true;
     viewer.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    viewer.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    viewer.renderer.toneMappingExposure = 0.9;
+    // Neutral keeps greens green (ACES pulls foliage toward gray-olive)
+    viewer.renderer.toneMapping = THREE.NeutralToneMapping;
+    viewer.renderer.toneMappingExposure = 0.95;
     // physical light (white sun, cool sky, warm bounce): the world's look, not the page's skin
     const sky = new THREE.HemisphereLight(
       new THREE.Color(0.85, 0.9, 1),
       new THREE.Color(0.45, 0.42, 0.38),
-      0.9,
+      1.25,
     );
     sky.up.set(0, 0, 1);
     sky.position.set(0, 0, 50);

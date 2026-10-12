@@ -85,6 +85,8 @@ export function toScene(world: World, name: string): SceneFiles {
     if (shape.quat[3] !== 1) parts.push(`quat="${wxyz(shape.quat)}"`);
     if (shape.texture) {
       parts.push(`material="${textureMaterial(shape.texture)}"`);
+    } else if (shape.type === "hfield") {
+      parts.push(`material="${grassMaterial(shape.rgba)}"`);
     } else {
       parts.push(`rgba="${vec(shape.rgba)}"`);
     }
@@ -94,6 +96,23 @@ export function toScene(world: World, name: string): SceneFiles {
       parts.push(`group="${HIDDEN_GROUP}"`);
     }
     return `      <geom ${parts.join(" ")}/>`;
+  }
+
+  /** a hill's color, speckled lighter and darker (MuJoCo's built-in random marks) so the sim camera sees texture */
+  const grassMaterials = new Map<string, string>();
+  function grassMaterial(rgba: readonly number[]): string {
+    const key = vec(rgba.slice(0, 3));
+    let material = grassMaterials.get(key);
+    if (!material) {
+      material = `grass_${grassMaterials.size}`;
+      grassMaterials.set(key, material);
+      const lighter = rgba.slice(0, 3).map((c) => Math.min(1, c * 1.15));
+      assets.push(
+        `    <texture name="${material}" type="2d" builtin="flat" width="64" height="64" rgb1="${key}" mark="random" random="0.12" markrgb="${vec(lighter)}"/>`,
+      );
+      assets.push(`    <material name="${material}" texture="${material}" texrepeat="0.5 0.5" texuniform="true" specular="0.05"/>`);
+    }
+    return material;
   }
 
   const textureFiles = new Set<string>();
