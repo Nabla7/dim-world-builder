@@ -323,7 +323,7 @@ export function office555(): Project {
     stepDepth: 0.22,
     width: 1.0,
     railing: "both",
-  }, { name: "Corner stairs", floor: ground, position: [0.17, 5.45, 0], rotation: yaw(Math.PI / 2) }));
+  }, { name: "Corner stairs", floor: ground, position: [0.23, 5.45, 0], rotation: yaw(Math.PI / 2) }));
   // where they come up through floor 2
   add(makeItem("hole", { sizeX: 1.6, sizeY: 2.9, depth: UPPER_SLAB }, {
     name: "South stairwell",
