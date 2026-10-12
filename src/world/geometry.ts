@@ -208,6 +208,32 @@ function axisAngle(axis: Vec3, angle: number): Quat {
   return [axis[0] * half, axis[1] * half, axis[2] * half, Math.cos(angle / 2)];
 }
 
+/** a then b: the rotation b applied after a, both [x, y, z, w] */
+function multiplyQuat(b: Quat, a: Quat): Quat {
+  return [
+    b[3] * a[0] + b[0] * a[3] + b[1] * a[2] - b[2] * a[1],
+    b[3] * a[1] - b[0] * a[2] + b[1] * a[3] + b[2] * a[0],
+    b[3] * a[2] + b[0] * a[1] - b[1] * a[0] + b[2] * a[3],
+    b[3] * a[3] - b[0] * a[0] - b[1] * a[1] - b[2] * a[2],
+  ];
+}
+
+/** shapes turned by `yaw` about z, then moved by `offset` */
+function placeShapes(shapes: Shape[], yaw: number, offset: Vec3): Shape[] {
+  const c = Math.cos(yaw);
+  const s = Math.sin(yaw);
+  const turn = axisAngle([0, 0, 1], yaw);
+  return shapes.map((shape) => ({
+    ...shape,
+    pos: [
+      c * shape.pos[0] - s * shape.pos[1] + offset[0],
+      s * shape.pos[0] + c * shape.pos[1] + offset[1],
+      shape.pos[2] + offset[2],
+    ],
+    quat: multiplyQuat(turn, shape.quat),
+  }));
+}
+
 function rotatedBox(center: Vec3, size: Vec3, quat: Quat, color: Rgba, role: Role = "both"): Shape {
   return { ...box(center, size, color, role), quat };
 }
@@ -656,6 +682,22 @@ export function stairsShapes(p: StairsParams): Shape[] {
       color,
     ));
     shapes.push(...flight(p, second, run1, offset, landingZ, -1, color));
+    return shapes;
+  }
+  if (style === "turn") {
+    // up along +x, a square landing, then a second flight at 90° (to +y for a left turn, -y for a right one)
+    const first = Math.ceil(steps / 2);
+    const second = steps - first;
+    const run1 = first * p.stepDepth;
+    const landingZ = first * p.stepHeight;
+    const side = p.turnDirection === "right" ? -1 : 1;
+    const shapes = flight(p, first, 0, 0, 0, 1, color);
+    shapes.push(box([run1 + p.width / 2, 0, landingZ / 2], [p.width, p.width, landingZ], color));
+    shapes.push(...placeShapes(
+      flight(p, second, 0, 0, 0, 1, color),
+      side * Math.PI / 2,
+      [run1 + p.width / 2, side * p.width / 2, landingZ],
+    ));
     return shapes;
   }
   if (style === "spiral") {

@@ -1,6 +1,6 @@
 // The 555 office, both floors, traced from its lidar floor plans ("555 OFFICE - FLOOR 1/2", same frame, meters): walls
 // as thin boxes along the scanned wall lines (trimmed where they meet so they don't overlap), the two stairs as a long
-// straight flight and a spiral in the stairwell, and furniture from the library where the scan shows desks, chairs,
+// straight flight and a 90° turn stairs, and furniture from the library where the scan shows desks, chairs,
 // boxes, shelves and couches. Floor 2 sits 4.7 m above floor 1 over the building's west block.
 
 import { defaultLight, defaultStairs, emptyProject, makeItem, PAINT, yaw } from "./defaults.ts";
@@ -150,9 +150,9 @@ export function office555(): Project {
   wall(4.85, 14.1, 9.85, 14.1, up, 3, [[0.75, 1.75], [3.35, 4.25]], "Room wall");
   wall(7.85, 17.55, 7.85, 14.1, up, 3, [], "Room wall");
   wall(5.4, 8.3, 5.4, 11.6, up, 3, [], "Big room wall");
-  // the stairwell (the spiral comes up at x 0..2, y 8.9..11)
-  wall(0.9, 8.6, 4.4, 8.6, up, 1.1, [], "Stairwell rail");
-  wall(2.3, 8.6, 2.3, 11.1, up, 1.1, [], "Stairwell rail");
+  // rails along the corner stairwell's long sides (it opens at its east end, where the stairs arrive)
+  wall(0.6, 7.92, 3.4, 7.92, up, 1.1, [], "Stairwell rail");
+  wall(0.6, 9.26, 3.4, 9.26, up, 1.1, [], "Stairwell rail");
   // south: two rooms west of the corridor, three east of it
   wall(-0.45, -2.05, 4.2, -2.05, up, 3, [], "Room wall");
   wall(5.8, -2.05, 9.85, -2.05, up, 3, [], "Room wall");
@@ -304,7 +304,7 @@ export function office555(): Project {
   add(mesh("table", ground, 8.4, -9.65, 0));
   add(mesh("drawer_cabinet", ground, 8.9, -11.15, Math.PI));
 
-  // the stairs: a long straight flight up the west side to floor 2, a spiral in the north-west stairwell
+  // the stairs: a long straight flight up the west side to floor 2, a 90° turn stairs in the north-west corner
   add(makeItem("stairs", {
     ...defaultStairs(),
     steps: 24,
@@ -313,25 +313,27 @@ export function office555(): Project {
     width: 1.5,
     railing: "right",
   }, { name: "South stairs", floor: ground, position: [0.45, -10.3, 0], rotation: yaw(Math.PI / 2) }));
+  // north along the west wall to a landing (y 8.1..9.1, 2.35 m up), then east overhead, arriving at x 3.3
   add(makeItem("stairs", {
     ...defaultStairs(),
-    style: "spiral",
-    steps: 26,
-    stepHeight: UPPER_Z / 26,
-    width: 0.85,
-    spiralTurn: 540,
+    style: "turn",
+    turnDirection: "right",
+    steps: 24,
+    stepHeight: UPPER_Z / 24,
+    stepDepth: 0.22,
+    width: 1.0,
     railing: "both",
-  }, { name: "Spiral stairs", floor: ground, position: [0.95, 9.95, 0] }));
+  }, { name: "Corner stairs", floor: ground, position: [0.17, 5.45, 0], rotation: yaw(Math.PI / 2) }));
   // where they come up through floor 2
   add(makeItem("hole", { sizeX: 1.6, sizeY: 2.9, depth: UPPER_SLAB }, {
     name: "South stairwell",
     floor: up,
     position: [0.45, -6.3, 0],
   }));
-  add(makeItem("hole", { sizeX: 2.2, sizeY: 2.2, depth: UPPER_SLAB }, {
-    name: "Spiral stairwell",
+  add(makeItem("hole", { sizeX: 2.8, sizeY: 1.2, depth: UPPER_SLAB }, {
+    name: "Corner stairwell",
     floor: up,
-    position: [0.95, 9.95, 0],
+    position: [2.0, 8.59, 0],
   }));
 
   // ── floor 2 furniture ──

@@ -166,6 +166,16 @@ describe("openings, holes, stairs styles, tags", () => {
     const s = stairsShapes({ ...defaultStairs(), style: "switchback", steps: 10, stepHeight: 0.2 });
     expect(Math.max(...s.map((b) => b.pos[2] + b.size[2]))).toBeCloseTo(2.0, 5);
   });
+  it("90° turn stairs: the second flight runs off the landing's side and reaches the full rise", () => {
+    const p = { ...defaultStairs(), style: "turn" as const, steps: 10, stepHeight: 0.2, stepDepth: 0.3, width: 1 };
+    const left = stairsShapes(p);
+    expect(Math.max(...left.map((b) => b.pos[2] + b.size[2]))).toBeCloseTo(2.0, 5);
+    // the last tread sits beside the landing (x 1.5..2.5), up along +y for a left turn and -y for a right one
+    const top = (shapes: typeof left) => shapes.reduce((a, b) => (b.pos[2] + b.size[2] > a.pos[2] + a.size[2] ? b : a));
+    expect(top(left).pos[0]).toBeCloseTo(2.0, 5);
+    expect(top(left).pos[1]).toBeGreaterThan(1.5);
+    expect(top(stairsShapes({ ...p, turnDirection: "right" })).pos[1]).toBeLessThan(-1.5);
+  });
   it("an AprilTag is printed 10/8 its black square, with texcoords for its image", () => {
     const [tag] = aprilTagShapes({ family: "tag36h11", id: 7, size: 0.1 });
     expect(tag.size[1] * 2).toBeCloseTo(0.125, 6);

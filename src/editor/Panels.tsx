@@ -406,12 +406,26 @@ function StairsEditor({ item }: { item: Extract<Item, { kind: "stairs" }> }) {
           items={[
             { value: "straight", label: "Straight" },
             { value: "switchback", label: "Switchback" },
+            { value: "turn", label: "90° turn" },
             { value: "spiral", label: "Spiral" },
           ]}
           onChange={(style: string) => set({ style: style as StairsParams["style"] })}
           data-testid="stairs-style"
         />
       </Field>
+      {p.style === "turn" && (
+        <Field label="Turns">
+          <Segmented
+            size="sm"
+            value={p.turnDirection ?? "left"}
+            items={[
+              { value: "left", label: "Left" },
+              { value: "right", label: "Right" },
+            ]}
+            onChange={(turnDirection: string) => set({ turnDirection: turnDirection as StairsParams["turnDirection"] })}
+          />
+        </Field>
+      )}
       {p.style === "spiral" && (
         <>
           <Range

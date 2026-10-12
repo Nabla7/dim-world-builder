@@ -51,8 +51,13 @@ export interface StairsParams {
   /** thin treads with open gaps between them (no risers, like a ship's ladder) instead of solid blocks */
   openRisers?: boolean;
   treadThickness?: number;
-  /** straight; switchback: two flights back and forth with a landing; spiral: around a center post */
-  style?: "straight" | "switchback" | "spiral";
+  /**
+   * straight; switchback: two flights back and forth with a landing; turn: two flights with a landing between them,
+   * the second at 90°; spiral: around a center post
+   */
+  style?: "straight" | "switchback" | "turn" | "spiral";
+  /** turn: which way the second flight goes */
+  turnDirection?: "left" | "right";
   /** spiral: degrees turned over the whole climb */
   spiralTurn?: number;
   /** spiral: the center post's radius */
