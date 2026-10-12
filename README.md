@@ -40,6 +40,7 @@ python verify/drive_go2.py examples/nav_test_course                             
 | 80 assets + clutter ![](https://github.com/jeff-hykin/dim-world-builder/releases/download/v0.1.0/5_asset_palette.gif) | Floors ![](https://github.com/jeff-hykin/dim-world-builder/releases/download/v0.1.0/6_floors.gif) |
 | Rooms, doors, windows, ceilings ![](https://github.com/jeff-hykin/dim-world-builder/releases/download/v0.1.0/7_rooms.gif) | Moving obstacles ![](https://github.com/jeff-hykin/dim-world-builder/releases/download/v0.1.0/8_moving_objects.gif) |
 | Holes + AprilTags ![](https://github.com/jeff-hykin/dim-world-builder/releases/download/v0.1.0/11_holes_and_apriltags.gif) | Drain grates, lights, saved views ![](https://github.com/jeff-hykin/dim-world-builder/releases/download/v0.1.0/12_grates_lights_views.gif) |
+| The 555 office, rebuilt from lidar maps; walking people ![](https://github.com/jeff-hykin/dim-world-builder/releases/download/v0.1.0/13_office_people.gif) | |
 
 Agents: every action is an endpoint (`dimos.yaml`); `deno run -A tools/dwb.ts --help` is the CLI. `dwb check` reports clipping
 (edits, generate and export return the same warnings). Example built that way: [tools/examples/office_555.ts](tools/examples/office_555.ts).
