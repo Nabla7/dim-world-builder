@@ -41,8 +41,6 @@ async function addFromPalette(demo: Demo, key: string, search?: string) {
   }
 }
 
-const selectedId = (demo: Demo) => demo.state<string>("s.selected");
-
 /**
  * drag the selected item's gizmo: Move goes along the X arrow then the Y arrow (dx, dy in screen pixels along each),
  * Rotate along the yaw ring, Scale from the center box (uniform)
@@ -280,15 +278,24 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
     await demo.say("Ceiling off and on", 300);
     await demo.clickText("Ceiling", 1200);
     await demo.clickText("Ceiling", 900);
-    await demo.say("Cut openings: a door, a double door, a window, a crawl-space hatch, an archway", 300);
+    await demo.say(
+      "Cut openings: a door, a double door, a window, a crawl-space hatch, an archway",
+      300,
+    );
     for (const kind of ["door", "double", "window", "crawl", "arch"]) {
       await demo.click(`[data-testid="add-opening-${kind}"]`, 700);
     }
     await demo.say("Then put each on a wall, slide it along, size it", 300);
-    const walls = demo.app.locator('[data-testid=inspector] [role=tablist], [data-testid=inspector] [role=radiogroup]');
+    const walls = demo.app.locator(
+      "[data-testid=inspector] [role=tablist], [data-testid=inspector] [role=radiogroup]",
+    );
     void walls;
     for (const [index, wall] of [[1, "S"], [2, "E"], [3, "W"], [4, "S"]] as const) {
-      const group = demo.app.locator(`[data-testid=inspector] >> text="${["Door", "Double door", "Window", "Crawl hatch", "Archway"][index]}"`).first();
+      const group = demo.app.locator(
+        `[data-testid=inspector] >> text="${
+          ["Door", "Double door", "Window", "Crawl hatch", "Archway"][index]
+        }"`,
+      ).first();
       await group.scrollIntoViewIfNeeded();
       const row = group.locator("xpath=..");
       const box = await row.locator(`text="${wall}"`).first().boundingBox();
@@ -333,7 +340,10 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
     await demo.clickText("Back and forth", 1200);
     await demo.clickText("Loop", 1200);
     await demo.page.keyboard.press("Escape");
-    await demo.say("Play motion: watch it ride the path, exactly as the simulation will move it", 300);
+    await demo.say(
+      "Play motion: watch it ride the path, exactly as the simulation will move it",
+      300,
+    );
     await demo.click("[data-testid=preview-motion]", 300);
     await demo.lookAt([1.5, 1.5, 0], [-4, -5, 5]);
     await demo.page.waitForTimeout(9000);
@@ -348,7 +358,10 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
     await openWorld(demo, "office_555");
     await demo.say("The 555 office, rebuilt from its lidar maps with the app's own API", 1200);
     await demo.lookAt([14, 2, 0], [-2, -22, 30]);
-    await demo.say("Play motion: four people walk their loops (they're scene movers: the robot must avoid them)", 300);
+    await demo.say(
+      "Play motion: four people walk their loops (they're scene movers: the robot must avoid them)",
+      300,
+    );
     await demo.click("[data-testid=preview-motion]", 300);
     await demo.page.waitForTimeout(7000);
     await demo.lookAt([22, 2, 0], [14, -12, 9]);
@@ -415,7 +428,9 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
     await demo.page.keyboard.press("Escape");
     await demo.click('[data-testid="add-tool:apriltag"]', 600);
     await demo.say("Click a wall: each click sticks the next tag id there, facing out", 300);
-    const room = await demo.state<number[]>("s.project.items.find(i => i.kind === 'room').position");
+    const room = await demo.state<number[]>(
+      "s.project.items.find(i => i.kind === 'room').position",
+    );
     for (const dx of [-1.5, 0, 1.5]) {
       const [sx, sy] = await demo.worldToScreen(room[0] + dx, room[1] - 2.6, 1.3);
       await demo.moveTo(sx, sy, 18);
@@ -424,7 +439,10 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
       await demo.page.waitForTimeout(700);
     }
     await demo.click("[data-testid=tag-tool-done]");
-    await demo.say("Exported as textured meshes: MuJoCo's camera sees them and OpenCV decodes them", 3000);
+    await demo.say(
+      "Exported as textured meshes: MuJoCo's camera sees them and OpenCV decodes them",
+      3000,
+    );
   },
 
   async "9_viewer_mode"(demo) {
@@ -435,7 +453,8 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
     await demo.click("[data-testid=export]", 800);
     await demo.click("[data-testid=export-go]");
     await demo.app.waitForSelector("[data-testid=export-result]", { timeout: 60000 });
-    const dir = (await demo.app.locator("[data-testid=export-result] b").first().textContent())!.trim();
+    const dir = (await demo.app.locator("[data-testid=export-result] b").first().textContent())!
+      .trim();
     await demo.say(`Exported to ${dir}`, 2000);
     await demo.clickText("Done");
     const python = flag("python") ?? `${Deno.env.get("HOME")}/repos/dimos_sim2/.venv/bin/python`;
@@ -453,16 +472,26 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
       stderr: "piped",
     }).spawn();
     // its output goes to a log beside the video, for when the run dies early
-    const log = await Deno.open(`${outDir}/playground_nav_eval.log`, { write: true, create: true, truncate: true });
+    const log = await Deno.open(`${outDir}/playground_nav_eval.log`, {
+      write: true,
+      create: true,
+      truncate: true,
+    });
     const copy = async (stream: ReadableStream<Uint8Array>) => {
       for await (const chunk of stream) await log.write(chunk);
     };
     const logged = Promise.all([copy(sim.stdout), copy(sim.stderr)]);
     try {
-      await demo.say("nav_eval.py starts a simulated Go2 (dimos sim2) in the export and walks its mapping path…", 400);
+      await demo.say(
+        "nav_eval.py starts a simulated Go2 (dimos sim2) in the export and walks its mapping path…",
+        400,
+      );
       await demo.click('[data-testid=mode] >> text="Viewer"', 500);
       await demo.lookAt([-4, -2, 0], [-16, -18, 12]);
-      await demo.say("Viewer mode: the world lit and shadowed; the Go2 and the moving cart and drum live from the sim", 15000);
+      await demo.say(
+        "Viewer mode: the world lit and shadowed; the Go2 and the moving cart and drum live from the sim",
+        15000,
+      );
       await demo.say("The drum circles the building; the cart rides the corridor", 12000);
       await demo.click("[data-testid=viewer-overlay] label", 500);
       await demo.say("With the robot's lidar on", 15000);
@@ -505,15 +534,26 @@ const SCENES: Record<string, (demo: Demo) => Promise<void>> = {
     await demo.lookAt([0, 0, 0], [-8, 6, 9]);
     await demo.say("Jump back to a saved view any time", 600);
     await demo.click('[data-testid^="view-"]', 2500);
-    await demo.say("Each view exports as a MuJoCo camera; render_view() and api/views/image give its picture", 3000);
+    await demo.say(
+      "Each view exports as a MuJoCo camera; render_view() and api/views/image give its picture",
+      3000,
+    );
   },
 
   async "0_playground_tour"(demo) {
     await openWorld(demo, "playground");
     await demo.say("A playground made in one command: dwb generate --kind playground", 2500);
     const shots: [[number, number, number], [number, number, number], string][] = [
-      [[0, 0, 1], [-14, -16, 12], "A two-floor building: a lab downstairs, an office upstairs, stairs up its side"],
-      [[0, 0, 1.5], [-3.5, -2.5, 2.2], "Inside the lab: furniture from the library, AprilTags on the walls, windows"],
+      [
+        [0, 0, 1],
+        [-14, -16, 12],
+        "A two-floor building: a lab downstairs, an office upstairs, stairs up its side",
+      ],
+      [
+        [0, 0, 1.5],
+        [-3.5, -2.5, 2.2],
+        "Inside the lab: furniture from the library, AprilTags on the walls, windows",
+      ],
       [[4, 12, 1], [-6, 6, 6], "A corridor with a cart riding through it"],
       [[-12, 10, 1.5], [-17, 4, 5], "A spiral stair tower"],
       [[-16, -12, 0], [-24, -22, 9], "A bumpy hill, clutter fields, pits"],

@@ -19,7 +19,12 @@ describe("Footprints", () => {
 function primitivesOverlap(items: Item[]): string[] {
   const discs = items
     .filter((i) => i.kind === "primitive")
-    .map((i) => ({ name: i.name, x: i.position[0], y: i.position[1], r: Math.hypot(i.scale[0], i.scale[1]) / 2 }));
+    .map((i) => ({
+      name: i.name,
+      x: i.position[0],
+      y: i.position[1],
+      r: Math.hypot(i.scale[0], i.scale[1]) / 2,
+    }));
   const overlaps: string[] = [];
   discs.forEach((a, i) =>
     discs.slice(i + 1).forEach((b) => {
@@ -51,7 +56,8 @@ describe("seeded placement", () => {
     const plants = playground(library, 7).items.filter((i) => i.kind === "mesh");
     plants.forEach((a, i) =>
       plants.slice(i + 1).forEach((b) => {
-        expect(Math.hypot(a.position[0] - b.position[0], a.position[1] - b.position[1])).toBeGreaterThanOrEqual(3 * Math.SQRT2);
+        expect(Math.hypot(a.position[0] - b.position[0], a.position[1] - b.position[1]))
+          .toBeGreaterThanOrEqual(3 * Math.SQRT2);
       })
     );
   });

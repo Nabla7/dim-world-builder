@@ -23,7 +23,14 @@ import { emptyProject } from "./world/defaults.ts";
 import { testCourse } from "./world/examples.ts";
 import { clutterYard } from "./world/examples_clutter.ts";
 import type { MeshAsset } from "./world/types.ts";
-import { AddPanel, FloorsPanel, Inspector, ItemsPanel, NavPanel, ViewsPanel } from "./editor/Panels.tsx";
+import {
+  AddPanel,
+  FloorsPanel,
+  Inspector,
+  ItemsPanel,
+  NavPanel,
+  ViewsPanel,
+} from "./editor/Panels.tsx";
 import { Viewport } from "./editor/Viewport.tsx";
 import { ClipBadge } from "./editor/ClipBadge.tsx";
 import {
@@ -39,9 +46,9 @@ import {
   select,
   setDrawingPath,
   setGizmo,
+  setGrass,
   setMode,
   setNavTool,
-  setGrass,
   setPreviewMotion,
   setShowCollision,
   setSnap,
@@ -217,7 +224,13 @@ export function App() {
                   label="Collision"
                   data-testid="show-collision"
                 />
-                <Toggle size="sm" value={grass} onChange={setGrass} label="Grass" data-testid="show-grass" />
+                <Toggle
+                  size="sm"
+                  value={grass}
+                  onChange={setGrass}
+                  label="Grass"
+                  data-testid="show-grass"
+                />
                 <Toggle
                   size="sm"
                   value={previewMotion}
@@ -594,8 +607,8 @@ function ExportDialog({ open, onClose }: { open: boolean; onClose: () => void })
             )}
             <Text small muted>
               Writes{" "}
-              {packageName}/ with scene.xml (MuJoCo), scene.json (entities, spawns, movers, plus views
-              and this project), annotations (the nav test), Python modules and meshes/.
+              {packageName}/ with scene.xml (MuJoCo), scene.json (entities, spawns, movers, plus
+              views and this project), annotations (the nav test), Python modules and meshes/.
             </Text>
           </div>
         )}

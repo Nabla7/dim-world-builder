@@ -14,12 +14,13 @@ dtk run <world>.go2 --simulation mujoco --transport zenoh                 # a Go
 dtk run <blueprint> <world>.scene-data --scene-package ~/dimos_worlds/<world>   # SceneData beside any sim2 blueprint
 ```
 
-Export: `scene.xml`, `scene.json` (sim2: movers; `annotations`: labeled points, paths, areas, e.g. the nav test; views + project in `extensions`),
-`world.py` / `blueprints.py` / `scene_data.py` (a namespace package), `meshes/`, `textures/`.
-Python: `from <world> import world; world.render_view("overview")`.
-`SceneData` answers `/scene_data_request` on `/scene_data` (meshes, lights, cameras) and announces itself on `/scene_info`;
-the [Controller](https://github.com/jeff-hykin/dim-controller) draws it as the "Simulated world" layer.
-Needs dimos branch `jeff/feat/sim2_world_builder`.
+Export: `scene.xml`, `scene.json` (sim2: movers; `annotations`: labeled points, paths, areas, e.g.
+the nav test; views + project in `extensions`), `world.py` / `blueprints.py` / `scene_data.py` (a
+namespace package), `meshes/`, `textures/`. Python:
+`from <world> import world; world.render_view("overview")`. `SceneData` answers
+`/scene_data_request` on `/scene_data` (meshes, lights, cameras) and announces itself on
+`/scene_info`; the [Controller](https://github.com/jeff-hykin/dim-controller) draws it as the
+"Simulated world" layer. Needs dimos branch `jeff/feat/sim2_world_builder`.
 
 ## Nav test
 
@@ -33,17 +34,18 @@ python verify/drive_go2.py examples/nav_test_course                             
 
 ## Editing
 
-| | |
-|---|---|
-| Import a GLB (cooked into convex hulls) ![](https://github.com/jeff-hykin/dim-world-builder/releases/download/v0.1.0/1_import_and_cook.gif) | Move / rotate / scale ![](https://github.com/jeff-hykin/dim-world-builder/releases/download/v0.1.0/2_add_move_rotate_scale.gif) |
-| Stairs: straight, switchback, spiral, open risers, railings ![](https://github.com/jeff-hykin/dim-world-builder/releases/download/v0.1.0/3_stairs.gif) | Bumpy hills ![](https://github.com/jeff-hykin/dim-world-builder/releases/download/v0.1.0/4_hills.gif) |
-| 80 assets + clutter ![](https://github.com/jeff-hykin/dim-world-builder/releases/download/v0.1.0/5_asset_palette.gif) | Floors ![](https://github.com/jeff-hykin/dim-world-builder/releases/download/v0.1.0/6_floors.gif) |
-| Rooms, doors, windows, ceilings ![](https://github.com/jeff-hykin/dim-world-builder/releases/download/v0.1.0/7_rooms.gif) | Moving obstacles ![](https://github.com/jeff-hykin/dim-world-builder/releases/download/v0.1.0/8_moving_objects.gif) |
-| Holes + AprilTags ![](https://github.com/jeff-hykin/dim-world-builder/releases/download/v0.1.0/11_holes_and_apriltags.gif) | Drain grates, lights, saved views ![](https://github.com/jeff-hykin/dim-world-builder/releases/download/v0.1.0/12_grates_lights_views.gif) |
-| The 555 office, rebuilt from lidar maps; walking people ![](https://github.com/jeff-hykin/dim-world-builder/releases/download/v0.1.0/13_office_people.gif) | |
+|                                                                                                                                                            |                                                                                                                                            |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Import a GLB (cooked into convex hulls) ![](https://github.com/jeff-hykin/dim-world-builder/releases/download/v0.1.0/1_import_and_cook.gif)                | Move / rotate / scale ![](https://github.com/jeff-hykin/dim-world-builder/releases/download/v0.1.0/2_add_move_rotate_scale.gif)            |
+| Stairs: straight, switchback, spiral, open risers, railings ![](https://github.com/jeff-hykin/dim-world-builder/releases/download/v0.1.0/3_stairs.gif)     | Bumpy hills ![](https://github.com/jeff-hykin/dim-world-builder/releases/download/v0.1.0/4_hills.gif)                                      |
+| 80 assets + clutter ![](https://github.com/jeff-hykin/dim-world-builder/releases/download/v0.1.0/5_asset_palette.gif)                                      | Floors ![](https://github.com/jeff-hykin/dim-world-builder/releases/download/v0.1.0/6_floors.gif)                                          |
+| Rooms, doors, windows, ceilings ![](https://github.com/jeff-hykin/dim-world-builder/releases/download/v0.1.0/7_rooms.gif)                                  | Moving obstacles ![](https://github.com/jeff-hykin/dim-world-builder/releases/download/v0.1.0/8_moving_objects.gif)                        |
+| Holes + AprilTags ![](https://github.com/jeff-hykin/dim-world-builder/releases/download/v0.1.0/11_holes_and_apriltags.gif)                                 | Drain grates, lights, saved views ![](https://github.com/jeff-hykin/dim-world-builder/releases/download/v0.1.0/12_grates_lights_views.gif) |
+| The 555 office, rebuilt from lidar maps; walking people ![](https://github.com/jeff-hykin/dim-world-builder/releases/download/v0.1.0/13_office_people.gif) |                                                                                                                                            |
 
-Agents: every action is an endpoint (`dimos.yaml`); `deno run -A tools/dwb.ts --help` is the CLI. `dwb check` reports clipping
-(edits, generate and export return the same warnings). Example built that way: [tools/examples/office_555.ts](tools/examples/office_555.ts).
+Agents: every action is an endpoint (`dimos.yaml`); `deno run -A tools/dwb.ts --help` is the CLI.
+`dwb check` reports clipping (edits, generate and export return the same warnings). Example built
+that way: [tools/examples/office_555.ts](tools/examples/office_555.ts).
 
 ## Develop
 

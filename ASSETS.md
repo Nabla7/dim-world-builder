@@ -97,14 +97,15 @@ meters (steel_shelves was exported at 10x and was scaled to its listed 2.14 m he
 Later additions: Kenney Food Kit, Mini Market, Mini Arcade and Nature Kit (same CC0 License.txt);
 Quaternius Ultimate House Interior, Ultimate Nature, Survival, Ultimate RPG and Cyberpunk Game Kit
 packs, each listed as "License CC0" on its quaternius.com pack page (files taken from the
-github.com/trebeljahr/quaternius-showcase mirror); a few Poly Pizza models whose pages state
-"Public Domain (CC0)". Poly Haven models used for the 1k glTF were first decimated in Blender to
-about 4000 triangles (UVs kept) and cooked with `--texture-size 256 --max-faces 3000` to keep each
-folder under 1 MB; metal_trash_can, vintage_suitcase and fire_hydrant ship as sets, so only one item
-was kept. book_pile is five Quaternius Book1_Closed copies stacked, and shoe_pile is two Boots and
-two Slippers (Isa Lousberg) arranged together, before cooking.
+github.com/trebeljahr/quaternius-showcase mirror); a few Poly Pizza models whose pages state "Public
+Domain (CC0)". Poly Haven models used for the 1k glTF were first decimated in Blender to about 4000
+triangles (UVs kept) and cooked with `--texture-size 256 --max-faces 3000` to keep each folder under
+1 MB; metal_trash_can, vintage_suitcase and fire_hydrant ship as sets, so only one item was kept.
+book_pile is five Quaternius Book1_Closed copies stacked, and shoe_pile is two Boots and two
+Slippers (Isa Lousberg) arranged together, before cooking.
 
-**License note (2026-10-11):** quaternius.com now shows a site-wide "Quaternius Asset License" (updated 2026-08-28)
-that restricts redistributing assets as assets, while each pack page used here (House Interior, Nature, Survival, RPG,
-Cyberpunk) still says "License: CC0", and these files came from a CC0-labelled mirror (trebeljahr/quaternius-showcase).
-Check before relying on them; the Poly Pizza items are CC0 per their uploaders' labels.
+**License note (2026-10-11):** quaternius.com now shows a site-wide "Quaternius Asset License"
+(updated 2026-08-28) that restricts redistributing assets as assets, while each pack page used here
+(House Interior, Nature, Survival, RPG, Cyberpunk) still says "License: CC0", and these files came
+from a CC0-labelled mirror (trebeljahr/quaternius-showcase). Check before relying on them; the Poly
+Pizza items are CC0 per their uploaders' labels.

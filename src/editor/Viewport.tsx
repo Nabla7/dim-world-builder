@@ -19,7 +19,7 @@ import { buildWorld, type World } from "../world/geometry.ts";
 import { moverPose } from "../world/movers.ts";
 import type { Item, MeshAsset, Project, Quat, Vec3 } from "../world/types.ts";
 import { bodyObject, disposeObject, ghost } from "./three_world.ts";
-import { fadeGrid, gridFocus, skyDome, SKY, SUN_DIRECTION, windTime } from "./nature.ts";
+import { fadeGrid, gridFocus, SKY, skyDome, SUN_DIRECTION, windTime } from "./nature.ts";
 import {
   addItem,
   addNavPoint,
@@ -95,7 +95,8 @@ function exposeForAutomation(viewer: {
       target: round(viewer.controls.target),
       fov: Math.round(viewer.camera.fov * 10) / 10,
     }),
-    goTo: (eye, target, fov) => glideTo(viewer, new THREE.Vector3(...eye), new THREE.Vector3(...target), fov),
+    goTo: (eye, target, fov) =>
+      glideTo(viewer, new THREE.Vector3(...eye), new THREE.Vector3(...target), fov),
   };
   Object.assign(globalThis, {
     dimWorldBuilder: {
@@ -184,9 +185,17 @@ function Lighting() {
     };
     scene.environment = environment;
     scene.environmentIntensity = 0.55;
-    scene.fog = new THREE.Fog(SKY.horizon.clone(), mode === "view" ? 45 : 70, mode === "view" ? 220 : 320);
+    scene.fog = new THREE.Fog(
+      SKY.horizon.clone(),
+      mode === "view" ? 45 : 70,
+      mode === "view" ? 220 : 320,
+    );
     // fill: blue from above, a green-brown bounce from the ground
-    const fill = new THREE.HemisphereLight(new THREE.Color(0.62, 0.75, 0.95), new THREE.Color(0.42, 0.4, 0.3), 0.55);
+    const fill = new THREE.HemisphereLight(
+      new THREE.Color(0.62, 0.75, 0.95),
+      new THREE.Color(0.42, 0.4, 0.3),
+      0.55,
+    );
     fill.up.set(0, 0, 1);
     fill.position.set(0, 0, 50);
     const sun = new THREE.DirectionalLight(SKY.sun.clone(), 2.6);
@@ -221,7 +230,9 @@ function Lighting() {
       gridFocus.value = Math.max(8, camera.position.distanceTo(viewer.controls.target));
       // the viewer remakes its grid on a theme change: fade each new one
       for (const child of scene.children) {
-        if ((child as THREE.GridHelper).isLineSegments && child.type === "GridHelper") fadeGrid(child);
+        if ((child as THREE.GridHelper).isLineSegments && child.type === "GridHelper") {
+          fadeGrid(child);
+        }
       }
     });
     return {

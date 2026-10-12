@@ -56,10 +56,15 @@ export function playground(library: MeshAsset[], seed = 7): Project {
       const reachY = depth / 2 - wall - r - 0.1;
       if (reachX <= 0 || reachY <= 0) continue;
       const spot = footprints.place(
-        () => [round(center[0] + (random() * 2 - 1) * reachX), round(center[1] + (random() * 2 - 1) * reachY)],
+        () => [
+          round(center[0] + (random() * 2 - 1) * reachX),
+          round(center[1] + (random() * 2 - 1) * reachY),
+        ],
         r,
       );
-      if (spot) add(mesh(asset, floor, [spot[0], spot[1], 0], Math.round(random() * 4) * (Math.PI / 2)));
+      if (spot) {
+        add(mesh(asset, floor, [spot[0], spot[1], 0], Math.round(random() * 4) * (Math.PI / 2)));
+      }
     }
   };
   /** tag36h11 tags on a room's inner walls, facing in, 1.3 m up */
@@ -231,7 +236,12 @@ export function playground(library: MeshAsset[], seed = 7): Project {
   );
   // storm drains on the way out of the start: slats a foot can slip between, and a grid the lidar half sees through
   add(
-    makeItem("hole", { sizeX: 0.6, sizeY: 1.2, depth: 0.5, grate: { ...defaultGrate(), direction: "y" } }, {
+    makeItem("hole", {
+      sizeX: 0.6,
+      sizeY: 1.2,
+      depth: 0.5,
+      grate: { ...defaultGrate(), direction: "y" },
+    }, {
       name: "Slatted drain",
       floor: ground,
       position: [-9, -4, 0],
@@ -286,8 +296,20 @@ export function playground(library: MeshAsset[], seed = 7): Project {
   // remembered views for agents and tests: each exports as a MuJoCo camera named by its key
   project.views = [
     { key: "overview", name: "Overview", eye: [-22, -26, 20], target: [0, 0, 0], fov: 50 },
-    { key: "lab_inside", name: "Inside the lab", eye: [-4.2, -3.2, 2.2], target: [1, 1.5, 0.6], fov: 60 },
-    { key: "corridor", name: "Down the corridor", eye: [-3.5, 12, 1.8], target: [10, 12, 0.6], fov: 55 },
+    {
+      key: "lab_inside",
+      name: "Inside the lab",
+      eye: [-4.2, -3.2, 2.2],
+      target: [1, 1.5, 0.6],
+      fov: 60,
+    },
+    {
+      key: "corridor",
+      name: "Down the corridor",
+      eye: [-3.5, 12, 1.8],
+      target: [10, 12, 0.6],
+      fov: 55,
+    },
     { key: "hill", name: "The hill", eye: [-16, -22, 4], target: [-16, -12, 0.3], fov: 55 },
   ];
   project.nav = {

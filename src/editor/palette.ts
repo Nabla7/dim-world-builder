@@ -1,6 +1,14 @@
 // What the Add panel offers, and how each choice becomes an item placed where the camera looks.
 
-import { defaultGrate, defaultHill, defaultLight, defaultRoom, defaultStairs, makeItem, PAINT } from "../world/defaults.ts";
+import {
+  defaultGrate,
+  defaultHill,
+  defaultLight,
+  defaultRoom,
+  defaultStairs,
+  makeItem,
+  PAINT,
+} from "../world/defaults.ts";
 import type { Object3D } from "three";
 import { scatterClutter } from "../world/scatter.ts";
 import type { Item, MeshAsset, PrimitiveParams, Vec3 } from "../world/types.ts";

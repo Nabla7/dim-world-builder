@@ -107,9 +107,13 @@ export function toScene(world: World, name: string): SceneFiles {
       grassMaterials.set(key, material);
       const lighter = rgba.slice(0, 3).map((c) => Math.min(1, c * 1.15));
       assets.push(
-        `    <texture name="${material}" type="2d" builtin="flat" width="64" height="64" rgb1="${key}" mark="random" random="0.12" markrgb="${vec(lighter)}"/>`,
+        `    <texture name="${material}" type="2d" builtin="flat" width="64" height="64" rgb1="${key}" mark="random" random="0.12" markrgb="${
+          vec(lighter)
+        }"/>`,
       );
-      assets.push(`    <material name="${material}" texture="${material}" texrepeat="0.5 0.5" texuniform="true" specular="0.05"/>`);
+      assets.push(
+        `    <material name="${material}" texture="${material}" texrepeat="0.5 0.5" texuniform="true" specular="0.05"/>`,
+      );
     }
     return material;
   }
@@ -186,7 +190,9 @@ ${assets.join("\n")}
 ${bodies.join("\n")}
 ${
     world.cameras.map((c) =>
-      `    <camera name="${attr(c.name)}" pos="${vec(c.pos)}" xyaxes="${vec(c.xyaxes)}" fovy="${num(c.fovy)}"/>`
+      `    <camera name="${attr(c.name)}" pos="${vec(c.pos)}" xyaxes="${vec(c.xyaxes)}" fovy="${
+        num(c.fovy)
+      }"/>`
     ).join("\n")
   }
   </worldbody>
@@ -223,7 +229,13 @@ ${
   };
   const viewsJson = {
     format: "dim-world-builder.views.v1",
-    views: world.cameras.map((c) => ({ camera: c.name, name: c.label, pos: c.pos, xyaxes: c.xyaxes, fovy: c.fovy })),
+    views: world.cameras.map((c) => ({
+      camera: c.name,
+      name: c.label,
+      pos: c.pos,
+      xyaxes: c.xyaxes,
+      fovy: c.fovy,
+    })),
   };
   return { xml, sceneJson, viewsJson, meshFiles, textureFiles };
 }

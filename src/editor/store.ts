@@ -236,7 +236,9 @@ export function saveView(camera: Omit<CameraView, "key" | "name">, name?: string
   const views = state.project.views ?? [];
   let n = views.length + 1;
   while (views.some((v) => v.name === `View ${n}`)) n++;
-  const [added] = withViewKeys([...views, { key: "", name: name ?? `View ${n}`, ...camera }]).slice(-1);
+  const [added] = withViewKeys([...views, { key: "", name: name ?? `View ${n}`, ...camera }]).slice(
+    -1,
+  );
   edit((p) => ({ ...p, views: [...(p.views ?? []), added] }));
   return added.key;
 }
@@ -255,7 +257,10 @@ export function renameView(key: string, name: string): string | null {
 
 /** points a view at where the camera is now */
 export function updateView(key: string, camera: Omit<CameraView, "key" | "name">) {
-  edit((p) => ({ ...p, views: (p.views ?? []).map((v) => (v.key === key ? { ...v, ...camera } : v)) }));
+  edit((p) => ({
+    ...p,
+    views: (p.views ?? []).map((v) => (v.key === key ? { ...v, ...camera } : v)),
+  }));
 }
 
 export function removeView(key: string) {

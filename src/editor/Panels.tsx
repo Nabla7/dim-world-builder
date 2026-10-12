@@ -28,8 +28,8 @@ import { slug } from "../world/keys.ts";
 import type {
   AprilTagParams,
   CameraView,
-  GrateParams,
   DoorOpening,
+  GrateParams,
   HillParams,
   HoleParams,
   Item,
@@ -422,7 +422,8 @@ function StairsEditor({ item }: { item: Extract<Item, { kind: "stairs" }> }) {
               { value: "left", label: "Left" },
               { value: "right", label: "Right" },
             ]}
-            onChange={(turnDirection: string) => set({ turnDirection: turnDirection as StairsParams["turnDirection"] })}
+            onChange={(turnDirection: string) =>
+              set({ turnDirection: turnDirection as StairsParams["turnDirection"] })}
           />
         </Field>
       )}
@@ -779,7 +780,9 @@ function HoleEditor({ item }: { item: Extract<Item, { kind: "hole" }> }) {
   );
 }
 
-function GrateEditor({ grate, onChange }: { grate: GrateParams; onChange: (grate: GrateParams) => void }) {
+function GrateEditor(
+  { grate, onChange }: { grate: GrateParams; onChange: (grate: GrateParams) => void },
+) {
   const set = (change: Partial<GrateParams>) => onChange({ ...grate, ...change });
   return (
     <>
@@ -804,7 +807,8 @@ function GrateEditor({ grate, onChange }: { grate: GrateParams; onChange: (grate
               { value: "x", label: "X" },
               { value: "y", label: "Y" },
             ]}
-            onChange={(direction: string) => set({ direction: direction as GrateParams["direction"] })}
+            onChange={(direction: string) =>
+              set({ direction: direction as GrateParams["direction"] })}
           />
         </Field>
       )}
@@ -836,8 +840,8 @@ function GrateEditor({ grate, onChange }: { grate: GrateParams; onChange: (grate
         onChange={(barDepth) => set({ barDepth })}
       />
       <Text small muted>
-        Every bar is a collision box flush with the floor: lidar sees down through the gaps, and feet can catch in
-        them.
+        Every bar is a collision box flush with the floor: lidar sees down through the gaps, and
+        feet can catch in them.
       </Text>
     </>
   );
@@ -920,7 +924,11 @@ function LightEditor({ item }: { item: Extract<Item, { kind: "light" }> }) {
           onChange={(angle) => set({ angle })}
         />
       )}
-      <Toggle value={p.shadows} onChange={(shadows: boolean) => set({ shadows })} label="Casts shadows" />
+      <Toggle
+        value={p.shadows}
+        onChange={(shadows: boolean) => set({ shadows })}
+        label="Casts shadows"
+      />
       <Text small muted>
         Spots and suns shine down the item's -z: tilt it to aim. Lidar doesn't see light.
       </Text>
@@ -1294,8 +1302,8 @@ export function ViewsPanel() {
   return (
     <div style={section} data-testid="views-panel">
       <Text small muted>
-        Remembered camera views. Each exports as a MuJoCo camera named by its id, for agents and tests to look from
-        (render_view in the exported package, or GET api/views/image).
+        Remembered camera views. Each exports as a MuJoCo camera named by its id, for agents and
+        tests to look from (render_view in the exported package, or GET api/views/image).
       </Text>
       <Button
         icon="camera"
@@ -1338,11 +1346,18 @@ function ViewEditor({ saved, onRenamed }: { saved: CameraView; onRenamed: (key: 
   return (
     <>
       <Field label="Name">
-        <TextInput value={draft} onChange={setDraft} onCommit={commit} onEnter={commit} data-testid="view-name" />
+        <TextInput
+          value={draft}
+          onChange={setDraft}
+          onCommit={commit}
+          onEnter={commit}
+          data-testid="view-name"
+        />
       </Field>
       {problem && <Text small tone="danger">{problem}</Text>}
       <Text small muted>
-        Id <code>{saved.key}</code> · from {saved.eye.map((v) => v.toFixed(1)).join(", ")} · {saved.fov}° fov
+        Id <code>{saved.key}</code> · from {saved.eye.map((v) => v.toFixed(1)).join(", ")} ·{" "}
+        {saved.fov}° fov
       </Text>
       <ButtonGroup>
         <Button

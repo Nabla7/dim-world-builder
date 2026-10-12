@@ -53,7 +53,10 @@ function bladeGeometry(): THREE.BufferGeometry {
   // every normal up: the blade shades like the ground it grows from, so a meadow reads soft, not noisy
   geometry.setAttribute(
     "normal",
-    new THREE.Float32BufferAttribute(Array.from({ length: positions.length / 3 }, () => [0, 0, 1]).flat(), 3),
+    new THREE.Float32BufferAttribute(
+      Array.from({ length: positions.length / 3 }, () => [0, 0, 1]).flat(),
+      3,
+    ),
   );
   geometry.setIndex(index);
   return geometry;
@@ -119,7 +122,11 @@ export function grassOn(
     const height = (0.14 + 0.14 * clump + 0.07 * hash(i, 3.1)) * (0.25 + 0.75 * fringe);
     const width = 0.05 + 0.025 * hash(i, 7.7);
     rotation.setFromAxisAngle(axis, hash(i, 5.3) * Math.PI * 2);
-    matrix.compose(new THREE.Vector3(x, y, heightAt(x, y) - 0.01), rotation, new THREE.Vector3(width, width, height));
+    matrix.compose(
+      new THREE.Vector3(x, y, heightAt(x, y) - 0.01),
+      rotation,
+      new THREE.Vector3(width, width, height),
+    );
     mesh.setMatrixAt(i, matrix);
     tint.setHSL(
       hsl.h + (clump - 0.5) * 0.035 + (hash(i, 1.9) - 0.5) * 0.012,
@@ -216,9 +223,15 @@ export function fadeGrid(grid: THREE.Object3D) {
     shader.uniforms.uFocus = gridFocus;
     shader.vertexShader = shader.vertexShader
       .replace("#include <common>", "#include <common>\nvarying float vViewDistance;")
-      .replace("#include <project_vertex>", "#include <project_vertex>\nvViewDistance = length(mvPosition.xyz);");
+      .replace(
+        "#include <project_vertex>",
+        "#include <project_vertex>\nvViewDistance = length(mvPosition.xyz);",
+      );
     shader.fragmentShader = shader.fragmentShader
-      .replace("#include <common>", "#include <common>\nvarying float vViewDistance;\nuniform float uFocus;")
+      .replace(
+        "#include <common>",
+        "#include <common>\nvarying float vViewDistance;\nuniform float uFocus;",
+      )
       .replace(
         "#include <fog_fragment>",
         "gl_FragColor.a *= 1.0 - smoothstep(uFocus * 0.9, uFocus * 1.8, vViewDistance);\n#include <fog_fragment>",

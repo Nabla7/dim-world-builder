@@ -12,7 +12,14 @@ import {
 import { toScene } from "./mjcf.ts";
 import { moverPose } from "./movers.ts";
 import type { Vec3 } from "./types.ts";
-import { defaultHill, defaultLight, defaultRoom, defaultStairs, emptyProject, makeItem } from "./defaults.ts";
+import {
+  defaultHill,
+  defaultLight,
+  defaultRoom,
+  defaultStairs,
+  emptyProject,
+  makeItem,
+} from "./defaults.ts";
 import { testCourse } from "./examples.ts";
 import { keyedProject } from "./keys.ts";
 import { barCenters, grateShapes } from "./geometry.ts";
@@ -169,11 +176,19 @@ describe("openings, holes, stairs styles, tags", () => {
     expect(Math.max(...s.map((b) => b.pos[2] + b.size[2]))).toBeCloseTo(2.0, 5);
   });
   it("90° turn stairs: the second flight runs off the landing's side and reaches the full rise", () => {
-    const p = { ...defaultStairs(), style: "turn" as const, steps: 10, stepHeight: 0.2, stepDepth: 0.3, width: 1 };
+    const p = {
+      ...defaultStairs(),
+      style: "turn" as const,
+      steps: 10,
+      stepHeight: 0.2,
+      stepDepth: 0.3,
+      width: 1,
+    };
     const left = stairsShapes(p);
     expect(Math.max(...left.map((b) => b.pos[2] + b.size[2]))).toBeCloseTo(2.0, 5);
     // the last tread sits beside the landing (x 1.5..2.5), up along +y for a left turn and -y for a right one
-    const top = (shapes: typeof left) => shapes.reduce((a, b) => (b.pos[2] + b.size[2] > a.pos[2] + a.size[2] ? b : a));
+    const top = (shapes: typeof left) =>
+      shapes.reduce((a, b) => (b.pos[2] + b.size[2] > a.pos[2] + a.size[2] ? b : a));
     expect(top(left).pos[0]).toBeCloseTo(2.0, 5);
     expect(top(left).pos[1]).toBeGreaterThan(1.5);
     expect(top(stairsShapes({ ...p, turnDirection: "right" })).pos[1]).toBeLessThan(-1.5);
@@ -187,20 +202,20 @@ describe("openings, holes, stairs styles, tags", () => {
 });
 
 it("a light item exports as a MuJoCo light on its body, with no geoms", () => {
-  const project = emptyProject("lit")
+  const project = emptyProject("lit");
   project.items = [
     makeItem("light", { ...defaultLight(), type: "spot", shadows: true }, {
       name: "Lamp",
       floor: project.floors[0].id,
       position: [1, 2, 2.5],
     }),
-  ]
-  const { xml } = toScene(buildWorld(project, {}), "lit")
-  const lamp = xml.match(/<body name="lamp[^"]*"[\s\S]*?<\/body>/)![0]
-  expect(lamp).toMatch(/<light [^>]*cutoff="40"[^>]*\/>/)
-  expect(lamp).toMatch(/castshadow="true"/)
-  expect(lamp).not.toMatch(/<geom/)
-})
+  ];
+  const { xml } = toScene(buildWorld(project, {}), "lit");
+  const lamp = xml.match(/<body name="lamp[^"]*"[\s\S]*?<\/body>/)![0];
+  expect(lamp).toMatch(/<light [^>]*cutoff="40"[^>]*\/>/);
+  expect(lamp).toMatch(/castshadow="true"/);
+  expect(lamp).not.toMatch(/<geom/);
+});
 
 describe("remembered views", () => {
   it("export as fixed MuJoCo cameras named by key, looking at their target", () => {
@@ -209,7 +224,9 @@ describe("remembered views", () => {
     const { xml, viewsJson } = toScene(buildWorld(project, {}), "views");
     // looking down +y: right is +x, up is +z
     expect(xml).toContain('<camera name="front" pos="0 -5 2" xyaxes="1 0 0 0 0 1" fovy="45"/>');
-    expect((viewsJson as { views: { camera: string }[] }).views.map((v) => v.camera)).toEqual(["front"]);
+    expect((viewsJson as { views: { camera: string }[] }).views.map((v) => v.camera)).toEqual([
+      "front",
+    ]);
   });
   it("looks straight down without a degenerate frame", () => {
     const axes = cameraLookAt([0, 0, 10], [0, 0, 0]);
@@ -223,7 +240,11 @@ describe("remembered views", () => {
       { key: "", name: "Kitchen view", eye: [0, 0, 1], target: [1, 0, 1], fov: 50 },
       { key: "", name: "2nd floor", eye: [0, 0, 1], target: [1, 0, 1], fov: 50 },
     ];
-    expect(keyedProject(project).views!.map((v) => v.key)).toEqual(["kitchen_view", "kitchen_view_2", "view_2nd_floor"]);
+    expect(keyedProject(project).views!.map((v) => v.key)).toEqual([
+      "kitchen_view",
+      "kitchen_view_2",
+      "view_2nd_floor",
+    ]);
   });
 });
 
@@ -244,7 +265,12 @@ describe("drain grates", () => {
     expect(barCenters(0.05, 0.03, 0.04)).toEqual([]);
   });
   it("makes slats one way and a grid both ways, tops flush with the floor, as collision boxes", () => {
-    const hole = { sizeX: 0.6, sizeY: 1.2, depth: 0.5, grate: { ...defaultGrate(), direction: "y" as const } };
+    const hole = {
+      sizeX: 0.6,
+      sizeY: 1.2,
+      depth: 0.5,
+      grate: { ...defaultGrate(), direction: "y" as const },
+    };
     const slats = grateShapes(hole);
     expect(slats.length).toBe(barCenters(0.6, 0.03, 0.04).length);
     slats.forEach((bar) => {
@@ -253,10 +279,17 @@ describe("drain grates", () => {
       expect(bar.pos[2] + bar.size[2]).toBeCloseTo(0); // top at the floor
     });
     const grid = grateShapes({ ...hole, grate: { ...hole.grate, pattern: "grid" } });
-    expect(grid.length).toBe(barCenters(0.6, 0.03, 0.04).length + barCenters(1.2, 0.03, 0.04).length);
+    expect(grid.length).toBe(
+      barCenters(0.6, 0.03, 0.04).length + barCenters(1.2, 0.03, 0.04).length,
+    );
   });
   it("never goes deeper than the hole", () => {
-    const [bar] = grateShapes({ sizeX: 1, sizeY: 1, depth: 0.02, grate: { ...defaultGrate(), barDepth: 0.1 } });
+    const [bar] = grateShapes({
+      sizeX: 1,
+      sizeY: 1,
+      depth: 0.02,
+      grate: { ...defaultGrate(), barDepth: 0.1 },
+    });
     expect(bar.size[2] * 2).toBeCloseTo(0.02);
   });
 });
@@ -264,18 +297,34 @@ describe("drain grates", () => {
 describe("hill look in the export", () => {
   it("gives a hill the speckled grass material, keeping its heights", () => {
     const project = emptyProject("grass");
-    project.items = [makeItem("hill", defaultHill(), { name: "Hill", floor: project.floors[0].id, position: [0, 0, 0] })];
+    project.items = [
+      makeItem("hill", defaultHill(), {
+        name: "Hill",
+        floor: project.floors[0].id,
+        position: [0, 0, 0],
+      }),
+    ];
     const world = buildWorld(project, {});
     const { xml } = toScene(world, "grass");
     expect(xml).toMatch(/<texture name="grass_0" type="2d" builtin="flat"[^>]*mark="random"/);
     expect(xml).toMatch(/type="hfield" hfield="[^"]+" material="grass_0"/);
     const shape = world.bodies.flatMap((b) => b.shapes).find((s) => s.type === "hfield")!;
-    expect(xml).toContain(`elevation="${shape.hfield!.elevation.map((v) => String(Math.round(v * 1e6) / 1e6)).join(" ")}"`);
+    expect(xml).toContain(
+      `elevation="${
+        shape.hfield!.elevation.map((v) => String(Math.round(v * 1e6) / 1e6)).join(" ")
+      }"`,
+    );
   });
 });
 
 describe("moverPose", () => {
-  const mover = { body: "cart", waypoints: [[0, 0, 0], [4, 0, 0], [4, 3, 0]] as Vec3[], speed: 1, mode: "loop" as const, heading: "path" as const };
+  const mover = {
+    body: "cart",
+    waypoints: [[0, 0, 0], [4, 0, 0], [4, 3, 0]] as Vec3[],
+    speed: 1,
+    mode: "loop" as const,
+    heading: "path" as const,
+  };
   it("walks the path at its speed and loops back to the start", () => {
     expect(moverPose(mover, 2)!.position).toEqual([2, 0, 0]);
     expect(moverPose(mover, 5.5)!.position[1]).toBeCloseTo(1.5);

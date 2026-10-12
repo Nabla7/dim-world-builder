@@ -2,16 +2,16 @@
 
 import type {
   Floor,
+  GrateParams,
   HillParams,
   Item,
+  LightParams,
   Project,
   Quat,
   Rgb,
   RoomParams,
   StairsParams,
   Vec3,
-  GrateParams,
-  LightParams,
 } from "./types.ts";
 
 export const PAINT = {

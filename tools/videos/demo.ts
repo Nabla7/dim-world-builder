@@ -169,7 +169,8 @@ export class Demo {
 
   /** nudge a slider with the keyboard (visible, exact): focus it, then press ←/→ */
   async slide(label: string, presses: number) {
-    const slider = this.app.locator(`input[type=range][aria-label="${label}"] >> visible=true`).first();
+    const slider = this.app.locator(`input[type=range][aria-label="${label}"] >> visible=true`)
+      .first();
     await slider.scrollIntoViewIfNeeded().catch(() => {});
     const box = await slider.boundingBox();
     if (box) await this.moveTo(box.x + box.width / 2, box.y + box.height / 2, 15);

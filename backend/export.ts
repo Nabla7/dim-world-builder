@@ -71,7 +71,10 @@ export async function exportProject(
   await write("README.md", readme(name, project));
   await write("pyproject.toml", pyproject(name));
   // the SceneData module (scene_data_request -> scene_data), the same file in every export
-  await write("scene_data.py", await Deno.readTextFile(new URL("./python/scene_data.py", import.meta.url)));
+  await write(
+    "scene_data.py",
+    await Deno.readTextFile(new URL("./python/scene_data.py", import.meta.url)),
+  );
   for (const [asset, meshFiles] of scene.meshFiles) {
     const source = assetDirs[asset];
     if (!source) throw new Error(`no files for mesh asset ${asset}`);
@@ -100,7 +103,8 @@ export async function exportProject(
  */
 export function navAnnotations(project: Project) {
   const plan = navEval(project);
-  const slug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+  const slug = (name: string) =>
+    name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
   const annotations: Record<string, unknown>[] = [];
   if (plan.mapping_path.length >= 2) {
     annotations.push({
@@ -292,7 +296,9 @@ async function copyWritable(from: string, to: string) {
 function pyproject(name: string): string {
   return `# pip install -e this folder (into dimos's venv) and dimos finds its blueprints:
 #   dimos run ${name.replace(/_/g, "-")}.go2          a Go2 in this world, plus the SceneData module
-#   dimos run <blueprint> ${name.replace(/_/g, "-")}.scene-data --scene-package <this folder>   SceneData beside any sim2 blueprint
+#   dimos run <blueprint> ${
+    name.replace(/_/g, "-")
+  }.scene-data --scene-package <this folder>   SceneData beside any sim2 blueprint
 [project]
 name = "${name}"
 version = "0.1.0"

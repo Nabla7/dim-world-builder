@@ -11,7 +11,15 @@ const UPPER = "upper";
 const UPPER_Z = 4.7;
 const UPPER_SLAB = 0.3;
 
-type Segment = { x0: number; y0: number; x1: number; y1: number; height: number; floor: string; name: string };
+type Segment = {
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+  height: number;
+  floor: string;
+  name: string;
+};
 
 /**
  * Closed joins with no overlap (lidar can't see through, the clip check stays quiet). Where two walls' ends meet (an L
@@ -33,10 +41,14 @@ function trimmed(walls: Segment[]): Segment[] {
     const length = Math.hypot(w.x1 - w.x0, w.y1 - w.y0);
     const ux = (w.x1 - w.x0) / length;
     const uy = (w.y1 - w.y0) / length;
-    const others = walls.map((o, k) => ({ o, k })).filter(({ o }) => o !== w && o.floor === w.floor);
+    const others = walls.map((o, k) => ({ o, k })).filter(({ o }) =>
+      o !== w && o.floor === w.floor
+    );
     /** how far to move this end outward (+) or inward (-) */
     const shift = (x: number, y: number): number => {
-      const corner = others.find(({ o }) => ends(o).some(([ex, ey]) => Math.hypot(ex - x, ey - y) < half));
+      const corner = others.find(({ o }) =>
+        ends(o).some(([ex, ey]) => Math.hypot(ex - x, ey - y) < half)
+      );
       if (corner) {
         const { o } = corner;
         const ol = Math.hypot(o.x1 - o.x0, o.y1 - o.y0);
@@ -49,7 +61,13 @@ function trimmed(walls: Segment[]): Segment[] {
     };
     const start = shift(w.x0, w.y0);
     const end = shift(w.x1, w.y1);
-    return { ...w, x0: w.x0 - ux * start, y0: w.y0 - uy * start, x1: w.x1 + ux * end, y1: w.y1 + uy * end };
+    return {
+      ...w,
+      x0: w.x0 - ux * start,
+      y0: w.y0 - uy * start,
+      x1: w.x1 + ux * end,
+      y1: w.y1 + uy * end,
+    };
   }).filter((w) => Math.hypot(w.x1 - w.x0, w.y1 - w.y0) > WALL); // a jog no longer than a wall is thick is already closed
 }
 
@@ -93,7 +111,12 @@ export function office555(): Project {
     const ux = (x1 - x0) / length;
     const uy = (y1 - y0) / length;
     let start = 0;
-    for (const [from, to] of [...gaps.sort((a, b) => a[0] - b[0]), [length, length] as [number, number]]) {
+    for (
+      const [from, to] of [
+        ...gaps.sort((a, b) => a[0] - b[0]),
+        [length, length] as [number, number],
+      ]
+    ) {
       if (from - start > 0.05) {
         walls.push({
           x0: x0 + ux * start,
@@ -178,14 +201,30 @@ export function office555(): Project {
 
   const items: Item[] = trimmed(walls).map(wallItem);
   const add = (...more: Item[]) => items.push(...more);
-  const mesh = (asset: string, floor: string, x: number, y: number, angle = 0, z = 0, name = asset) =>
+  const mesh = (
+    asset: string,
+    floor: string,
+    x: number,
+    y: number,
+    angle = 0,
+    z = 0,
+    name = asset,
+  ) =>
     makeItem("mesh", { source: "library", asset }, {
       name: name.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase()),
       floor,
       position: [round(x), round(y), z] as Vec3,
       rotation: yaw(angle),
     });
-  const box = (floor: string, x: number, y: number, size: Vec3, color: Rgb, name: string, angle = 0) =>
+  const box = (
+    floor: string,
+    x: number,
+    y: number,
+    size: Vec3,
+    color: Rgb,
+    name: string,
+    angle = 0,
+  ) =>
     makeItem("primitive", { shape: "box", color }, {
       name,
       floor,
@@ -201,7 +240,17 @@ export function office555(): Project {
     const c = Math.cos(facing);
     const s = Math.sin(facing);
     add(mesh("desk", floor, x, y, facing + Math.PI / 2));
-    add(mesh("computer_monitor", floor, x - c * 0.15, y - s * 0.15, facing + Math.PI / 2 + Math.PI, 0.76, "monitor"));
+    add(
+      mesh(
+        "computer_monitor",
+        floor,
+        x - c * 0.15,
+        y - s * 0.15,
+        facing + Math.PI / 2 + Math.PI,
+        0.76,
+        "monitor",
+      ),
+    );
     add(mesh("office_chair", floor, x + c * 0.75, y + s * 0.75, facing + Math.PI / 2));
   };
 
@@ -260,7 +309,13 @@ export function office555(): Project {
   add(mesh("houseplant_tall", ground, 29.2, 17.1, 0));
 
   // the east wall: boxes, a couple of desks, shelving
-  for (const [x, y, a] of [[26.2, 12.35, 0], [27.1, 12.35, 0], [25.9, 11.2, 20], [26.6, 10.5, -15], [27.6, 10.6, 10]]) {
+  for (
+    const [x, y, a] of [[26.2, 12.35, 0], [27.1, 12.35, 0], [25.9, 11.2, 20], [26.6, 10.5, -15], [
+      27.6,
+      10.6,
+      10,
+    ]]
+  ) {
     add(mesh("cardboard_box", ground, x, y, a * D));
   }
   for (const y of [9.6, 10.5, 11.4]) add(mesh("wooden_crate", ground, 29.1, y, Math.PI / 2));
@@ -299,7 +354,20 @@ export function office555(): Project {
   // the lab: couches and chairs along its west wall, a bench in the middle
   add(mesh("sofa", ground, 0.15, 3.9, -Math.PI / 2));
   add(mesh("sofa", ground, 0.15, 1.6, -Math.PI / 2));
-  for (const [x, y, a] of [[1.45, 4.55, 10], [1.4, 3.0, -20], [1.6, 1.0, 30], [1.25, -0.2, -35], [3.3, 2.9, 0], [4.8, 3.05, 40], [3.8, -1.0, 20], [2.6, -1.4, -10], [4.6, -1.55, 60], [6.5, 2.6, 0]]) {
+  for (
+    const [x, y, a] of [
+      [1.45, 4.55, 10],
+      [1.4, 3.0, -20],
+      [1.6, 1.0, 30],
+      [1.25, -0.2, -35],
+      [3.3, 2.9, 0],
+      [4.8, 3.05, 40],
+      [3.8, -1.0, 20],
+      [2.6, -1.4, -10],
+      [4.6, -1.55, 60],
+      [6.5, 2.6, 0],
+    ]
+  ) {
     add(mesh("office_chair", ground, x, y, a * D));
   }
   add(mesh("table", ground, 5.75, 1.0, 80 * D, 0, "bench"));
@@ -323,7 +391,12 @@ export function office555(): Project {
     stepDepth: 0.23,
     width: 1.5,
     railing: "right",
-  }, { name: "South stairs", floor: ground, position: [0.45, -10.3, 0], rotation: yaw(Math.PI / 2) }));
+  }, {
+    name: "South stairs",
+    floor: ground,
+    position: [0.45, -10.3, 0],
+    rotation: yaw(Math.PI / 2),
+  }));
   // north along the west wall to a landing (y 8.1..9.1, 2.35 m up), then east overhead, arriving at x 3.3
   add(makeItem("stairs", {
     ...defaultStairs(),
@@ -335,7 +408,12 @@ export function office555(): Project {
     stepDepth: 0.22,
     width: 1.0,
     railing: "both",
-  }, { name: "Corner stairs", floor: ground, position: [0.23, 5.45, 0], rotation: yaw(Math.PI / 2) }));
+  }, {
+    name: "Corner stairs",
+    floor: ground,
+    position: [0.23, 5.45, 0],
+    rotation: yaw(Math.PI / 2),
+  }));
   // where they come up through floor 2
   add(makeItem("hole", { sizeX: 1.6, sizeY: 2.9, depth: UPPER_SLAB }, {
     name: "South stairwell",
@@ -352,7 +430,9 @@ export function office555(): Project {
   add(mesh("table", up, 2.0, 15.3, 0, 0, "kitchen island"));
   add(mesh("monobloc_chair", up, 1.1, 14.25, 0));
   add(mesh("monobloc_chair", up, 2.7, 14.25, 0));
-  for (const y of [14.4, 15.6, 16.8]) add(mesh("drawer_cabinet", up, 4.4, y, -Math.PI / 2, 0, "counter"));
+  for (const y of [14.4, 15.6, 16.8]) {
+    add(mesh("drawer_cabinet", up, 4.4, y, -Math.PI / 2, 0, "counter"));
+  }
   add(mesh("fridge", up, 0.15, 16.8, -Math.PI / 2));
   add(mesh("bookcase_closed", up, 2.3, 11.5, 0));
   station(up, 6.3, 16.6, Math.PI);
@@ -365,7 +445,9 @@ export function office555(): Project {
     add(mesh("office_chair", up, x, 10.65, 0));
   }
   // the big hall: storage and a couch along its west wall
-  for (const [x, y] of [[0.3, 6.8], [0.3, 6.0], [1.1, 6.8]]) add(mesh("cardboard_box", up, x, y, 0));
+  for (const [x, y] of [[0.3, 6.8], [0.3, 6.0], [1.1, 6.8]]) {
+    add(mesh("cardboard_box", up, x, y, 0));
+  }
   add(mesh("sofa", up, 0.15, 4.2, -Math.PI / 2));
   add(mesh("wooden_crate", up, 0.4, 2.9, Math.PI / 2));
   add(mesh("desk", up, 0.55, 1.65, Math.PI / 2));
@@ -399,19 +481,49 @@ export function office555(): Project {
   }
 
   // ── people walking around: kinematic movers (they push the robot, nothing pushes them) ──
-  const person = (name: string, floor: string, path: [number, number][], color: typeof PAINT.blue, speed: number, mode: "loop" | "pingpong") => ({
+  const person = (
+    name: string,
+    floor: string,
+    path: [number, number][],
+    color: typeof PAINT.blue,
+    speed: number,
+    mode: "loop" | "pingpong",
+  ) => ({
     ...makeItem("primitive", { shape: "person", color }, {
       name,
       floor,
       position: [path[0][0], path[0][1], 0],
       scale: [0.45, 0.28, 1.72],
     }),
-    mover: { waypoints: path.map(([x, y]) => [x, y, 0] as [number, number, number]), speed, mode, heading: "path" as const },
+    mover: {
+      waypoints: path.map(([x, y]) => [x, y, 0] as [number, number, number]),
+      speed,
+      mode,
+      heading: "path" as const,
+    },
   });
-  add(person("Walker A", ground, [[20.5, -8], [23.5, -8], [23.5, 10], [20.5, 10]], PAINT.blue, 1.1, "loop"));
+  add(
+    person(
+      "Walker A",
+      ground,
+      [[20.5, -8], [23.5, -8], [23.5, 10], [20.5, 10]],
+      PAINT.blue,
+      1.1,
+      "loop",
+    ),
+  );
   add(person("Walker B", ground, [[12, -6], [19, -6]], PAINT.red, 0.9, "pingpong"));
   add(person("Walker C", ground, [[12.5, 12], [22, 12]], PAINT.green, 1.0, "pingpong"));
-  add(person("Walker D", up, [[6.5, -1.2], [6.5, 5.6], [3.0, 5.6], [3.0, -1.2]], PAINT.orange, 0.8, "loop"));
+  add(
+    person(
+      "Walker D",
+      up,
+      [[6.5, -1.2], [6.5, 5.6], [3.0, 5.6], [3.0, -1.2]],
+      PAINT.orange,
+      0.8,
+      "loop",
+    ),
+  );
   project.items = items;
   project.activeFloor = ground;
   project.spawns = [

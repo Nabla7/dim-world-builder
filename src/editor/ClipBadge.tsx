@@ -41,7 +41,13 @@ export function ClipBadge() {
   };
   return (
     <div style={{ position: "relative" }}>
-      <Button size="sm" variant="warn" icon="alert" onClick={() => setOpen(!open)} data-testid="clip-badge">
+      <Button
+        size="sm"
+        variant="warn"
+        icon="alert"
+        onClick={() => setOpen(!open)}
+        data-testid="clip-badge"
+      >
         {clips.length} clipping
       </Button>
       {open && (
@@ -79,8 +85,9 @@ export function ClipBadge() {
                 font: "inherit",
               }}
             >
-              {clip.a.name} <span style={{ color: "var(--muted-fg)" }}>({clip.a.key})</span> ↔ {clip.b.name}{" "}
-              <span style={{ color: "var(--muted-fg)" }}>({clip.b.key})</span> · {Math.round(clip.depth_m * 100)} cm
+              {clip.a.name} <span style={{ color: "var(--muted-fg)" }}>({clip.a.key})</span> ↔{" "}
+              {clip.b.name} <span style={{ color: "var(--muted-fg)" }}>({clip.b.key})</span> ·{" "}
+              {Math.round(clip.depth_m * 100)} cm
             </button>
           ))}
         </div>

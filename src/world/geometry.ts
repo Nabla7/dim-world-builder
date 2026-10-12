@@ -399,10 +399,20 @@ function personShapes(sx: number, sy: number, sz: number, color: Rgba): Shape[] 
   const shapes: Shape[] = [];
   for (const side of [1, -1]) {
     shapes.push(cylinderAlong("z", [0, side * sx * 0.2, leg / 2], legRadius, leg, trousers));
-    shapes.push(cylinderAlong("z", [0, side * (sx / 2 - legRadius * 0.6), torsoBottom + torso * 0.45], legRadius * 0.7, torso * 0.95, color));
+    shapes.push(
+      cylinderAlong(
+        "z",
+        [0, side * (sx / 2 - legRadius * 0.6), torsoBottom + torso * 0.45],
+        legRadius * 0.7,
+        torso * 0.95,
+        color,
+      ),
+    );
   }
   shapes.push(box([0, 0, torsoBottom + torso / 2], [sy * 0.9, sx * 0.72, torso], color));
-  shapes.push(cylinderAlong("z", [0, 0, torsoBottom + torso + sz * 0.03], headRadius * 0.45, sz * 0.06, skin));
+  shapes.push(
+    cylinderAlong("z", [0, 0, torsoBottom + torso + sz * 0.03], headRadius * 0.45, sz * 0.06, skin),
+  );
   shapes.push({
     type: "sphere",
     pos: [0, 0, sz - headRadius],
@@ -691,7 +701,13 @@ function railings(
 }
 
 /** a landing at height `top`: a solid block down to the floor, or with open risers a slab you can see and step under */
-function landingBox(p: StairsParams, center: [number, number], size: [number, number], top: number, color: Rgba): Shape {
+function landingBox(
+  p: StairsParams,
+  center: [number, number],
+  size: [number, number],
+  top: number,
+  color: Rgba,
+): Shape {
   const thick = p.openRisers ? Math.min(0.08, top) : top;
   return box([center[0], center[1], top - thick / 2], [size[0], size[1], thick], color);
 }
@@ -711,7 +727,15 @@ export function stairsShapes(p: StairsParams): Shape[] {
     const offset = p.width + gap;
     const landing = p.width;
     const shapes = flight(p, first, 0, 0, 0, 1, color);
-    shapes.push(landingBox(p, [run1 + landing / 2, offset / 2], [landing, p.width * 2 + gap], landingZ, color));
+    shapes.push(
+      landingBox(
+        p,
+        [run1 + landing / 2, offset / 2],
+        [landing, p.width * 2 + gap],
+        landingZ,
+        color,
+      ),
+    );
     shapes.push(...flight(p, second, run1, offset, landingZ, -1, color));
     return shapes;
   }
@@ -881,12 +905,15 @@ export function itemShapes(item: Item, assets: Record<string, MeshAsset>): Shape
       return meshShapes(assets[item.params.asset], item.scale);
     case "hole":
       // the hole is cut out of its floor's slab (floorSlab); the box is only a handle to pick it by in the editor
-      return [...grateShapes(item.params), box(
-        [0, 0, -item.params.depth / 2],
-        [item.params.sizeX, item.params.sizeY, item.params.depth],
-        [0.9, 0.3, 0.2, 0.18],
-        "editor",
-      )];
+      return [
+        ...grateShapes(item.params),
+        box(
+          [0, 0, -item.params.depth / 2],
+          [item.params.sizeX, item.params.sizeY, item.params.depth],
+          [0.9, 0.3, 0.2, 0.18],
+          "editor",
+        ),
+      ];
     case "apriltag":
       return aprilTagShapes(item.params);
     case "light":
@@ -968,7 +995,10 @@ export function barCenters(span: number, barWidth: number, gap: number): number[
   const count = Math.floor((span - gap) / (barWidth + gap));
   if (count < 1) return [];
   const spacing = (span - count * barWidth) / (count + 1);
-  return Array.from({ length: count }, (_, i) => -span / 2 + spacing * (i + 1) + barWidth * (i + 0.5));
+  return Array.from(
+    { length: count },
+    (_, i) => -span / 2 + spacing * (i + 1) + barWidth * (i + 0.5),
+  );
 }
 
 /** a hole's grate: bars whose tops are flush with the floor (z = 0 in the hole's frame), running the hole's length */

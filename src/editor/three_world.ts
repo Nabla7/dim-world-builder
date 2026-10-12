@@ -57,7 +57,12 @@ function material(shape: Shape): THREE.MeshStandardMaterial {
   const [r, g, b, a] = shape.rgba;
   if (shape.type === "hfield") {
     // its colors are per facet (lowPolyGround)
-    return new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.95, metalness: 0 });
+    return new THREE.MeshStandardMaterial({
+      vertexColors: true,
+      flatShading: true,
+      roughness: 0.95,
+      metalness: 0,
+    });
   }
   return new THREE.MeshStandardMaterial({
     color: new THREE.Color().setRGB(r, g, b, THREE.SRGBColorSpace),
@@ -146,7 +151,10 @@ export function lowPolyHeightAt(shape: Shape): (x: number, y: number) => number 
     const det = (b[1] - c[1]) * (a[0] - c[0]) + (c[0] - b[0]) * (a[1] - c[1]);
     const wa = ((b[1] - c[1]) * (x - c[0]) + (c[0] - b[0]) * (y - c[1])) / det;
     const wb = ((c[1] - a[1]) * (x - c[0]) + (a[0] - c[0]) * (y - c[1])) / det;
-    return { z: wa * a[2] + wb * b[2] + (1 - wa - wb) * c[2], inside: wa >= -1e-6 && wb >= -1e-6 && wa + wb <= 1 + 1e-6 };
+    return {
+      z: wa * a[2] + wb * b[2] + (1 - wa - wb) * c[2],
+      inside: wa >= -1e-6 && wb >= -1e-6 && wa + wb <= 1 + 1e-6,
+    };
   };
   return (x, y) => {
     const c = find(xs, x, false);
@@ -171,7 +179,12 @@ export function lowPolyHeightAt(shape: Shape): (x: number, y: number) => number 
  */
 function lowPolyGround(shape: Shape): THREE.BufferGeometry {
   const { rows, cols, point, top } = lowPolyGrid(shape);
-  const base = new THREE.Color().setRGB(shape.rgba[0], shape.rgba[1], shape.rgba[2], THREE.SRGBColorSpace);
+  const base = new THREE.Color().setRGB(
+    shape.rgba[0],
+    shape.rgba[1],
+    shape.rgba[2],
+    THREE.SRGBColorSpace,
+  );
   const hsl = base.getHSL({ h: 0, s: 0, l: 0 }, THREE.SRGBColorSpace);
   const positions: number[] = [];
   const colors: number[] = [];
@@ -250,7 +263,12 @@ function livelier<M extends THREE.Material | THREE.Material[]>(material: M): M {
       const hsl = standard.color.getHSL({ h: 0, s: 0, l: 0 }, THREE.SRGBColorSpace);
       const green = hsl.h > 0.17 && hsl.h < 0.45 && hsl.s > 0.12;
       if (green) {
-        standard.color.setHSL(hsl.h, Math.min(1, hsl.s * 1.3), Math.min(0.75, hsl.l * 1.12), THREE.SRGBColorSpace);
+        standard.color.setHSL(
+          hsl.h,
+          Math.min(1, hsl.s * 1.3),
+          Math.min(0.75, hsl.l * 1.12),
+          THREE.SRGBColorSpace,
+        );
         standard.vertexColors = true;
         standard.userData.foliage = true;
         // light through the leaves: a little of their own color, so the shaded side isn't a dark hole
@@ -401,12 +419,21 @@ export function bodyObject(
 
 /** the editor's stand-in for an exported MuJoCo light, shining down the body's -z */
 function threeLight(light: WorldLight): THREE.Object3D {
-  const color = new THREE.Color(...light.rgb.map((c) => Math.min(1, c)) as [number, number, number]);
+  const color = new THREE.Color(
+    ...light.rgb.map((c) => Math.min(1, c)) as [number, number, number],
+  );
   const strength = Math.max(...light.rgb) * 3;
   const made = light.type === "sun"
     ? new THREE.DirectionalLight(color, strength)
     : light.type === "spot"
-    ? new THREE.SpotLight(color, strength * 8, light.range * 2, (light.angle * Math.PI) / 180, 0.3, 1)
+    ? new THREE.SpotLight(
+      color,
+      strength * 8,
+      light.range * 2,
+      (light.angle * Math.PI) / 180,
+      0.3,
+      1,
+    )
     : new THREE.PointLight(color, strength * 8, light.range * 2, 1);
   made.castShadow = light.shadows;
   if (made instanceof THREE.DirectionalLight || made instanceof THREE.SpotLight) {

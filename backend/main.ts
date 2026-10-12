@@ -177,7 +177,12 @@ async function clipCheck(project: Project, tolerance = 0.02): Promise<ClipReport
   const parent = `${dataDir}/checks/${crypto.randomUUID()}`;
   try {
     const { list, dirs } = await assets();
-    const result = await exportProject(project, Object.fromEntries(list.map((a) => [a.id, a])), dirs, parent);
+    const result = await exportProject(
+      project,
+      Object.fromEntries(list.map((a) => [a.id, a])),
+      dirs,
+      parent,
+    );
     const output = await new Deno.Command(uvBinary(), {
       args: [
         "run",
@@ -343,7 +348,9 @@ async function api(request: Request, url: URL): Promise<Response | null> {
       `${projectsDir}/${safeName(url.searchParams.get("name") ?? "")}.json`,
       null,
     );
-    return project ? json({ views: keyedProject(project).views ?? [] }) : json({ error: "no such project" }, 404);
+    return project
+      ? json({ views: keyedProject(project).views ?? [] })
+      : json({ error: "no such project" }, 404);
   }
   if (route === "POST /api/views") {
     // remember a view (by name; its key comes from the name) in a saved world, replacing one with the same key
@@ -355,7 +362,10 @@ async function api(request: Request, url: URL): Promise<Response | null> {
     const project = await readJson<Project | null>(file, null);
     if (!project) return json({ error: `no project ${name}` }, 404);
     if (!view?.name || !Array.isArray(view.eye) || !Array.isArray(view.target)) {
-      return json({ error: "give { name, view: { name, eye: [x,y,z], target: [x,y,z], fov? } }" }, 400);
+      return json(
+        { error: "give { name, view: { name, eye: [x,y,z], target: [x,y,z], fov? } }" },
+        400,
+      );
     }
     const key = view.key || slug(view.name).replace(/^item_/, "view_");
     const saved = { key, name: view.name, eye: view.eye, target: view.target, fov: view.fov ?? 50 };
@@ -386,7 +396,12 @@ async function api(request: Request, url: URL): Promise<Response | null> {
       Math.max(16, Math.min(1920, Number(url.searchParams.get(param)) || fallback));
     const parent = `${dataDir}/renders`;
     const { list, dirs } = await assets();
-    const result = await exportProject(project, Object.fromEntries(list.map((a) => [a.id, a])), dirs, parent);
+    const result = await exportProject(
+      project,
+      Object.fromEntries(list.map((a) => [a.id, a])),
+      dirs,
+      parent,
+    );
     const out = `${parent}/${result.name}_${key}.png`;
     const output = await new Deno.Command(uvBinary(), {
       args: [
@@ -407,7 +422,10 @@ async function api(request: Request, url: URL): Promise<Response | null> {
       env: { UV_PROJECT_ENVIRONMENT: `${dataDir}/cooker-venv` },
     }).output();
     if (!output.success) {
-      return json({ error: "render failed", detail: new TextDecoder().decode(output.stderr).slice(-2000) }, 500);
+      return json({
+        error: "render failed",
+        detail: new TextDecoder().decode(output.stderr).slice(-2000),
+      }, 500);
     }
     return new Response(await Deno.readFile(out), { headers: { "content-type": "image/png" } });
   }
