@@ -15,7 +15,7 @@
   ],
   "items": [
     {
-      "id": "9f67ddf787ab",
+      "id": "22d9ec3572fb",
       "kind": "room",
       "params": {
         "width": 6,
@@ -28,7 +28,7 @@
           {
             "wall": "south",
             "offset": 0,
-            "width": 1.2,
+            "width": 1.6,
             "height": 2.1
           }
         ],
@@ -58,7 +58,7 @@
       ]
     },
     {
-      "id": "40cf3f55a7aa",
+      "id": "d3d645f97c79",
       "kind": "room",
       "params": {
         "width": 6,
@@ -101,7 +101,7 @@
       ]
     },
     {
-      "id": "79785a219a5d",
+      "id": "4fe0b399bd6e",
       "kind": "primitive",
       "params": {
         "shape": "box",
@@ -131,7 +131,7 @@
       ]
     },
     {
-      "id": "7fbf12a9330c",
+      "id": "eeb02f8eb419",
       "kind": "primitive",
       "params": {
         "shape": "box",
@@ -178,7 +178,7 @@
       }
     },
     {
-      "id": "69afb04a4665",
+      "id": "d8c1d92ceaf1",
       "kind": "stairs",
       "params": {
         "steps": 6,
@@ -211,7 +211,7 @@
       ]
     },
     {
-      "id": "64cf354627bb",
+      "id": "fd895e5fcf26",
       "kind": "hill",
       "params": {
         "sizeX": 10,
@@ -249,7 +249,7 @@
       ]
     },
     {
-      "id": "1a2987381c20",
+      "id": "a80ace610213",
       "kind": "primitive",
       "params": {
         "shape": "cone",
@@ -279,7 +279,7 @@
       ]
     },
     {
-      "id": "014d678664b8",
+      "id": "8843a674eee5",
       "kind": "primitive",
       "params": {
         "shape": "cone",
@@ -309,7 +309,7 @@
       ]
     },
     {
-      "id": "3e3dd5c8c1d0",
+      "id": "137c772fd402",
       "kind": "primitive",
       "params": {
         "shape": "beanbag",
@@ -322,8 +322,8 @@
       "name": "Beanbag",
       "floor": "ground",
       "position": [
-        4.5,
-        1.2,
+        3.6,
+        1.6,
         0
       ],
       "rotation": [
@@ -339,7 +339,7 @@
       ]
     },
     {
-      "id": "605cae28931e",
+      "id": "46ef9ef64bef",
       "kind": "primitive",
       "params": {
         "shape": "ramp",
@@ -369,7 +369,7 @@
       ]
     },
     {
-      "id": "866216d3dd74",
+      "id": "9c82b5a2de3f",
       "kind": "primitive",
       "params": {
         "shape": "cylinder",
@@ -382,8 +382,8 @@
       "name": "Pillar",
       "floor": "ground",
       "position": [
-        6.5,
-        -1,
+        7.6,
+        1.4,
         0
       ],
       "rotation": [

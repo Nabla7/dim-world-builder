@@ -2,152 +2,152 @@
   "format": "dimos.scene.v1",
   "id": "clutter_yard",
   "entities": {
-    "step_stool_392dd0": {
-      "body": "step_stool_392dd0",
+    "step_stool_c3a55a": {
+      "body": "step_stool_c3a55a",
       "label": "Step stool",
       "kind": "step_stool",
       "movable": false
     },
-    "pipe_a46be1": {
-      "body": "pipe_a46be1",
+    "pipe_2c7e49": {
+      "body": "pipe_2c7e49",
       "label": "Pipe",
       "kind": "pipe",
       "movable": false
     },
-    "soccer_ball_6facd1": {
-      "body": "soccer_ball_6facd1",
+    "soccer_ball_bd2e43": {
+      "body": "soccer_ball_bd2e43",
       "label": "Soccer ball",
       "kind": "soccer_ball",
       "movable": false
     },
-    "step_stool_b6fdbc": {
-      "body": "step_stool_b6fdbc",
+    "step_stool_ed50cc": {
+      "body": "step_stool_ed50cc",
       "label": "Step stool",
       "kind": "step_stool",
       "movable": false
     },
-    "step_stool_7da7e2": {
-      "body": "step_stool_7da7e2",
+    "step_stool_615067": {
+      "body": "step_stool_615067",
       "label": "Step stool",
       "kind": "step_stool",
       "movable": false
     },
-    "pipe_22815a": {
-      "body": "pipe_22815a",
+    "pipe_bdbd78": {
+      "body": "pipe_bdbd78",
       "label": "Pipe",
       "kind": "pipe",
       "movable": false
     },
-    "cone_bd4dcf": {
-      "body": "cone_bd4dcf",
+    "cone_10a389": {
+      "body": "cone_10a389",
       "label": "Cone",
       "kind": "cone",
       "movable": false
     },
-    "step_stool_06a45a": {
-      "body": "step_stool_06a45a",
+    "step_stool_242b27": {
+      "body": "step_stool_242b27",
       "label": "Step stool",
       "kind": "step_stool",
       "movable": false
     },
-    "soccer_ball_b35b7a": {
-      "body": "soccer_ball_b35b7a",
+    "soccer_ball_0c0789": {
+      "body": "soccer_ball_0c0789",
       "label": "Soccer ball",
       "kind": "soccer_ball",
       "movable": false
     },
-    "soccer_ball_71f976": {
-      "body": "soccer_ball_71f976",
+    "soccer_ball_aaa165": {
+      "body": "soccer_ball_aaa165",
       "label": "Soccer ball",
       "kind": "soccer_ball",
       "movable": false
     },
-    "cone_7567ff": {
-      "body": "cone_7567ff",
+    "cone_023376": {
+      "body": "cone_023376",
       "label": "Cone",
       "kind": "cone",
       "movable": false
     },
-    "bowling_pin_90cca2": {
-      "body": "bowling_pin_90cca2",
+    "bowling_pin_747b6a": {
+      "body": "bowling_pin_747b6a",
       "label": "Bowling pin",
       "kind": "bowling_pin",
       "movable": false
     },
-    "box_3653f8": {
-      "body": "box_3653f8",
+    "box_969659": {
+      "body": "box_969659",
       "label": "Box",
       "kind": "box",
       "movable": false
     },
-    "cone_de9b8b": {
-      "body": "cone_de9b8b",
+    "cone_4aaa23": {
+      "body": "cone_4aaa23",
       "label": "Cone",
       "kind": "cone",
       "movable": false
     },
-    "ladder_f51d01": {
-      "body": "ladder_f51d01",
+    "ladder_0c61ea": {
+      "body": "ladder_0c61ea",
       "label": "Ladder",
       "kind": "ladder",
       "movable": false
     },
-    "box_0f2056": {
-      "body": "box_0f2056",
+    "box_c53527": {
+      "body": "box_c53527",
       "label": "Box",
       "kind": "box",
       "movable": false
     },
-    "soccer_ball_209a1b": {
-      "body": "soccer_ball_209a1b",
+    "soccer_ball_860e6d": {
+      "body": "soccer_ball_860e6d",
       "label": "Soccer ball",
       "kind": "soccer_ball",
       "movable": false
     },
-    "cone_387f90": {
-      "body": "cone_387f90",
+    "cone_405e57": {
+      "body": "cone_405e57",
       "label": "Cone",
       "kind": "cone",
       "movable": false
     },
-    "step_stool_45e4e7": {
-      "body": "step_stool_45e4e7",
+    "step_stool_a6f904": {
+      "body": "step_stool_a6f904",
       "label": "Step stool",
       "kind": "step_stool",
       "movable": false
     },
-    "cone_2df408": {
-      "body": "cone_2df408",
+    "cone_d90937": {
+      "body": "cone_d90937",
       "label": "Cone",
       "kind": "cone",
       "movable": false
     },
-    "cone_fc8a8e": {
-      "body": "cone_fc8a8e",
+    "cone_7877d8": {
+      "body": "cone_7877d8",
       "label": "Cone",
       "kind": "cone",
       "movable": false
     },
-    "bowling_pin_6ad8bf": {
-      "body": "bowling_pin_6ad8bf",
+    "bowling_pin_fb91bd": {
+      "body": "bowling_pin_fb91bd",
       "label": "Bowling pin",
       "kind": "bowling_pin",
       "movable": false
     },
-    "ladder_105f0e": {
-      "body": "ladder_105f0e",
+    "ladder_51946f": {
+      "body": "ladder_51946f",
       "label": "Ladder",
       "kind": "ladder",
       "movable": false
     },
-    "open_stairs_6d8660": {
-      "body": "open_stairs_6d8660",
+    "open_stairs_e04bc6": {
+      "body": "open_stairs_e04bc6",
       "label": "Open stairs",
       "kind": "stairs",
       "movable": false
     },
-    "big_pipe_827c24": {
-      "body": "big_pipe_827c24",
+    "big_pipe_ba2a2c": {
+      "body": "big_pipe_ba2a2c",
       "label": "Big pipe",
       "kind": "pipe",
       "movable": false

@@ -28,7 +28,14 @@ export function testCourse(): Project {
     { name: "upstairs", floor: "upper", position: [5.5, 0, 0], yaw: 0 },
   ];
   project.items.push(
-    makeItem("room", { ...defaultRoom(), width: 6, depth: 5, floor: false, ceiling: true }, {
+    makeItem("room", {
+      ...defaultRoom(),
+      width: 6,
+      depth: 5,
+      floor: false,
+      ceiling: true,
+      doors: [{ wall: "south", offset: 0, width: 1.6, height: 2.1 }],
+    }, {
       name: "Lab room",
       floor: ground,
       position: [5.5, 0, 0],
@@ -86,7 +93,7 @@ export function testCourse(): Project {
     makeItem("primitive", { shape: "beanbag", color: PAINT.red }, {
       name: "Beanbag",
       floor: ground,
-      position: [4.5, 1.2, 0],
+      position: [3.6, 1.6, 0],
       scale: [0.9, 0.9, 0.6],
     }),
     makeItem("primitive", { shape: "ramp", color: PAINT.slate }, {
@@ -99,7 +106,7 @@ export function testCourse(): Project {
     makeItem("primitive", { shape: "cylinder", color: PAINT.blue }, {
       name: "Pillar",
       floor: ground,
-      position: [6.5, -1, 0],
+      position: [7.6, 1.4, 0],
       scale: [0.4, 0.4, 2.8],
     }),
   );
