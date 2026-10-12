@@ -218,7 +218,8 @@ export function office555(): Project {
   wall(-0.45, -4.45, 1.8, -4.45, ground, 3, [[0.0, 0.9]], "Small room wall");
 
   // the south rooms
-  wall(1.45, -7.0, 1.45, -11.15, ground, 3, [[2.0, 3.6]], "South room wall");
+  // the south stairs' east wall, with a door (y -5.65..-4.65) at their foot
+  wall(1.45, -4.45, 1.45, -11.15, ground, 3, [[0.2, 1.2]], "Stairwell wall");
   wall(1.45, -11.15, 6.35, -11.15, ground, 3, [[3.6, 4.6]], "South room wall");
   wall(6.35, -11.15, 6.35, -7.35, ground, 3, [], "South room wall");
   wall(6.6, -7.3, 9.55, -7.3, ground, 3, [], "South room wall");
@@ -466,26 +467,14 @@ export function office555(): Project {
     position: [0.23, 6.45, 0],
     rotation: yaw(Math.PI / 2),
   }));
-  // a pair of closet doors under the south stairs' tall end, in the south room's west wall (y -10.6..-9.0)
-  const doorX = 1.45;
-  add(box(ground, doorX, -9.8, [0.15, 1.6, 2.2], PAINT.slate, "Under-stairs door frame"));
-  add(makeItem("primitive", { shape: "box", color: WALL_PAINT }, {
-    name: "Under-stairs door lintel",
+  // the stairwell door, swung open flat against the corridor side of the wall, hinged at its south jamb
+  add(box(ground, 1.55, -6.15, [0.04, 1.0, 2.1], PAINT.wood, "Stairwell door"));
+  add(makeItem("primitive", { shape: "box", color: PAINT.steel }, {
+    name: "Door handle",
     floor: ground,
-    position: [doorX, -9.8, 2.2],
-    scale: [0.15, 1.6, 0.8],
+    position: [1.6, -5.75, 1.0],
+    scale: [0.04, 0.03, 0.2],
   }));
-  for (const y of [-10.19, -9.41]) {
-    add(box(ground, doorX + 0.085, y, [0.02, 0.76, 2.12], PAINT.wood, "Under-stairs door"));
-  }
-  for (const y of [-9.88, -9.72]) {
-    add(makeItem("primitive", { shape: "box", color: PAINT.steel }, {
-      name: "Door handle",
-      floor: ground,
-      position: [doorX + 0.11, y, 1.0],
-      scale: [0.04, 0.03, 0.2],
-    }));
-  }
   // where they come up through floor 2
   add(makeItem("hole", { sizeX: 1.6, sizeY: 3.0, depth: UPPER_SLAB }, {
     name: "South stairwell",
