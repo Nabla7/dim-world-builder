@@ -166,7 +166,8 @@ function WorldLayer({ assets }: { assets: Record<string, MeshAsset> }) {
   const mode = useEditor((s) => s.mode);
   const world = useMemo(() => buildWorld(project, assets), [project, assets]);
   const worldRef = useRef<World>(world);
-  const framedName = useRef<string | null>(null);
+  const framed = useRef(-1);
+  const opened = useEditor((s) => s.opened);
   worldRef.current = world;
   const tf = useTf();
   const layer = useLayer(({ viewer }) => {
@@ -220,9 +221,10 @@ function WorldLayer({ assets }: { assets: Record<string, MeshAsset> }) {
       objects.set(body.itemId, object);
       root.add(object);
     }
-    // a different world was opened: frame all of it
-    if (framedName.current !== project.name && world.bodies.length) {
-      framedName.current = project.name;
+    // a different world was opened: frame all of it (once; an empty world is never framed later)
+    const justOpened = framed.current !== opened;
+    framed.current = opened;
+    if (justOpened && world.bodies.length) {
       const bounds = new THREE.Box3().setFromObject(root);
       const center = bounds.getCenter(new THREE.Vector3());
       const size = Math.max(4, bounds.getSize(new THREE.Vector3()).length());

@@ -21,6 +21,8 @@ export interface EditorState {
   future: Project[];
   /** the last time the project changed, for autosave */
   revision: number;
+  /** counts opened projects (not edits), so the view frames each newly opened world once */
+  opened: number;
 }
 
 let state: EditorState = {
@@ -34,6 +36,7 @@ let state: EditorState = {
   past: [],
   future: [],
   revision: 0,
+  opened: 0,
 };
 const listeners = new Set<() => void>();
 
