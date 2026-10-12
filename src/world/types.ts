@@ -69,6 +69,19 @@ export interface HoleParams {
   depth: number;
 }
 
+/** a light for the simulation's cameras (and the editor's view): lidar doesn't see light */
+export interface LightParams {
+  type: "point" | "spot" | "sun";
+  color: Rgb;
+  /** 0..2, 1 is a bright room light */
+  intensity: number;
+  /** point/spot: meters until it has faded to about a fifth */
+  range: number;
+  /** spot: half-angle of the cone, degrees */
+  angle: number;
+  shadows: boolean;
+}
+
 export interface AprilTagParams {
   family: "tag36h11";
   id: number;
@@ -146,7 +159,8 @@ export type Item =
   | (ItemBase & { kind: "stairs"; params: StairsParams })
   | (ItemBase & { kind: "hill"; params: HillParams })
   | (ItemBase & { kind: "hole"; params: HoleParams })
-  | (ItemBase & { kind: "apriltag"; params: AprilTagParams });
+  | (ItemBase & { kind: "apriltag"; params: AprilTagParams })
+  | (ItemBase & { kind: "light"; params: LightParams });
 
 export type ItemKind = Item["kind"];
 

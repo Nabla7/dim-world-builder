@@ -10,7 +10,7 @@ import {
   stairsShapes,
 } from "./geometry.ts";
 import { toScene } from "./mjcf.ts";
-import { defaultHill, defaultRoom, defaultStairs, makeItem } from "./defaults.ts";
+import { defaultHill, defaultLight, defaultRoom, defaultStairs, emptyProject, makeItem } from "./defaults.ts";
 import { testCourse } from "./examples.ts";
 
 describe("rooms", () => {
@@ -148,3 +148,19 @@ describe("openings, holes, stairs styles, tags", () => {
     expect(tag.mesh?.texcoords).toHaveLength(16);
   });
 });
+
+it("a light item exports as a MuJoCo light on its body, with no geoms", () => {
+  const project = emptyProject("lit")
+  project.items = [
+    makeItem("light", { ...defaultLight(), type: "spot", shadows: true }, {
+      name: "Lamp",
+      floor: project.floors[0].id,
+      position: [1, 2, 2.5],
+    }),
+  ]
+  const { xml } = toScene(buildWorld(project, {}), "lit")
+  const lamp = xml.match(/<body name="lamp[^"]*"[\s\S]*?<\/body>/)![0]
+  expect(lamp).toMatch(/<light [^>]*cutoff="40"[^>]*\/>/)
+  expect(lamp).toMatch(/castshadow="true"/)
+  expect(lamp).not.toMatch(/<geom/)
+})

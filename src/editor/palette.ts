@@ -1,6 +1,6 @@
 // What the Add panel offers, and how each choice becomes an item placed where the camera looks.
 
-import { defaultHill, defaultRoom, defaultStairs, makeItem, PAINT } from "../world/defaults.ts";
+import { defaultHill, defaultLight, defaultRoom, defaultStairs, makeItem, PAINT } from "../world/defaults.ts";
 import type { Object3D } from "three";
 import { scatterClutter } from "../world/scatter.ts";
 import type { Item, MeshAsset, PrimitiveParams, Vec3 } from "../world/types.ts";
@@ -119,6 +119,18 @@ export const BUILT_IN: PaletteEntry[] = [
         position: at,
       }),
     tool: "tag",
+  },
+  {
+    key: "build:light",
+    title: "Light",
+    group: "Builders",
+    icon: "sun",
+    make: (floor, at) =>
+      makeItem("light", defaultLight(), {
+        name: "Light",
+        floor,
+        position: [at[0], at[1], 2.4],
+      }),
   },
   {
     key: "build:wall",

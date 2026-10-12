@@ -52,6 +52,15 @@ export interface Shape {
   role: Role;
 }
 
+export interface WorldLight {
+  type: "point" | "spot" | "sun";
+  /** [r, g, b] times intensity */
+  rgb: Vec3;
+  range: number;
+  angle: number;
+  shadows: boolean;
+}
+
 export interface Body {
   /** MJCF body name and scene entity id */
   name: string;
@@ -63,6 +72,8 @@ export interface Body {
   quat: Quat;
   mocap: boolean;
   shapes: Shape[];
+  /** lights carried by the body: they shine down its -z (spot, sun) from its origin */
+  lights?: WorldLight[];
 }
 
 export interface WorldMover {
@@ -766,6 +777,16 @@ export function itemShapes(item: Item, assets: Record<string, MeshAsset>): Shape
       )];
     case "apriltag":
       return aprilTagShapes(item.params);
+    case "light":
+      // a bulb to pick it by in the editor; the light itself is in Body.lights
+      return [{
+        type: "sphere",
+        pos: [0, 0, 0],
+        quat: IDENTITY,
+        size: [0.12],
+        rgba: [...item.params.color, 1] as Rgba,
+        role: "editor",
+      }];
   }
 }
 
@@ -910,6 +931,15 @@ export function buildWorld(project: Project, assets: Record<string, MeshAsset>):
       quat: item.rotation,
       mocap: Boolean(mover),
       shapes: itemShapes(item, assets),
+      lights: item.kind === "light"
+        ? [{
+          type: item.params.type,
+          rgb: item.params.color.map((c) => c * item.params.intensity) as Vec3,
+          range: item.params.range,
+          angle: item.params.angle,
+          shadows: item.params.shadows,
+        }]
+        : undefined,
     });
     if (mover && item.mover) {
       movers.push({

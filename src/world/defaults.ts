@@ -10,6 +10,7 @@ import type {
   RoomParams,
   StairsParams,
   Vec3,
+  LightParams,
 } from "./types.ts";
 
 export const PAINT = {
@@ -72,6 +73,15 @@ export const defaultStairs = (): StairsParams => ({
   spiralTurn: 360,
   spiralCore: 0.1,
   color: PAINT.concrete,
+});
+
+export const defaultLight = (): LightParams => ({
+  type: "point",
+  color: [1, 0.95, 0.85],
+  intensity: 0.8,
+  range: 8,
+  angle: 40,
+  shadows: false,
 });
 
 export const defaultHill = (): HillParams => ({

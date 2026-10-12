@@ -3,7 +3,7 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
-import type { Body, Shape } from "../world/geometry.ts";
+import type { Body, Shape, WorldLight } from "../world/geometry.ts";
 import type { MeshAsset } from "../world/types.ts";
 
 const gltfLoader = new GLTFLoader();
@@ -221,7 +221,25 @@ export function bodyObject(
     place(mesh, shape);
     group.add(mesh);
   }
+  for (const light of body.lights ?? []) group.add(threeLight(light));
   return group;
+}
+
+/** the editor's stand-in for an exported MuJoCo light, shining down the body's -z */
+function threeLight(light: WorldLight): THREE.Object3D {
+  const color = new THREE.Color(...light.rgb.map((c) => Math.min(1, c)) as [number, number, number]);
+  const strength = Math.max(...light.rgb) * 3;
+  const made = light.type === "sun"
+    ? new THREE.DirectionalLight(color, strength)
+    : light.type === "spot"
+    ? new THREE.SpotLight(color, strength * 8, light.range * 2, (light.angle * Math.PI) / 180, 0.3, 1)
+    : new THREE.PointLight(color, strength * 8, light.range * 2, 1);
+  made.castShadow = light.shadows;
+  if (made instanceof THREE.DirectionalLight || made instanceof THREE.SpotLight) {
+    made.target.position.set(0, 0, -1);
+    made.add(made.target);
+  }
+  return made;
 }
 
 /** dims a body that sits on another floor than the one being edited */

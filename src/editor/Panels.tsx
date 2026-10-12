@@ -30,6 +30,7 @@ import type {
   HillParams,
   HoleParams,
   Item,
+  LightParams,
   MeshAsset,
   OpeningKind,
   Quat,
@@ -760,6 +761,63 @@ function AprilTagEditor({ item }: { item: Extract<Item, { kind: "apriltag" }> })
   );
 }
 
+function LightEditor({ item }: { item: Extract<Item, { kind: "light" }> }) {
+  const p = item.params;
+  const set = (change: Partial<LightParams>) =>
+    updateItem(item.id, (i) => ({ ...i, params: { ...p, ...change } } as Item), `light-${item.id}`);
+  return (
+    <>
+      <Field label="Kind">
+        <Segmented
+          size="sm"
+          value={p.type}
+          items={[
+            { value: "point", label: "Bulb" },
+            { value: "spot", label: "Spot" },
+            { value: "sun", label: "Sun" },
+          ]}
+          onChange={(type: string) => set({ type: type as LightParams["type"] })}
+        />
+      </Field>
+      <Swatches value={p.color} onChange={(color) => set({ color })} />
+      <Range
+        label="Brightness"
+        value={p.intensity}
+        min={0}
+        max={2}
+        step={0.05}
+        onChange={(intensity) => set({ intensity })}
+      />
+      {p.type !== "sun" && (
+        <Range
+          label="Reach"
+          value={p.range}
+          min={1}
+          max={30}
+          step={0.5}
+          unit="m"
+          onChange={(range) => set({ range })}
+        />
+      )}
+      {p.type === "spot" && (
+        <Range
+          label="Cone half-angle"
+          value={p.angle}
+          min={5}
+          max={89}
+          step={1}
+          unit="°"
+          onChange={(angle) => set({ angle })}
+        />
+      )}
+      <Toggle value={p.shadows} onChange={(shadows: boolean) => set({ shadows })} label="Casts shadows" />
+      <Text small muted>
+        Spots and suns shine down the item's -z: tilt it to aim. Lidar doesn't see light.
+      </Text>
+    </>
+  );
+}
+
 function MoverEditor({ item }: { item: Item }) {
   const drawing = useEditor((s) => s.drawingPath === item.id);
   const mover = item.mover;
@@ -948,7 +1006,8 @@ export function Inspector({ assets }: { assets: MeshAsset[] }) {
       {item.kind === "room" && <RoomEditor item={item} />}
       {item.kind === "hole" && <HoleEditor item={item} />}
       {item.kind === "apriltag" && <AprilTagEditor item={item} />}
-      {item.kind !== "hole" && item.kind !== "apriltag" && (
+      {item.kind === "light" && <LightEditor item={item} />}
+      {item.kind !== "hole" && item.kind !== "apriltag" && item.kind !== "light" && (
         <>
           <p style={heading}>Motion</p>
           <MoverEditor item={item} />

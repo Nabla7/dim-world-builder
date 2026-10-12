@@ -118,10 +118,24 @@ export function toScene(world: World, name: string): SceneFiles {
       .filter((shape) => shape.role !== "editor")
       .map((shape, i) => geom(shape, body, i))
       .join("\n");
+    const lights = (body.lights ?? []).map((l, i) => {
+      const parts = [
+        `name="${body.name}_light${i}"`,
+        `pos="0 0 0"`,
+        `dir="0 0 -1"`,
+        `diffuse="${vec(l.rgb)}"`,
+        `specular="0.1 0.1 0.1"`,
+        `castshadow="${l.shadows}"`,
+      ];
+      if (l.type === "sun") parts.push(`directional="true"`);
+      else parts.push(`attenuation="1 0 ${num(4 / Math.max(0.5, l.range) ** 2)}"`);
+      parts.push(`cutoff="${l.type === "spot" ? num(l.angle) : 180}"`);
+      return `      <light ${parts.join(" ")}/>`;
+    });
     const mocap = body.mocap ? ` mocap="true"` : "";
     return `    <body name="${body.name}" pos="${vec(body.pos)}" quat="${
       wxyz(body.quat)
-    }"${mocap}>\n${geoms}\n    </body>`;
+    }"${mocap}>\n${[...lights, geoms].filter(Boolean).join("\n")}\n    </body>`;
   });
 
   const xml = `<mujoco model="${attr(name)}">
