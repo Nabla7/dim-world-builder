@@ -586,21 +586,21 @@ var openTimeoutMs = 1e4;
 var pingTimeoutMs = 3e3;
 var reconnectDelayMs = 1e3;
 var ackEveryBytes = 16384;
-var ackDelayMs = 5;
+var ackDelayMs = 50;
+var statsBudgetShare = .05;
+var maxStatsIntervalMs = 1e4;
 var clockWindow = 16;
 var initialClockPings = 5;
 var putHeaderBytes = 8;
 var maxPartialMessages = 8;
+var defaultPacketLifetimeMs = 1e3;
+var reliablePublisherMaxBacklogMs = 2e3;
 /** Delivery -> data channel reliability (SPEC "Delivery -> transport mapping"). */
 function channelInit(delivery, maxAge) {
 	if (delivery === "reliable") return { ordered: true };
-	if (maxAge) return {
-		ordered: false,
-		maxPacketLifeTime: Math.min(65535, Math.round(maxAge))
-	};
 	return {
 		ordered: false,
-		maxRetransmits: 0
+		maxPacketLifeTime: Math.min(65535, Math.round(maxAge || defaultPacketLifetimeMs))
 	};
 }
 function toBytes(value) {
@@ -1104,7 +1104,7 @@ var Publisher = class extends Endpoint {
 	/** why the gateway is dropping this publisher's puts right now (another client's lease), else null */
 	blocked = null;
 	#last = null;
-	/** stamped frames waiting for the channel (reliable: all, latest: only the newest) */
+	/** stamped frames waiting for the channel, with when they were put (reliable: all, latest: only the newest) */
 	#pending = [];
 	#repeatTimer = null;
 	#tripListeners = /* @__PURE__ */ new Set();
@@ -1174,16 +1174,29 @@ var Publisher = class extends Endpoint {
 				this.dropped += this.#pending.length;
 				this.#pending = [];
 			}
-			this.#pending.push(frame);
+			this.#pending.push({
+				frame,
+				at: performance.now()
+			});
+			this.#dropStale();
 			return;
 		}
 		channel.send(frame);
 		this.sent++;
 	}
+	/** A reliable publisher's oldest waiting puts, past its backlog limit (order is kept). */
+	#dropStale() {
+		const oldest = performance.now() - (this.options.latencyLimit ?? reliablePublisherMaxBacklogMs);
+		while (this.#pending.length > 1 && this.#pending[0].at < oldest) {
+			this.#pending.shift();
+			this.dropped++;
+		}
+	}
 	#flush() {
 		const channel = this.channel;
+		this.#dropStale();
 		while (this.#pending.length > 0 && channel?.readyState === "open" && this.rejectionReason === null && channel.bufferedAmount <= backedUpBytes) {
-			channel.send(this.#pending.shift());
+			channel.send(this.#pending.shift().frame);
 			this.sent++;
 		}
 	}
@@ -1287,6 +1300,8 @@ var ZenohGateway = class {
 	clockOffsetMs = null;
 	/** gateway-side heartbeat, clock and bandwidth stats */
 	gatewayStats = null;
+	/** whether the link keeps up with the subscriptions, and what is dropped when it doesn't; null before the first stats poll */
+	congestion = null;
 	/** the message encodings the gateway runs, fetched on connect */
 	encodings = [];
 	/** the ICE servers in use (the gateway's unless given) */
@@ -1312,6 +1327,11 @@ var ZenohGateway = class {
 	#closed = false;
 	#generation = 0;
 	#statsTimer = null;
+	/** when the next gateway stats may be asked for (`statsBudgetShare`) */
+	#statsDueAt = 0;
+	/** each subscription's drops so far, and when they were counted (for `congestion`) */
+	#dropTotals = /* @__PURE__ */ new Map();
+	#dropsCountedAt = 0;
 	/** renegotiations run one at a time */
 	#negotiation = Promise.resolve();
 	/** resolves once the current peer connection is up (renegotiation needs `control`) */
@@ -1776,13 +1796,46 @@ var ZenohGateway = class {
 			if (this.state === "connected") this.#setState("degraded");
 			return;
 		}
+		if (performance.now() < this.#statsDueAt) return;
+		this.#statsDueAt = Infinity;
 		const response = await this._request({ op: "stats" }, pingTimeoutMs).catch(() => null);
-		if (response) this.gatewayStats = {
-			clock: response.clock,
-			heartbeat: response.heartbeat,
-			bandwidth: response.bandwidth ?? null
-		};
+		const budget = Number(response?.bandwidth?.budgetBytesPerSec ?? 0);
+		const share = response && budget > 0 ? JSON.stringify(response).length / (statsBudgetShare * budget) * 1e3 : 0;
+		this.#statsDueAt = performance.now() + (response ? Math.min(maxStatsIntervalMs, share) : maxStatsIntervalMs);
+		if (response) {
+			this.gatewayStats = {
+				clock: response.clock,
+				heartbeat: response.heartbeat,
+				bandwidth: response.bandwidth ?? null
+			};
+			this.#updateCongestion(response.bandwidth ?? null, response.channels ?? []);
+		}
 		this.#refreshStats(response?.channels ?? null);
+	}
+	#updateCongestion(bandwidth, channels) {
+		const now = performance.now();
+		const seconds = this.#dropsCountedAt > 0 ? (now - this.#dropsCountedAt) / 1e3 : 0;
+		this.#dropsCountedAt = now;
+		const totals = /* @__PURE__ */ new Map();
+		let dropped = 0;
+		for (const channel of channels) {
+			if (channel.type !== "sub" || channel.id === null) continue;
+			const endpoint = this.#endpointsById.get(channel.id);
+			const count = (name) => Number(channel.stats[name] ?? 0);
+			const total = count("droppedQueue") + count("droppedAge") + count("abandonedPartial") + (endpoint instanceof Subscription ? endpoint.partialDropped : 0);
+			totals.set(channel.id, total);
+			if (channel.allocation?.constrained === true) dropped += total - (this.#dropTotals.get(channel.id) ?? total);
+		}
+		this.#dropTotals = totals;
+		const number = (name) => Number(bandwidth?.[name] ?? 0);
+		const degraded = bandwidth?.constrained === true;
+		this.congestion = {
+			degraded,
+			limitedBy: !degraded ? null : number("pageBlockedFraction") > number("networkBlockedFraction") ? "page" : "network",
+			droppedPerSec: seconds > 0 ? dropped / seconds : 0,
+			sentBytesPerSec: number("sentBytesPerSec"),
+			wantedBytesPerSec: number("demandBytesPerSec")
+		};
 	}
 	#refreshStats(gatewayChannels) {
 		if (gatewayChannels) {

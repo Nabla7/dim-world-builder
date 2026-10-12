@@ -124,6 +124,8 @@ export class ZenohGateway {
     clockOffsetMs: null;
     /** gateway-side heartbeat, clock and bandwidth stats */
     gatewayStats: null;
+    /** whether the link keeps up with the subscriptions, and what is dropped when it doesn't; null before the first stats poll */
+    congestion: null;
     /** the message encodings the gateway runs, fetched on connect */
     encodings: any[];
     /** the ICE servers in use (the gateway's unless given) */
