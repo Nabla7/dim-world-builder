@@ -10,6 +10,8 @@ const WALL = 0.15;
 const UPPER = "upper";
 const UPPER_Z = 4.7;
 const UPPER_SLAB = 0.3;
+// the angles below were written for these two facing the other way
+const BACKWARD = new Set(["office_chair", "computer_monitor"]);
 const FLOOR: Rgb = [0.66, 0.64, 0.6];
 
 type Segment = {
@@ -95,6 +97,7 @@ export function office555(): Project {
     sizeY: 36,
     center: [14.6, 2.5],
     color: FLOOR,
+    finish: "concrete",
   };
   project.floors.push({
     id: UPPER,
@@ -222,7 +225,7 @@ export function office555(): Project {
       name: name.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase()),
       floor,
       position: [round(x), round(y), z] as Vec3,
-      rotation: yaw(angle),
+      rotation: yaw(angle + (BACKWARD.has(asset) ? Math.PI : 0)),
     });
   const box = (
     floor: string,
