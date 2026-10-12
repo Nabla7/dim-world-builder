@@ -238,8 +238,8 @@ export function office555(): Project {
   wall(7.85, 17.55, 7.85, 14.1, up, 3, [], "Room wall");
   wall(5.4, 8.3, 5.4, 11.6, up, 3, [], "Big room wall");
   // rails along the corner stairwell's long sides (it opens at its east end, where the stairs arrive)
-  wall(0.6, 7.92, 3.4, 7.92, up, 1.1, [], "Stairwell rail");
-  wall(0.6, 9.26, 3.4, 9.26, up, 1.1, [], "Stairwell rail");
+  wall(0.6, 8.92, 3.4, 8.92, up, 1.1, [], "Stairwell rail");
+  wall(0.6, 10.26, 3.4, 10.26, up, 1.1, [], "Stairwell rail");
   // south: two rooms west of the corridor, three east of it
   wall(-0.45, -2.05, 4.2, -2.05, up, 3, [], "Room wall");
   wall(5.8, -2.05, 9.85, -2.05, up, 3, [], "Room wall");
@@ -450,7 +450,8 @@ export function office555(): Project {
     position: [0.45, -10.3, 0],
     rotation: yaw(Math.PI / 2),
   }));
-  // north along the west wall to a landing (y 8.1..9.1, 2.35 m up), then east overhead, arriving at x 3.3
+  // north along the west wall to a landing (y 9.1..10.1, 2.35 m up), then east overhead, arriving at x 3.3;
+  // its foot starts 1.3 m north of the lab wall so there is room to walk onto it
   add(makeItem("stairs", {
     ...defaultStairs(),
     style: "turn",
@@ -464,9 +465,23 @@ export function office555(): Project {
   }, {
     name: "Corner stairs",
     floor: ground,
-    position: [0.23, 5.45, 0],
+    position: [0.23, 6.45, 0],
     rotation: yaw(Math.PI / 2),
   }));
+  // a pair of closet doors on the south stairs' solid east side, where it is over 3 m tall (y -6.7..-5.1)
+  const doorX = 1.2 + 0.025;
+  add(box(ground, doorX, -5.9, [0.03, 1.72, 2.2], PAINT.slate, "Under-stairs door frame"));
+  for (const y of [-6.29, -5.51]) {
+    add(box(ground, doorX + 0.02, y, [0.02, 0.76, 2.12], PAINT.wood, "Under-stairs door"));
+  }
+  for (const y of [-5.98, -5.82]) {
+    add(makeItem("primitive", { shape: "box", color: PAINT.steel }, {
+      name: "Door handle",
+      floor: ground,
+      position: [doorX + 0.05, y, 1.0],
+      scale: [0.04, 0.03, 0.2],
+    }));
+  }
   // where they come up through floor 2
   add(makeItem("hole", { sizeX: 1.6, sizeY: 2.9, depth: UPPER_SLAB }, {
     name: "South stairwell",
@@ -476,7 +491,7 @@ export function office555(): Project {
   add(makeItem("hole", { sizeX: 2.8, sizeY: 1.2, depth: UPPER_SLAB }, {
     name: "Corner stairwell",
     floor: up,
-    position: [2.0, 8.59, 0],
+    position: [2.0, 9.59, 0],
   }));
 
   // ── floor 2 furniture ──
