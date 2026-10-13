@@ -10,6 +10,14 @@ const WALL = 0.15;
 const UPPER = "upper";
 const UPPER_Z = 4.7;
 const UPPER_SLAB = 0.3;
+const ROOF = "roof";
+// the roof deck sits on the west block's floor 2 walls; the east hall is raised to meet it
+const ROOF_Z = UPPER_Z + 3 + 0.15;
+const ROOF_DECK = 0.15;
+// the roof trusses: how far their bottom chord hangs below the roof's elevation, and where they stand along y (one on
+// the hall's column)
+const TRUSS_DROP = 1.9;
+const TRUSS_YS = [-8.05, -2.05, 3.95, 9.95, 15.95];
 // the angles below were written for these two facing the other way
 const BACKWARD = new Set(["office_chair", "computer_monitor"]);
 const FLOOR: Rgb = [0.66, 0.64, 0.6];
@@ -109,6 +117,13 @@ export function office555(): Project {
     elevation: UPPER_Z,
     slab: { thickness: UPPER_SLAB, sizeX: 10.5, sizeY: 30.2, center: [4.7, 2.5], color: FLOOR },
   });
+  // the roof: a white plank deck over the whole building, its trusses, purlins and skylights hung under it
+  project.floors.push({
+    id: ROOF,
+    name: "Roof",
+    elevation: ROOF_Z,
+    slab: { thickness: ROOF_DECK, sizeX: 30.45, sizeY: 30.45, center: [14.625, 2.475], color: WALL_PAINT, finish: "wood" },
+  });
 
   const walls: Segment[] = [];
   // pieces standing inside a window's gap: the joins don't apply to them (they'd trim a mullion away)
@@ -183,7 +198,7 @@ export function office555(): Project {
   };
 
   // ── floor 1: the shell (west block walls reach floor 2's slab; the east hall is double height) ──
-  const shell = 6;
+  const shell = ROOF_Z - ROOF_DECK;
   const west = UPPER_Z - UPPER_SLAB;
   // the west entrance at y 14.6..16.4, a side door at the corner stairs (y 5.35..6.25), a double door at the south stairs' foot (y -5.55..-3.85)
   wall(-0.45, -12.45, -0.45, 17.55, ground, west, [[6.9, 8.6], [17.8, 18.7], [27.05, 28.85]], "Outer wall");
@@ -384,7 +399,7 @@ export function office555(): Project {
     name: "Column",
     floor: ground,
     position: [24.85, -2.05, 0],
-    scale: [0.3, 0.3, 6],
+    scale: [0.3, 0.3, ROOF_Z - TRUSS_DROP], // up to the truss above it
   }));
 
   // the south wall: cabinets, desks, crates
@@ -562,6 +577,68 @@ export function office555(): Project {
   add(mesh("steel_shelves", up, 9.4, -5.0, Math.PI / 2));
   add(mesh("steel_shelves", up, 9.4, -9.0, Math.PI / 2));
   add(mesh("drawer_cabinet", up, 7.8, -12.1, 0));
+
+  // ── the roof over the east hall (x 9.95..29.7): trusses spanning east-west, purlins along y on them, skylights ──
+  /** a square beam from end to end (its ends flush, not overhanging), in the plane x-z at y */
+  const roofBeam = (x0: number, z0: number, x1: number, z1: number, y: number, size: number, name: string) => {
+    const length = Math.hypot(x1 - x0, z1 - z0);
+    const pitch = -Math.atan2(z1 - z0, x1 - x0);
+    add(makeItem("primitive", { shape: "box", color: WALL_PAINT }, {
+      name,
+      floor: ROOF,
+      // a primitive stands on its own bottom face, which tilts with it
+      position: [round((x0 + x1) / 2 - Math.sin(pitch) * size / 2), y, round((z0 + z1) / 2 - Math.cos(pitch) * size / 2)],
+      rotation: [0, Math.sin(pitch / 2), 0, Math.cos(pitch / 2)],
+      scale: [round(length), size, size],
+    }));
+  };
+  const hallWest = 9.95 + WALL / 2;
+  const hallEast = 29.7 - WALL / 2;
+  const purlinBottom = -ROOF_DECK - 0.25;
+  // chord centerlines (relative to the roof's elevation)
+  const topChord = purlinBottom - 0.1;
+  const bottomChord = -TRUSS_DROP + 0.1;
+  const panels = 8;
+  for (const y of TRUSS_YS) {
+    roofBeam(hallWest, topChord, hallEast, topChord, y, 0.2, "Truss chord");
+    roofBeam(hallWest, bottomChord, hallEast, bottomChord, y, 0.2, "Truss chord");
+    // posts and braces run between the chords' faces; a brace's ends stand clear of the posts beside them
+    const top = topChord - 0.1;
+    const bottom = bottomChord + 0.1;
+    for (let i = 0; i <= panels; i++) {
+      const x = hallWest + ((hallEast - hallWest) * i) / panels;
+      if (i > 0 && i < panels) {
+        roofBeam(x, bottom, x, top, y, 0.12, "Truss post");
+      }
+      if (i < panels) {
+        // the diagonals slope down toward the middle of the span
+        const next = hallWest + ((hallEast - hallWest) * (i + 1)) / panels;
+        const toward = Math.sign(next - x) * (i < panels / 2 ? 1 : -1);
+        const [high, low] = i < panels / 2 ? [x, next] : [next, x];
+        const clear = 0.16;
+        // a slanted beam's square-cut end leans its corner out by about half its size: start that far inside the chords
+        roofBeam(high + toward * clear, top - 0.06, low - toward * clear, bottom + 0.06, y, 0.12, "Truss brace");
+      }
+    }
+  }
+  // purlins: along y, resting on the trusses' top chords
+  for (let x = 12.4; x < hallEast; x += 2.5) {
+    add(box(ROOF, x, 2.475, [0.12, 30.0, 0.25], WALL_PAINT, "Purlin"));
+    items[items.length - 1].position[2] = purlinBottom;
+  }
+  // skylights between the purlins, in each bay between trusses: an opening with a curb and dark mullions
+  for (const y of [-10.3, -5.05, 0.95, 6.95, 12.95]) {
+    for (const x of [16.15, 23.65]) {
+      add(makeItem("hole", { sizeX: 1.6, sizeY: 2.6, depth: ROOF_DECK }, { name: "Skylight", floor: ROOF, position: [x, y, 0] }));
+      for (const [dx, dy, sx, sy] of [[0, 1.35, 1.8, 0.1], [0, -1.35, 1.8, 0.1], [0.85, 0, 0.1, 2.6], [-0.85, 0, 0.1, 2.6]]) {
+        add(box(ROOF, x + dx, y + dy, [sx, sy, 0.3], PAINT.steel, "Skylight curb"));
+      }
+      for (const dy of [-0.43, 0.43]) {
+        add(box(ROOF, x, y + dy, [1.6, 0.05, 0.05], PAINT.slate, "Skylight mullion"));
+        items[items.length - 1].position[2] = 0.25;
+      }
+    }
+  }
 
   // ceiling lights over the hall
   for (const [x, y] of [[14, 10], [22, 10], [14, -6], [22, -6], [18, 2], [26, 2]]) {

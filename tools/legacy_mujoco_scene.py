@@ -93,14 +93,16 @@ def tame_lighting(root: ET.Element) -> None:
 
 def dark_floors(root: ET.Element) -> None:
     """Floor slabs in the dark gray the older sim's scenes use (a light floor reads as glare there): slab geoms and the
-    concrete textures they wear."""
+    concrete textures they wear (not the roof's deck)."""
     dark = (0.26, 0.27, 0.29)
     for texture in root.iter("texture"):
         if (texture.get("name") or "").startswith("concrete"):
             texture.set("rgb1", " ".join(f"{c:g}" for c in dark))
             texture.set("markrgb", " ".join(f"{c * 0.8:.3g}" for c in dark))
     for geom in root.iter("geom"):
-        if (geom.get("name") or "").startswith("slab_") and geom.get("rgba"):
+        # the roof's deck keeps its white planks
+        name = geom.get("name") or ""
+        if name.startswith("slab_") and not name.startswith("slab_roof") and geom.get("rgba"):
             alpha = geom.get("rgba", "").split()[3:] or ["1"]
             geom.set("rgba", " ".join([*(f"{c:g}" for c in dark), *alpha]))
 
