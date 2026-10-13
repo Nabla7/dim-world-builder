@@ -17,8 +17,8 @@ dimos-desktop install github.com/jeff-hykin/dim-world-builder --ref main
 
 ```sh
 uv pip install -e ~/dimos_worlds/<world>                                  # into dimos's venv
-dtk run <world>.go2 --simulation mujoco --transport zenoh                 # a Go2 in it + SceneData
-dtk run <blueprint> <world>.scene-data --scene-package ~/dimos_worlds/<world>   # SceneData beside any sim2 blueprint
+dimos run <world>.go2 --simulation mujoco --transport zenoh                 # a Go2 in it + SceneData
+dimos run <blueprint> <world>.scene-data --scene-package ~/dimos_worlds/<world>   # SceneData beside any sim2 blueprint
 ```
 
 Export: `scene.xml`, `scene.json` (sim2: movers; `annotations`: labeled points, paths, areas, e.g.
