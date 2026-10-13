@@ -17,7 +17,7 @@ dimos-desktop install github.com/jeff-hykin/dim-world-builder --ref main
 
 ```sh
 uv pip install -e ~/dimos_worlds/<world>                                  # into dimos's venv
-dimos run <world>.go2 --simulation mujoco --transport zenoh                 # a Go2 in it + SceneData
+dimos run <world>.go2 --simulation mujoco --transport zenoh               # a Go2 in it + SceneData
 dimos run <blueprint> <world>.scene-data --scene-package ~/dimos_worlds/<world>   # SceneData beside any sim2 blueprint
 ```
 
