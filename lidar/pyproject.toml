@@ -1,0 +1,14 @@
+[project]
+name = "dim-lidar-to-shapes"
+version = "0.1.0"
+description = "Fit a lidar map with World Builder primitives (floors, walls, boxes, ramps, cylinders, spheres)"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    "numpy>=1.26",
+    "scipy>=1.11",
+    "open3d>=0.19",
+    "mujoco>=3.3",
+]
+
+[tool.uv]
+package = false
