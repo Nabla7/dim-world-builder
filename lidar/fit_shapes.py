@@ -720,7 +720,7 @@ def main():
     args.out.parent.mkdir(parents=True, exist_ok=True)
     Path(f"{args.out}.shapes.json").write_text(json.dumps({"metrics": metrics, "shapes": [s.to_json() for s in shapes]}))
     write_project(Path(f"{args.out}.project.json"), name, shapes, info["storeys"])
-    write_viewer(Path(f"{args.out}.html"), name, measured_points, shapes, metrics, settings.tolerance,
+    write_viewer(Path(f"{args.out}.html"), f"{name} shape fit", measured_points, shapes, metrics, settings.tolerance,
                  args.max_viewer_points)
     for tolerance, values in metrics.items():
         if isinstance(values, dict) and "coverage" in values:

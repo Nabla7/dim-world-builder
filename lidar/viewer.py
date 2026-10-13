@@ -9,16 +9,14 @@ import numpy as np
 from shapes import Shape, nearest_surface_distance
 from world_builder import COLORS
 
-PAGE = """<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>__TITLE__</title>
+PAGE = """<title>__TITLE__</title>
 <style>
-:root { --bg:#f4f3f0; --panel:#ffffffe8; --text:#1d1d1f; --muted:#666; --line:#d8d6d0; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#141518; --panel:#1f2126e8; --text:#ececec; --muted:#9a9a9a; --line:#33353b; } }
-:root[data-theme="dark"] { --bg:#141518; --panel:#1f2126e8; --text:#ececec; --muted:#9a9a9a; --line:#33353b; }
+:root { --bg:#eef0f2; --panel:#ffffffe8; --text:#1b2027; --muted:#5d6672; --line:#d3d8de; --point:#2b3440; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { color-scheme:dark; --bg:#14171b; --panel:#1e2228e8; --text:#e7eaee; --muted:#98a1ab; --line:#323840; --point:#b9c2cc; } }
+:root[data-theme="dark"] { color-scheme:dark; --bg:#14171b; --panel:#1e2228e8; --text:#e7eaee; --muted:#98a1ab; --line:#323840; --point:#b9c2cc; }
 html,body { margin:0; height:100%; background:var(--bg); color:var(--text); font:13px/1.4 system-ui,sans-serif; overflow:hidden; }
 #view { position:fixed; inset:0; }
-#panel { position:fixed; top:12px; left:12px; max-width:min(330px, calc(100vw - 32px)); background:var(--panel);
+#panel { position:fixed; top:calc(12px + env(safe-area-inset-top, 0px)); left:12px; max-width:min(330px, calc(100vw - 32px)); background:var(--panel);
   border:1px solid var(--line); border-radius:10px; padding:10px 12px; backdrop-filter:blur(6px); }
 #panel h1 { font-size:14px; margin:0 0 6px; }
 #panel .metric { font-variant-numeric:tabular-nums; }
@@ -27,7 +25,7 @@ html,body { margin:0; height:100%; background:var(--bg); color:var(--text); font
 .swatch { width:10px; height:10px; border-radius:2px; display:inline-block; }
 .muted { color:var(--muted); }
 details summary { cursor:pointer; margin-top:6px; }
-</style></head><body>
+</style>
 <div id="view"></div>
 <div id="panel">
   <h1>__TITLE__</h1>
@@ -39,7 +37,7 @@ details summary { cursor:pointer; margin-top:6px; }
     <label>shape opacity <input type="range" id="opacity" min="0" max="1" step="0.05" value="0.55"></label>
     <label>cut above <input type="range" id="cut" min="0" max="1" step="0.005" value="1"><span id="cutValue" class="muted"></span></label>
   </details>
-  <div class="muted">drag: orbit · right-drag: pan · scroll: zoom</div>
+  <div class="muted">drag: orbit &middot; right-drag: pan &middot; scroll: zoom</div>
 </div>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
 <script type="module">
@@ -76,7 +74,7 @@ function pointCloud(onlyMissed) {
   for (let i = 0; i < missed.length; i++) { if (!onlyMissed || missed[i]) { keep.push(i) } }
   const pos = new Float32Array(keep.length * 3)
   const col = new Float32Array(keep.length * 3)
-  const ok = new THREE.Color(0x30343c), bad = new THREE.Color(0xe0453a)
+  const ok = new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue("--point").trim()), bad = new THREE.Color(0xe0453a)
   keep.forEach((i, j) => {
     pos.set(positions.subarray(i * 3, i * 3 + 3), j * 3)
     const c = missed[i] ? bad : ok
@@ -128,7 +126,7 @@ for (const role of Object.keys(colors)) {
 const m = DATA.metrics
 document.getElementById("metrics").innerHTML = Object.entries(m).filter(([, v]) => v && v.coverage !== undefined)
   .map(([tol, v]) => `within ${tol} m: <b>${(v.coverage * 100).toFixed(1)}%</b> of points explained (${(v.coverage_above_floor * 100).toFixed(1)}% above the floor), ${(v.support * 100).toFixed(1)}% of shape surface backed`).join("<br>")
-  + `<br>${m.shape_count} shapes · ${m.points.toLocaleString()} points (showing ${missed.length.toLocaleString()})`
+  + `<br>${m.shape_count} shapes &middot; ${m.points.toLocaleString()} points (showing ${missed.length.toLocaleString()})`
 
 document.getElementById("showPoints").onchange = (e) => { points.visible = e.target.checked }
 document.getElementById("onlyMissed").onchange = (e) => {
@@ -160,7 +158,7 @@ function resize() { renderer.setSize(innerWidth, innerHeight); camera.aspect = i
 addEventListener("resize", resize)
 resize()
 renderer.setAnimationLoop(() => { controls.update(); renderer.render(scene, camera) })
-</script></body></html>
+</script>
 """
 
 
@@ -172,7 +170,8 @@ def write_viewer(path: Path, title: str, points: np.ndarray, shapes: list[Shape]
     data = {
         "points": base64.b64encode(points.astype(np.float32).tobytes()).decode(),
         "missed": base64.b64encode(missed.astype(np.uint8).tobytes()).decode(),
-        "bounds": [points.min(axis=0).tolist(), points.max(axis=0).tolist()],
+        # framed on the bulk of the map: stray returns through a window shouldn't shrink it to a dot
+        "bounds": [np.percentile(points, 1, axis=0).tolist(), np.percentile(points, 99, axis=0).tolist()],
         "shapes": [s.to_json() for s in shapes],
         "colors": COLORS,
         "metrics": metrics,
