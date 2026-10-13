@@ -2,7 +2,14 @@
 
 Build 3D worlds for dimos's MuJoCo sim (sim2), export them, drop a robot in.
 
-`dimos-desktop install github.com/jeff-hykin/dim-world-builder`
+## How to install
+
+```sh
+# 1. dimOS Desktop (Mac or Linux)
+curl -fsSL https://raw.githubusercontent.com/jeff-hykin/dimos-desktop-mirror/main/install.sh | bash
+# 2. World Builder, as a Desktop app
+dimos-desktop install github.com/jeff-hykin/dim-world-builder --ref main
+```
 
 ![tour](https://github.com/jeff-hykin/dim-world-builder/releases/download/v0.1.0/0_playground_tour.gif)
 
