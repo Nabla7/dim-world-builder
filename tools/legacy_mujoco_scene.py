@@ -51,6 +51,10 @@ def convert(world: Path, out: Path, name: str) -> Path:
 
     tame_lighting(root)
     dark_floors(root)
+    # the G1's feet collide only with a geom named "floor" (its contact pairs), so the ground slab takes that name
+    for geom in root.iter("geom"):
+        if geom.get("name") == "slab_ground_g0":
+            geom.set("name", "floor")
 
     worldbody = root.find("worldbody")
     if worldbody is None:
