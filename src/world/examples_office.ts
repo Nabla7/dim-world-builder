@@ -122,7 +122,14 @@ export function office555(): Project {
     id: ROOF,
     name: "Roof",
     elevation: ROOF_Z,
-    slab: { thickness: ROOF_DECK, sizeX: 30.45, sizeY: 30.45, center: [14.625, 2.475], color: WALL_PAINT, finish: "wood" },
+    slab: {
+      thickness: ROOF_DECK,
+      sizeX: 30.45,
+      sizeY: 30.45,
+      center: [14.625, 2.475],
+      color: WALL_PAINT,
+      finish: "wood",
+    },
   });
 
   const walls: Segment[] = [];
@@ -201,7 +208,16 @@ export function office555(): Project {
   const shell = ROOF_Z - ROOF_DECK;
   const west = UPPER_Z - UPPER_SLAB;
   // the west entrance at y 14.6..16.4, a side door at the corner stairs (y 5.35..6.25), a double door at the south stairs' foot (y -5.55..-3.85)
-  wall(-0.45, -12.45, -0.45, 17.55, ground, west, [[6.9, 8.6], [17.8, 18.7], [27.05, 28.85]], "Outer wall");
+  wall(
+    -0.45,
+    -12.45,
+    -0.45,
+    17.55,
+    ground,
+    west,
+    [[6.9, 8.6], [17.8, 18.7], [27.05, 28.85]],
+    "Outer wall",
+  );
   wall(-0.45, 17.55, 9.85, 17.55, ground, west, [], "Outer wall");
   wall(9.95, 17.55, 29.7, 17.55, ground, shell, [], "Outer wall");
   // the east hall's outer wall: two big windows, their sills above the shelving
@@ -580,14 +596,26 @@ export function office555(): Project {
 
   // ── the roof over the east hall (x 9.95..29.7): trusses spanning east-west, purlins along y on them, skylights ──
   /** a square beam from end to end (its ends flush, not overhanging), in the plane x-z at y */
-  const roofBeam = (x0: number, z0: number, x1: number, z1: number, y: number, size: number, name: string) => {
+  const roofBeam = (
+    x0: number,
+    z0: number,
+    x1: number,
+    z1: number,
+    y: number,
+    size: number,
+    name: string,
+  ) => {
     const length = Math.hypot(x1 - x0, z1 - z0);
     const pitch = -Math.atan2(z1 - z0, x1 - x0);
     add(makeItem("primitive", { shape: "box", color: WALL_PAINT }, {
       name,
       floor: ROOF,
       // a primitive stands on its own bottom face, which tilts with it
-      position: [round((x0 + x1) / 2 - Math.sin(pitch) * size / 2), y, round((z0 + z1) / 2 - Math.cos(pitch) * size / 2)],
+      position: [
+        round((x0 + x1) / 2 - Math.sin(pitch) * size / 2),
+        y,
+        round((z0 + z1) / 2 - Math.cos(pitch) * size / 2),
+      ],
       rotation: [0, Math.sin(pitch / 2), 0, Math.cos(pitch / 2)],
       scale: [round(length), size, size],
     }));
@@ -617,7 +645,15 @@ export function office555(): Project {
         const [high, low] = i < panels / 2 ? [x, next] : [next, x];
         const clear = 0.16;
         // a slanted beam's square-cut end leans its corner out by about half its size: start that far inside the chords
-        roofBeam(high + toward * clear, top - 0.06, low - toward * clear, bottom + 0.06, y, 0.12, "Truss brace");
+        roofBeam(
+          high + toward * clear,
+          top - 0.06,
+          low - toward * clear,
+          bottom + 0.06,
+          y,
+          0.12,
+          "Truss brace",
+        );
       }
     }
   }
@@ -629,8 +665,21 @@ export function office555(): Project {
   // skylights between the purlins, in each bay between trusses: an opening with a curb and dark mullions
   for (const y of [-10.3, -5.05, 0.95, 6.95, 12.95]) {
     for (const x of [16.15, 23.65]) {
-      add(makeItem("hole", { sizeX: 1.6, sizeY: 2.6, depth: ROOF_DECK }, { name: "Skylight", floor: ROOF, position: [x, y, 0] }));
-      for (const [dx, dy, sx, sy] of [[0, 1.35, 1.8, 0.1], [0, -1.35, 1.8, 0.1], [0.85, 0, 0.1, 2.6], [-0.85, 0, 0.1, 2.6]]) {
+      add(
+        makeItem("hole", { sizeX: 1.6, sizeY: 2.6, depth: ROOF_DECK }, {
+          name: "Skylight",
+          floor: ROOF,
+          position: [x, y, 0],
+        }),
+      );
+      for (
+        const [dx, dy, sx, sy] of [[0, 1.35, 1.8, 0.1], [0, -1.35, 1.8, 0.1], [0.85, 0, 0.1, 2.6], [
+          -0.85,
+          0,
+          0.1,
+          2.6,
+        ]]
+      ) {
         add(box(ROOF, x + dx, y + dy, [sx, sy, 0.3], PAINT.steel, "Skylight curb"));
       }
       for (const dy of [-0.43, 0.43]) {
