@@ -25,11 +25,13 @@ caches:
     - url: https://dimos-desktop.cachix.org
       key: "dimos-desktop.cachix.org-1:A4P35aGJGmCan92LWyamtSFXMqaVE+VRFYnrJ8QMTeQ="
 provides:
+    when: you need to build a 3D world for a simulated robot or export one to dimos sim2
     description: "World Builder: makes 3D worlds (rooms, floors, stairs, hills, furniture, moving obstacles) for simulated robots and exports them for dimos sim2"
     endpoints:
         - method: POST
           path: api/export
-          description: "Write a world as a dimos sim2 scene folder (scene.xml, scene.json, a Python package); warnings lists items that clip into each other"
+          when: you want a world as a dimos sim2 scene to run in simulation
+          description: "Write a world as a dimos sim2 scene folder <parentDir>/<name>/ (scene.xml, scene.json, a Python package) and also save the project. Returns { dir, name, files, bodies, movers, warnings }; warnings lists items that clip into each other"
           params:
               project:
                   type: object
@@ -42,29 +44,34 @@ provides:
                   description: the folder to write <name>/ into (default ~/dimos_worlds)
         - method: GET
           path: api/library
-          description: Every placeable 3D asset (built-in library and cooked imports) with its size and collision pieces
+          when: you need the ids and sizes of the assets you can place in a world
+          description: Every placeable 3D asset (built-in library and cooked imports) as a JSON list, each with its id, size and collision pieces
           role: context
         - method: GET
           path: api/projects
-          description: The names of the saved worlds
+          when: you need to know which worlds are saved
+          description: "The names of the saved worlds, as { projects: [name] }"
           role: context
         - method: GET
           path: api/project
-          description: A saved world's project (rooms, stairs, items, floors, movers, nav test) as JSON
+          when: you need to read the full contents of a saved world
+          description: A saved world's project (rooms, stairs, items, floors, movers, nav test) as JSON; 404 if there is no such world
           params:
               name:
                   type: string
                   description: the world's name
         - method: POST
           path: api/project
-          description: Save (create or replace) a world project
+          when: you want to save a whole world you built or edited yourself
+          description: "Save (create or replace) a world project under its name (snake_cased). Returns { saved: name, items: count }; 400 if the project is not dim-world-builder.project.v1"
           params:
               project:
                   type: object
                   description: the world (dim-world-builder.project.v1)
         - method: POST
           path: api/project/items
-          description: "Add items to a saved world. Each item: kind (primitive|mesh|room|stairs|hill|hole|apriltag|light), params, and optionally name, floor, position [x,y,z], rotation [x,y,z,w], scale, mover. warnings lists items that now clip into each other"
+          when: you want to add objects, rooms, stairs or obstacles to a saved world
+          description: "Add items to a saved world. Each item: kind (primitive|mesh|room|stairs|hill|hole|apriltag|light), params, and optionally name, floor (default the active floor), position [x,y,z], rotation [x,y,z,w], scale, mover. Returns { added: [item id], items: count, warnings }; warnings lists items that now clip into each other"
           params:
               name:
                   type: string
@@ -74,7 +81,8 @@ provides:
                   description: the items to add
         - method: POST
           path: api/generate
-          description: "Generate and save a world (playground is a big two-floor test scene; test_course, clutter_yard, empty); warnings lists items that clip into each other"
+          when: you want a ready-made test world to start from
+          description: "Generate and save a world (playground is a big two-floor test scene; test_course, clutter_yard, empty). Returns { saved: name, items: count, warnings }; warnings lists items that clip into each other"
           params:
               kind:
                   type: string
@@ -87,6 +95,7 @@ provides:
                   description: for playground (optional)
         - method: POST
           path: api/check
+          when: you need to know whether items in a world overlap
           description: "Which items clip into each other: MuJoCo checks every pair of collision shapes (floors and hills excluded). clips: [{a, b (key, name, kind), depth_m, at [x,y,z]}], warnings: one line each"
           role: context
           params:
@@ -101,7 +110,8 @@ provides:
                   description: meters of overlap to ignore (default 0.02)
         - method: GET
           path: api/views
-          description: A saved world's remembered camera views (key, name, eye, target, fov); each is a MuJoCo camera named by its key in the export
+          when: you need the camera views remembered for a saved world
+          description: "A saved world's remembered camera views as { views: [{ key, name, eye, target, fov }] }; each is a MuJoCo camera named by its key in the export"
           role: context
           params:
               name:
@@ -109,7 +119,8 @@ provides:
                   description: the world's name
         - method: POST
           path: api/views
-          description: Remember a camera view in a saved world (its key comes from the view's name; the same key replaces it)
+          when: you want to remember a camera angle on a saved world
+          description: "Remember a camera view in a saved world (its key comes from the view's name; the same key replaces it). Returns { saved: key, views: count }"
           params:
               name:
                   type: string
@@ -119,7 +130,8 @@ provides:
                   description: "{ name, eye: [x,y,z], target: [x,y,z], fov (vertical degrees, default 50) }"
         - method: POST
           path: api/views/remove
-          description: Forget a remembered view
+          when: you want to forget a remembered camera view
+          description: "Forget a remembered view of a saved world. Returns { removed: count }"
           params:
               name:
                   type: string
@@ -129,6 +141,7 @@ provides:
                   description: the view's key
         - method: GET
           path: api/views/image
+          when: you want to see what a world looks like from a remembered view
           description: A PNG of the world (as exported, rendered by MuJoCo) seen from a remembered view
           role: view
           params:
@@ -143,7 +156,7 @@ provides:
                   description: pixels (default 960, at most 1920)
               height:
                   type: number
-                  description: pixels (default 540, at most 1080)
+                  description: pixels (default 540, at most 1920)
     private:
         - api/internal/*
         - files/*
