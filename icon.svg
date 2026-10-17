@@ -11,16 +11,16 @@
     <!-- a globe (rim, meridian, equator, two parallels) with a hammer over its upper right: a cylinder head (its end face
          an ellipse) on a handle, cut out of the globe by a gap -->
     <g id="dwb-hammer-shape" stroke-linecap="round" stroke-linejoin="round"><path d="M0 2V24"/><path d="M-7 -8H7A3.2 5.6 0 0 1 7 3.2H-7A3.2 5.6 0 0 1 -7 -8Z"/></g>
-    <mask id="dwb-gap" maskUnits="userSpaceOnUse" x="0" y="0" width="64" height="64"><rect width="64" height="64" fill="#fff"/><use href="#dwb-hammer-shape" transform="translate(72 0) scale(-1 1) translate(41 21) rotate(35) scale(.8)" fill="#000" stroke="#000" stroke-width="5.6"/></mask>
+    <mask id="dwb-gap" maskUnits="userSpaceOnUse" x="0" y="0" width="64" height="64"><rect width="64" height="64" fill="#fff"/><use href="#dwb-hammer-shape" transform="translate(75 -1.5) scale(-1 1) translate(41 21) rotate(35) scale(.8)" fill="#000" stroke="#000" stroke-width="5.6"/></mask>
     <g id="dwb-glyph">
       <g mask="url(#dwb-gap)">
         <circle cx="28" cy="28" r="14.5" fill="none" stroke="url(#dwb-a)" stroke-width="3"/>
         <ellipse cx="28" cy="28" rx="6.4" ry="14.5" fill="none" stroke="url(#dwb-a)" stroke-width="2.2" stroke-opacity=".7"/>
         <path d="M13.5 28H42.5M16 20.5H40M16 35.5H40" fill="none" stroke="url(#dwb-a)" stroke-width="2.2" stroke-opacity=".7"/>
       </g>
-      <use href="#dwb-hammer-shape" transform="translate(72 0) scale(-1 1) translate(41 21) rotate(35) scale(.8)" fill="url(#dwb-h)" stroke="url(#dwb-h)" stroke-width="2.6"/>
+      <use href="#dwb-hammer-shape" transform="translate(75 -1.5) scale(-1 1) translate(41 21) rotate(35) scale(.8)" fill="url(#dwb-h)" stroke="url(#dwb-h)" stroke-width="2.6"/>
       <!-- the head's striking face, so it reads as a cylinder -->
-      <ellipse cx="7" cy="-2.4" rx="3.2" ry="5.6" transform="translate(72 0) scale(-1 1) translate(41 21) rotate(35) scale(.8)" fill="#3ccf5e" stroke="#0d2a14" stroke-width="1.2"/>
+      <ellipse cx="7" cy="-2.4" rx="3.2" ry="5.6" transform="translate(75 -1.5) scale(-1 1) translate(41 21) rotate(35) scale(.8)" fill="#3ccf5e" stroke="#0d2a14" stroke-width="1.2"/>
     </g>
     <linearGradient id="dwb-scanrow" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".25" stop-color="#e2e2e2"/><stop offset=".5" stop-color="#c2c2c2"/><stop offset=".75" stop-color="#e2e2e2"/><stop offset="1" stop-color="#fff"/></linearGradient>
     <pattern id="dwb-scan" width="64" height="3.6" patternUnits="userSpaceOnUse"><rect width="64" height="3.6" fill="url(#dwb-scanrow)"/></pattern>
