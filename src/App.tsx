@@ -35,6 +35,7 @@ import {
 } from "./editor/Panels.tsx";
 import { Viewport } from "./editor/Viewport.tsx";
 import { ClipBadge } from "./editor/ClipBadge.tsx";
+import { layoutCss, Sheet, SidePanel, usePhone } from "./editor/Layout.tsx";
 import {
   addItem,
   duplicateItem,
@@ -73,12 +74,7 @@ export function App() {
   const [importing, setImporting] = useState(false);
   const [exporting, setExporting] = useState(false);
   const mode = useEditor((s) => s.mode);
-  const gizmo = useEditor((s) => s.gizmo);
-  const snap = useEditor((s) => s.snap);
-  const showCollision = useEditor((s) => s.showCollision);
-  const previewMotion = useEditor((s) => s.previewMotion);
   const project = useEditor((s) => s.project);
-  const navTool = useEditor((s) => s.navTool);
   const revision = useEditor((s) => s.revision);
   const assetMap = useAssetMap(assets);
 
@@ -111,9 +107,49 @@ export function App() {
   }, [revision]);
 
   useKeyboard();
+  const phone = usePhone();
+  const [sheet, setSheet] = useState<"tools" | "inspector" | null>(null);
+
+  const toolPanel = (
+    <>
+      <Tabs
+        value={tab}
+        onChange={(t: string) => setTab(t as Tab)}
+        items={[
+          { value: "items", label: "Items" },
+          { value: "shapes", label: "Shapes" },
+          { value: "builders", label: "Builders" },
+          { value: "scene", label: "Scene" },
+          { value: "nav", label: "Labels" },
+          { value: "views", label: "Views" },
+        ]}
+        style={{ padding: "0 8px", ...(phone && { overflowX: "auto", flex: "none" }) }}
+      />
+      <div
+        style={{ flex: 1, overflow: "auto", paddingBottom: "var(--dim-inset-bottom, 0px)" }}
+        data-testid="sidebar"
+      >
+        <PanelBoundary key={tab}>
+          {tab === "items" && (
+            <LibraryPanel
+              assets={assets}
+              onImport={() => setImporting(true)}
+            />
+          )}
+          {tab === "shapes" && <ShapesPanel />}
+          {tab === "builders" && <BuildersPanel />}
+          {tab === "scene" && <ScenePanel />}
+          {tab === "nav" && <LabelsPanel />}
+          {tab === "views" && <ViewsPanel />}
+        </PanelBoundary>
+      </div>
+    </>
+  );
+  const inspector = <Inspector assets={assets} />;
 
   return (
     <div
+      className={phone ? "dwb-phone" : undefined}
       style={{
         position: "fixed",
         inset: 0,
@@ -123,12 +159,13 @@ export function App() {
         color: "var(--fg)",
       }}
     >
+      <style>{layoutCss}</style>
       <header
         style={{
           display: "flex",
           alignItems: "center",
-          gap: 10,
-          padding: "8px 12px",
+          gap: phone ? 6 : 10,
+          padding: phone ? "6px 8px" : "8px 12px",
           borderBottom: "1px solid var(--border)",
           background: "var(--surface)",
         }}
@@ -137,11 +174,11 @@ export function App() {
           value={project.name}
           onChange={renameProject}
           aria-label="World name"
-          style={{ maxWidth: 240 }}
+          style={phone ? { flex: "1 1 0", minWidth: 0 } : { maxWidth: 240 }}
           data-testid="world-name"
         />
-        <ProjectMenu />
-        <div style={{ flex: 1 }} />
+        <ProjectMenu width={phone ? 84 : 220} />
+        {!phone && <div style={{ flex: 1 }} />}
         <ClipBadge />
         <Segmented
           value={mode}
@@ -149,124 +186,43 @@ export function App() {
           onChange={(m: string) => setMode(m as "edit" | "view")}
           data-testid="mode"
         />
-        <Button
-          variant="primary"
-          icon="download"
-          onClick={() => setExporting(true)}
-          data-testid="export"
-        >
-          Export
-        </Button>
-      </header>
-      <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
-        {mode === "edit" && (
-          <aside
-            style={{
-              width: 330,
-              borderRight: "1px solid var(--border)",
-              display: "flex",
-              flexDirection: "column",
-              background: "var(--surface)",
-            }}
-          >
-            <Tabs
-              value={tab}
-              onChange={(t: string) => setTab(t as Tab)}
-              items={[
-                { value: "items", label: "Items" },
-                { value: "shapes", label: "Shapes" },
-                { value: "builders", label: "Builders" },
-                { value: "scene", label: "Scene" },
-                { value: "nav", label: "Labels" },
-                { value: "views", label: "Views" },
-              ]}
-              style={{ padding: "0 8px" }}
+        {phone
+          ? (
+            <IconButton
+              icon="download"
+              label="Export"
+              variant="primary"
+              onClick={() => setExporting(true)}
+              data-testid="export"
             />
-            <div
-              style={{ flex: 1, overflow: "auto", paddingBottom: "var(--dim-inset-bottom, 0px)" }}
-              data-testid="sidebar"
+          )
+          : (
+            <Button
+              variant="primary"
+              icon="download"
+              onClick={() => setExporting(true)}
+              data-testid="export"
             >
-              <PanelBoundary key={tab}>
-                {tab === "items" && (
-                  <LibraryPanel
-                    assets={assets}
-                    onImport={() => setImporting(true)}
-                  />
-                )}
-                {tab === "shapes" && <ShapesPanel />}
-                {tab === "builders" && <BuildersPanel />}
-                {tab === "scene" && <ScenePanel />}
-                {tab === "nav" && <LabelsPanel />}
-                {tab === "views" && <ViewsPanel />}
-              </PanelBoundary>
-            </div>
-          </aside>
+              Export
+            </Button>
+          )}
+      </header>
+      <div style={{ flex: 1, display: "flex", minHeight: 0, position: "relative" }}>
+        {mode === "edit" && !phone && (
+          <SidePanel
+            side="left"
+            storageKey="dim-world-builder.panel-left"
+            defaultWidth={330}
+            style={{ display: "flex", flexDirection: "column", background: "var(--surface)" }}
+          >
+            {toolPanel}
+          </SidePanel>
         )}
         <main style={{ flex: 1, position: "relative", minWidth: 0 }}>
           <Viewport assets={assetMap} />
-          {mode === "edit"
-            ? (
-              <div
-                style={{
-                  position: "absolute",
-                  left: 12,
-                  top: 12,
-                  // clear of the view cube
-                  maxWidth: "calc(100% - 170px)",
-                  display: "flex",
-                  flexWrap: "wrap",
-                  alignItems: "center",
-                  gap: 8,
-                  padding: 6,
-                  borderRadius: "var(--radius)",
-                  background: "var(--panel, var(--raised))",
-                  boxShadow: "var(--shadow)",
-                }}
-              >
-                <Segmented
-                  size="sm"
-                  value={gizmo}
-                  items={[
-                    { value: "translate", label: "Move (W)" },
-                    { value: "rotate", label: "Rotate (E)" },
-                    { value: "scale", label: "Scale (R)" },
-                  ]}
-                  onChange={(g: string) => setGizmo(g as "translate")}
-                  data-testid="gizmo"
-                />
-                <Toggle size="sm" value={snap} onChange={setSnap} label="Snap" />
-                <Toggle
-                  size="sm"
-                  value={showCollision}
-                  onChange={setShowCollision}
-                  label="Collision"
-                  data-testid="show-collision"
-                />
-                <FancyToggle />
-                <Toggle
-                  size="sm"
-                  value={previewMotion}
-                  onChange={setPreviewMotion}
-                  label="Play motion"
-                  data-testid="preview-motion"
-                />
-                {navTool === "tag" && (
-                  <Button
-                    size="sm"
-                    icon="close"
-                    onClick={() => setNavTool(null)}
-                    data-testid="tag-tool-done"
-                  >
-                    Placing AprilTags: click a wall · Done
-                  </Button>
-                )}
-                <IconButton icon="rotate-left" label="Undo" size="sm" onClick={undo} />
-                <IconButton icon="rotate-right" label="Redo" size="sm" onClick={redo} />
-              </div>
-            )
-            : <ViewerOverlay />}
+          {mode === "edit" ? <EditToolbar phone={phone} /> : <ViewerOverlay />}
           {mode === "edit" && <FloorPicker />}
-          {mode === "edit" && (
+          {mode === "edit" && !phone && (
             <div
               style={{
                 position: "absolute",
@@ -285,20 +241,81 @@ export function App() {
             </div>
           )}
         </main>
-        {mode === "edit" && (
-          <aside
-            style={{
-              width: 320,
-              borderLeft: "1px solid var(--border)",
-              overflow: "auto",
-              background: "var(--surface)",
-              paddingBottom: "var(--dim-inset-bottom, 0px)",
-            }}
+        {mode === "edit" && !phone && (
+          <SidePanel
+            side="right"
+            storageKey="dim-world-builder.panel-right"
+            defaultWidth={320}
+            style={{ display: "flex", flexDirection: "column", background: "var(--surface)" }}
           >
-            <Inspector assets={assets} />
-          </aside>
+            {/* the scroller is inside, so the resize edge (over the border) isn't clipped */}
+            <div
+              style={{
+                flex: 1,
+                minHeight: 0,
+                overflow: "auto",
+                paddingBottom: "var(--dim-inset-bottom, 0px)",
+              }}
+            >
+              {inspector}
+            </div>
+          </SidePanel>
+        )}
+        {mode === "edit" && phone && (
+          <>
+            <Sheet
+              open={sheet === "tools"}
+              title="Add to the world"
+              onClose={() => setSheet(null)}
+              testId="sheet-tools"
+            >
+              {toolPanel}
+            </Sheet>
+            <Sheet
+              open={sheet === "inspector"}
+              title="Inspector"
+              onClose={() => setSheet(null)}
+              testId="sheet-inspector"
+            >
+              <div style={{ flex: 1, overflow: "auto" }}>{inspector}</div>
+            </Sheet>
+          </>
         )}
       </div>
+      {mode === "edit" && phone && (
+        <div
+          data-testid="phone-bar"
+          style={{
+            display: "flex",
+            gap: 8,
+            padding: "6px 8px",
+            paddingBottom: "calc(6px + var(--dim-inset-bottom, env(safe-area-inset-bottom, 0px)))",
+            borderTop: "1px solid var(--border)",
+            background: "var(--surface)",
+          }}
+        >
+          <Button
+            icon="plus"
+            style={{ flex: 1 }}
+            pressed={sheet === "tools"}
+            onClick={() => setSheet(sheet === "tools" ? null : "tools")}
+            data-testid="open-tools"
+          >
+            Add
+          </Button>
+          <IconButton icon="rotate-left" label="Undo" onClick={undo} />
+          <IconButton icon="rotate-right" label="Redo" onClick={redo} />
+          <Button
+            icon="settings"
+            style={{ flex: 1 }}
+            pressed={sheet === "inspector"}
+            onClick={() => setSheet(sheet === "inspector" ? null : "inspector")}
+            data-testid="open-inspector"
+          >
+            Inspect
+          </Button>
+        </div>
+      )}
       <ImportDialog
         open={importing}
         onClose={() => setImporting(false)}
@@ -384,6 +401,103 @@ function useKeyboard() {
     addEventListener("keydown", onKey);
     return () => removeEventListener("keydown", onKey);
   }, []);
+}
+
+/** over the view's top-left: the gizmo, the view's switches, undo/redo; a phone keeps the switches behind a button */
+function EditToolbar({ phone }: { phone: boolean }) {
+  const gizmo = useEditor((s) => s.gizmo);
+  const snap = useEditor((s) => s.snap);
+  const showCollision = useEditor((s) => s.showCollision);
+  const previewMotion = useEditor((s) => s.previewMotion);
+  const navTool = useEditor((s) => s.navTool);
+  const [more, setMore] = useState(false);
+  const switches = (
+    <>
+      <Toggle size="sm" value={snap} onChange={setSnap} label="Snap" />
+      <Toggle
+        size="sm"
+        value={showCollision}
+        onChange={setShowCollision}
+        label="Collision"
+        data-testid="show-collision"
+      />
+      <FancyToggle />
+      <Toggle
+        size="sm"
+        value={previewMotion}
+        onChange={setPreviewMotion}
+        label="Play motion"
+        data-testid="preview-motion"
+      />
+    </>
+  );
+  return (
+    <div
+      data-testid="edit-toolbar"
+      style={{
+        position: "absolute",
+        left: phone ? 8 : 12,
+        top: phone ? 8 : 12,
+        // clear of the view cube
+        maxWidth: phone ? "calc(100% - 120px)" : "calc(100% - 170px)",
+        display: "flex",
+        flexWrap: "wrap",
+        alignItems: "center",
+        gap: phone ? 6 : 8,
+        padding: 6,
+        borderRadius: "var(--radius)",
+        background: "var(--panel, var(--raised))",
+        boxShadow: "var(--shadow)",
+      }}
+    >
+      <Segmented
+        size="sm"
+        value={gizmo}
+        items={phone
+          ? [
+            { value: "translate", label: "Move" },
+            { value: "rotate", label: "Rotate" },
+            { value: "scale", label: "Scale" },
+          ]
+          : [
+            { value: "translate", label: "Move (W)" },
+            { value: "rotate", label: "Rotate (E)" },
+            { value: "scale", label: "Scale (R)" },
+          ]}
+        onChange={(g: string) => setGizmo(g as "translate")}
+        data-testid="gizmo"
+      />
+      {phone
+        ? (
+          <IconButton
+            icon="more-horizontal"
+            label="View switches"
+            size="sm"
+            variant={more ? "primary" : "default"}
+            onClick={() => setMore(!more)}
+            data-testid="toolbar-more"
+          />
+        )
+        : switches}
+      {phone && more && (
+        <div style={{ flexBasis: "100%", display: "flex", flexDirection: "column", gap: 2 }}>
+          {switches}
+        </div>
+      )}
+      {navTool === "tag" && (
+        <Button
+          size="sm"
+          icon="close"
+          onClick={() => setNavTool(null)}
+          data-testid="tag-tool-done"
+        >
+          Placing AprilTags: click a wall · Done
+        </Button>
+      )}
+      {!phone && <IconButton icon="rotate-left" label="Undo" size="sm" onClick={undo} />}
+      {!phone && <IconButton icon="rotate-right" label="Redo" size="sm" onClick={redo} />}
+    </div>
+  );
 }
 
 /** the floors as a stack of buttons over the view's bottom-left corner (top floor on top): the lit one is edited */
@@ -512,7 +626,7 @@ function FancyToggle() {
   );
 }
 
-function ProjectMenu() {
+function ProjectMenu({ width }: { width: number }) {
   const [projects, setProjects] = useState<string[]>([]);
   const refresh = () => api.listProjects().then((r) => setProjects(r.projects)).catch(() => {});
   useEffect(() => {
@@ -529,7 +643,7 @@ function ProjectMenu() {
     <Select
       size="sm"
       value=""
-      style={{ width: 220 }}
+      style={{ width }}
       options={choices}
       onFocus={refresh}
       aria-label="Open a world"

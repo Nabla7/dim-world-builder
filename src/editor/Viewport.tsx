@@ -76,6 +76,7 @@ export function Viewport({ assets }: { assets: Record<string, MeshAsset> }) {
         // orbits, the wheel zooms
         const controls = viewer.controls as unknown as {
           mouseButtons: Record<string, number>;
+          touches: Record<string, number>;
           screenSpacePanning: boolean;
         };
         controls.mouseButtons = {
@@ -83,6 +84,8 @@ export function Viewport({ assets }: { assets: Record<string, MeshAsset> }) {
           MIDDLE: THREE.MOUSE.DOLLY,
           RIGHT: THREE.MOUSE.ROTATE,
         };
+        // touch, the same way: one finger pans, two pinch to zoom and twist/drag to orbit
+        controls.touches = { ONE: THREE.TOUCH.PAN, TWO: THREE.TOUCH.DOLLY_ROTATE };
         controls.screenSpacePanning = false;
         exposeForAutomation(viewer);
       }}
