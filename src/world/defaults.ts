@@ -44,8 +44,14 @@ export function seeded(seed: number): () => number {
 
 export const IDENTITY: Quat = [0, 0, 0, 1];
 
+/** `length` random hex digits; not crypto.randomUUID, which plain-http pages (a robot's LAN address) don't have */
+export function randomHex(length: number): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(Math.ceil(length / 2)));
+  return [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, length);
+}
+
 export function newId(): string {
-  return crypto.randomUUID().replace(/-/g, "").slice(0, 12);
+  return randomHex(12);
 }
 
 export function yaw(angle: number): Quat {

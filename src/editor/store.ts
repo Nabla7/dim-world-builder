@@ -2,7 +2,7 @@
 // React's render) and the panels read the same thing.
 
 import { useSyncExternalStore } from "react";
-import { emptyProject } from "../world/defaults.ts";
+import { emptyProject, newId, randomHex } from "../world/defaults.ts";
 import type {
   Annotation,
   CameraView,
@@ -202,7 +202,7 @@ export function select(selected: string | null, how: { add?: boolean; member?: b
 /** bundles the selection into a new group; returns its id */
 export function groupSelection(): string | null {
   if (state.selection.length < 2) return null;
-  const id = `group_${crypto.randomUUID().slice(0, 6)}`;
+  const id = `group_${randomHex(6)}`;
   const chosen = new Set(state.selection);
   edit((p) => {
     const groups = p.groups ?? [];
@@ -312,7 +312,7 @@ export function duplicateItem(id: string) {
   const item = state.project.items.find((i) => i.id === id);
   if (!item) return;
   const copy = structuredClone(item);
-  copy.id = crypto.randomUUID().replace(/-/g, "").slice(0, 12);
+  copy.id = newId();
   copy.name = `${item.name} copy`;
   delete copy.key;
   copy.position = [item.position[0] + 0.5, item.position[1] + 0.5, item.position[2]] as Vec3;
@@ -338,7 +338,7 @@ export function setActiveFloor(floor: string) {
 export function addFloor(around: Vec3 = [0, 0, 0]) {
   edit((p) => {
     const topFloor = p.floors.reduce((a, b) => (b.elevation > a.elevation ? b : a));
-    const id = `floor_${crypto.randomUUID().slice(0, 6)}`;
+    const id = `floor_${randomHex(6)}`;
     const below = p.items.filter((i) =>
       i.floor === topFloor.id && !["light", "hill"].includes(i.kind)
     );
@@ -440,7 +440,7 @@ export function addLabelPoint(point: Vec3) {
     ? "Mapping walk"
     : { point: "Point", path: "Path", area: "Area" }[tool];
   const label: Annotation = {
-    id: crypto.randomUUID().slice(0, 8),
+    id: randomHex(8),
     kind: tool,
     label: `${name} ${same.length + 1}`,
     tags,
