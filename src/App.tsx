@@ -1,4 +1,4 @@
-import { Component, type ReactNode, useCallback, useEffect, useState } from "react";
+import { Component, type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter.js";
 import * as api from "./api.ts";
 import {
@@ -23,6 +23,7 @@ import {
 import { emptyProject } from "./world/defaults.ts";
 import { testCourse } from "./world/examples.ts";
 import { clutterYard } from "./world/examples_clutter.ts";
+import { office555 } from "./world/examples_office.ts";
 import type { MeshAsset } from "./world/types.ts";
 import {
   BuildersPanel,
@@ -109,6 +110,14 @@ export function App() {
   useKeyboard();
   const phone = usePhone();
   const [sheet, setSheet] = useState<"tools" | "inspector" | null>(null);
+  // a sheet covers the view, so it gets out of the way once something lands or wants a tap in the world
+  const itemCount = useEditor((s) => s.project.items.length);
+  const wantsTap = useEditor((s) => s.navTool !== null || s.drawingPath !== null);
+  const lastCount = useRef(itemCount);
+  useEffect(() => {
+    if (itemCount > lastCount.current || wantsTap) setSheet(null);
+    lastCount.current = itemCount;
+  }, [itemCount, wantsTap]);
 
   const toolPanel = (
     <>
@@ -637,6 +646,7 @@ function ProjectMenu({ width }: { width: number }) {
     { value: "new", label: "New empty world" },
     { value: "example", label: "Example: nav test course" },
     { value: "clutter", label: "Example: cluttered yard" },
+    { value: "office", label: "Example: the office (555)" },
     ...projects.map((p) => ({ value: `project:${p}`, label: p, group: "Saved" })),
   ];
   return (
@@ -655,6 +665,7 @@ function ProjectMenu({ width }: { width: number }) {
           );
         } else if (choice === "example") loadProject(testCourse());
         else if (choice === "clutter") loadProject(clutterYard());
+        else if (choice === "office") loadProject(office555());
         else if (choice.startsWith("project:")) api.loadProject(choice.slice(8)).then(loadProject);
       }}
     />
