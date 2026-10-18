@@ -637,7 +637,11 @@ function FancyToggle() {
 
 function ProjectMenu({ width }: { width: number }) {
   const [projects, setProjects] = useState<string[]>([]);
-  const refresh = () => api.listProjects().then((r) => setProjects(r.projects)).catch(() => {});
+  // refreshed on mount and on blur, never while open: a phone's picker drops the pick if its options change under it
+  const refresh = () =>
+    api.listProjects().then((r) =>
+      setProjects((old) => old.join("\n") === r.projects.join("\n") ? old : r.projects)
+    ).catch(() => {});
   useEffect(() => {
     refresh();
   }, []);
@@ -655,7 +659,7 @@ function ProjectMenu({ width }: { width: number }) {
       value=""
       style={{ width }}
       options={choices}
-      onFocus={refresh}
+      onBlur={refresh}
       aria-label="Open a world"
       data-testid="open-world"
       onChange={(choice: string) => {
