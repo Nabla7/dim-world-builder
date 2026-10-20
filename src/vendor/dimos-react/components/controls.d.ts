@@ -1,4 +1,4 @@
-import { AnchorHTMLAttributes, ButtonHTMLAttributes, HTMLAttributes, InputHTMLAttributes, Key, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react';
+import { AnchorHTMLAttributes, ButtonHTMLAttributes, HTMLAttributes, InputHTMLAttributes, Key, ReactNode, Ref, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react';
 export type ButtonVariant = "default" | "primary" | "ghost" | "danger" | "ok" | "warn";
 export type ControlSize = "sm" | "md" | "lg";
 /** The status colors a Badge, Chip or TagList item takes. */
@@ -17,9 +17,11 @@ export interface ButtonProps extends Omit<ButtonHTMLAttributes<ButtonElement>, "
     type?: ButtonHTMLAttributes<HTMLButtonElement>["type"];
     /** makes it a link that looks like a button (`download`, `target` pass through) */
     href?: string;
+    /** the rendered element (React 19 passes a function component's ref as a prop) */
+    ref?: Ref<ButtonElement>;
 }
 /** A button; `href` makes it a link that looks like a button (`download`, `target` pass through). */
-export declare function Button({ variant, size, icon, iconRight, pressed, loading, block, className, children, type, disabled, href, ...rest }: ButtonProps): import('react').JSX.Element;
+export declare function Button({ variant, size, icon, iconRight, pressed, loading, block, className, children, type, disabled, href, ref, ...rest }: ButtonProps): import('react').JSX.Element;
 export interface HoldButtonProps extends ButtonProps {
     onHold?: () => void;
     onRelease?: () => void;

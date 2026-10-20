@@ -1,4 +1,5 @@
-import { $t as Slider, A as depthScale, Bn as headerFrameId, C as useStore, Cn as decodeMessage, Dn as parseKey, F as DEFAULT_GRADIENT, Ft as Badge, Gt as IconButton, It as Button, J as ColorSwatch, Ln as decode, Pn as useTopicList, Qn as themeColors, Qt as Select, R as GRADIENTS, S as readLocal, T as DEPTH_COLORMAPS, Ut as Field, V as RAMPS, W as isPalette, an as Toggle, b as Store, bt as EmptyState, jn as useDataSource, l as isDepthTopic, o as cameraInfoFor, q as sampleGradient, qt as NumberInput, rr as cx, s as cameraStreamsFor, sn as Icon, vt as Alert, w as writeLocal, x as localStore, z as PALETTES } from "./chunks/camera-Bd0gZkzw.js";
+import { A as NumberInput, E as Field, F as Select, H as Toggle, I as Slider, O as IconButton, W as Icon, mt as themeColors, v as Badge, y as Button, yt as cx } from "./chunks/nav-D57o5csA.js";
+import { A as depthScale, C as useStore, F as DEFAULT_GRADIENT, J as ColorSwatch, Lt as headerFrameId, Ot as useDataSource, Pt as decode, R as GRADIENTS, S as readLocal, T as DEPTH_COLORMAPS, V as RAMPS, W as isPalette, b as Store, bt as decodeMessage, it as EmptyState, jt as useTopicList, l as isDepthTopic, nt as Alert, o as cameraInfoFor, q as sampleGradient, s as cameraStreamsFor, w as writeLocal, wt as parseKey, x as localStore, z as PALETTES } from "./chunks/camera-IXP0snTY.js";
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { jsx, jsxs } from "react/jsx-runtime";
 import * as THREE from "three";
@@ -756,7 +757,11 @@ function limitPolar(direction, maxPolar) {
 /** The canvas renders at the screen's resolution, up to 2× (beyond that the extra pixels cost more than they show). */
 var pixelRatio = () => Math.min(2, globalThis.devicePixelRatio || 1);
 var Viewer = class {
+	/** null when the browser couldn't start WebGL: the scene still updates but nothing draws (`webglError` says why) */
 	renderer;
+	webglError;
+	/** what the view draws into and takes pointer input on: the renderer's canvas, or a blank one without WebGL */
+	canvas;
 	labels;
 	scene = new THREE.Scene();
 	camera = new THREE.PerspectiveCamera(60, 1, .05, 1e4);
@@ -836,21 +841,29 @@ var Viewer = class {
 		this.camera.far = far;
 		this.camera.fov = fov;
 		this.camera.updateProjectionMatrix();
-		this.renderer = new THREE.WebGLRenderer({
-			antialias,
-			alpha: true,
-			powerPreference: "high-performance"
-		});
-		this.renderer.setPixelRatio(pixelRatio());
-		this.renderer.setClearColor(0, 0);
-		this.renderer.domElement.className = "dr-scene-canvas";
-		host.appendChild(this.renderer.domElement);
+		let renderer = null;
+		try {
+			renderer = new THREE.WebGLRenderer({
+				antialias,
+				alpha: true,
+				powerPreference: "high-performance"
+			});
+			renderer.setPixelRatio(pixelRatio());
+			renderer.setClearColor(0, 0);
+		} catch (error) {
+			console.warn("3D view: WebGL unavailable", error);
+		}
+		this.renderer = renderer;
+		this.webglError = renderer ? null : "this browser couldn't start WebGL";
+		this.canvas = renderer?.domElement ?? document.createElement("canvas");
+		this.canvas.className = "dr-scene-canvas";
+		host.appendChild(this.canvas);
 		this.labels = new CSS2DRenderer();
 		this.labels.domElement.className = "dr-scene-labels";
 		host.appendChild(this.labels.domElement);
 		this.camera.up.set(0, 0, 1);
 		this.camera.position.set(-6, -6, 5);
-		this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+		this.controls = new OrbitControls(this.camera, this.canvas);
 		this.controls.enableDamping = true;
 		this.controls.dampingFactor = .18;
 		this.controls.screenSpacePanning = false;
@@ -933,7 +946,7 @@ var Viewer = class {
 		};
 		for (const listener of this.#listeners) listener(info);
 		this.#render();
-		return this.renderer.domElement.toDataURL(type);
+		return this.canvas.toDataURL(type);
 	}
 	/**
 	* Draws `object` (and everything under it, children added later too) over the rest of the scene: in a second pass
@@ -945,7 +958,7 @@ var Viewer = class {
 		this.requestRender();
 	}
 	#render() {
-		this.#onTop.render(this.renderer, this.scene, this.camera);
+		if (this.renderer) this.#onTop.render(this.renderer, this.scene, this.camera);
 	}
 	/** Draw on the next frame. */
 	requestRender() {
@@ -985,7 +998,7 @@ var Viewer = class {
 	* a few pixels of the ray or the nearest mesh hit, else where the ray meets the ground (z = 0). Null on a miss.
 	*/
 	pick(clientX, clientY) {
-		const rect = this.renderer.domElement.getBoundingClientRect();
+		const rect = this.canvas.getBoundingClientRect();
 		const ndc = new THREE.Vector2((clientX - rect.left) / rect.width * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
 		const raycaster = new THREE.Raycaster();
 		raycaster.layers.enable(1);
@@ -1194,7 +1207,7 @@ var Viewer = class {
 	#watchPixelRatio() {
 		(globalThis.matchMedia?.(`(resolution: ${globalThis.devicePixelRatio}dppx)`))?.addEventListener("change", () => {
 			if (this.#disposed) return;
-			this.renderer.setPixelRatio(pixelRatio());
+			this.renderer?.setPixelRatio(pixelRatio());
 			this.#resize();
 			this.#watchPixelRatio();
 		}, { once: true });
@@ -1202,12 +1215,16 @@ var Viewer = class {
 	#resize() {
 		const width = Math.max(1, this.#host.clientWidth);
 		const height = Math.max(1, this.#host.clientHeight);
-		this.renderer.setSize(width, height);
+		if (this.renderer) this.renderer.setSize(width, height);
+		else Object.assign(this.canvas, {
+			width,
+			height
+		});
 		this.labels.setSize(width, height);
 		this.camera.aspect = width / height;
 		this.camera.updateProjectionMatrix();
 		this.resolution.set(width, height);
-		this.pixelsPerMeter.value = height * this.renderer.getPixelRatio() / (2 * Math.tan(THREE.MathUtils.degToRad(this.camera.fov) / 2));
+		this.pixelsPerMeter.value = height * (this.renderer?.getPixelRatio() ?? 1) / (2 * Math.tan(THREE.MathUtils.degToRad(this.camera.fov) / 2));
 		this.requestRender();
 	}
 	#loop = (now) => {
@@ -1328,7 +1345,7 @@ var Viewer = class {
 			latencyP50: percentile(this.#latencies, .5),
 			latencyP95: percentile(this.#latencies, .95),
 			arrivalToFrameMs: percentile(this.#arrivals, .5),
-			drawCalls: this.renderer.info.render.calls,
+			drawCalls: this.renderer?.info.render.calls ?? 0,
 			points
 		});
 		const times = this.#frameTimes;
@@ -1352,9 +1369,9 @@ var Viewer = class {
 		this.controls.dispose();
 		this.#grid?.geometry.dispose();
 		this.#grid?.material.dispose();
-		this.renderer.dispose();
-		this.renderer.forceContextLoss?.();
-		this.renderer.domElement.remove();
+		this.renderer?.dispose();
+		this.renderer?.forceContextLoss?.();
+		this.canvas.remove();
 		this.labels.domElement.remove();
 		this.#listeners.clear();
 		this.#resetListeners.clear();
@@ -1672,7 +1689,7 @@ var ViewCube = class {
 	};
 	#onWheel = (event) => {
 		event.preventDefault();
-		this.#viewer.renderer.domElement.dispatchEvent(new WheelEvent("wheel", event));
+		this.#viewer.canvas.dispatchEvent(new WheelEvent("wheel", event));
 	};
 	/** Dragging the cube orbits the view around its target, like dragging the scene. */
 	#orbit(dx, dy) {
@@ -4884,6 +4901,8 @@ var Camera3dLayer = class {
 			this.#stops.push(this.#camera.video.subscribe(() => this.#onVideo()));
 			this.#onVideo();
 		}
+		this.#plane.renderOrder = this.#depth ? 2 : 1;
+		this.#plane.material.depthWrite = false;
 		this.#content.add(this.#plane, this.#frustum.object);
 		this.#stops.push(settings.subscribe(() => this.#reshape(true)));
 		this.#findInfo();
@@ -5041,7 +5060,7 @@ var Camera3dLayer = class {
 		]) this.#frustum.push(a.x, a.y, a.z, b.x, b.y, b.z);
 		this.#frustum.commit();
 		this.#frustum.object.visible = settings.frustum;
-		const optical = settings.convention === "optical" || settings.convention === "auto" && /optical/i.test(this.#frame ?? "");
+		const optical = settings.convention === "optical" || settings.convention === "auto" && !/(^|_)body(_|$)/i.test(this.#frame ?? "");
 		this.#content.matrix.copy(optical ? new THREE.Matrix4() : OPTICAL_TO_BODY);
 		this.#content.matrixWorldNeedsUpdate = true;
 		this.context.setStatus({ info: `${intrinsics.width}×${intrinsics.height}${this.#intrinsics ? "" : " (no CameraInfo: 70° guess)"} · ${optical ? "optical" : "body"} frame ${this.#frame || "?"}` });
@@ -5140,7 +5159,7 @@ function Camera3dSettingsEditor({ settings, topic }) {
 				children: /* @__PURE__ */ jsx(Select, {
 					value: value.convention,
 					options: [
-						["auto", "auto (by name)"],
+						["auto", "auto (optical unless named body)"],
 						["optical", "optical (z forward)"],
 						["body", "body (x forward)"]
 					],
@@ -5726,7 +5745,7 @@ function Scene3D({ fixedFrame, followFrame = null, follow = true, onFollowChange
 	pickRef.current = onPick;
 	useEffect(() => {
 		if (!viewer) return;
-		const canvas = viewer.renderer.domElement;
+		const canvas = viewer.canvas;
 		let down = null;
 		const onDown = (event) => {
 			down = {

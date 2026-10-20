@@ -109,12 +109,13 @@ export function Viewport({ assets }: { assets: Record<string, MeshAsset> }) {
 function exposeForAutomation(viewer: {
   camera: THREE.PerspectiveCamera;
   controls: { target: THREE.Vector3; update(): void };
-  renderer: THREE.WebGLRenderer;
+  renderer: THREE.WebGLRenderer | null;
+  canvas: HTMLCanvasElement;
   scene: THREE.Scene;
   requestRender(): void;
 }) {
   const toScreen = (point: THREE.Vector3): [number, number] => {
-    const rect = viewer.renderer.domElement.getBoundingClientRect();
+    const rect = viewer.canvas.getBoundingClientRect();
     viewer.camera.updateMatrixWorld();
     const ndc = point.clone().project(viewer.camera);
     return [rect.left + ((ndc.x + 1) / 2) * rect.width, rect.top + ((1 - ndc.y) / 2) * rect.height];
@@ -135,11 +136,13 @@ function exposeForAutomation(viewer: {
       view: () => view.camera?.get(),
       /** mean milliseconds to draw one frame of the current view (GPU included), for checking a look's cost */
       frameMs(frames = 30): number {
-        const gl = viewer.renderer.getContext();
-        viewer.renderer.render(viewer.scene, viewer.camera);
+        const renderer = viewer.renderer;
+        if (!renderer) return NaN; // no WebGL: nothing draws
+        const gl = renderer.getContext();
+        renderer.render(viewer.scene, viewer.camera);
         gl.finish();
         const start = performance.now();
-        for (let i = 0; i < frames; i++) viewer.renderer.render(viewer.scene, viewer.camera);
+        for (let i = 0; i < frames; i++) renderer.render(viewer.scene, viewer.camera);
         gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(4));
         return (performance.now() - start) / frames;
       },
@@ -216,9 +219,10 @@ function Lighting() {
   const softShadows = useEditor((s) => fancyOn(s.fancy, "shadows"));
   const skyOn = useEditor((s) => fancyOn(s.fancy, "sky"));
   useLayer(({ viewer }) => {
-    noticeRenderer(rendererName(viewer.renderer));
-    const root = new THREE.Group();
     const renderer = viewer.renderer;
+    if (!renderer) return null; // no WebGL: nothing draws, so no look to set up
+    noticeRenderer(rendererName(renderer));
+    const root = new THREE.Group();
     renderer.shadowMap.enabled = true;
     // variance shadow maps blur the map itself (a smooth, wide penumbra: a hazy, diffuse sun); PCF's 17 taps band when
     // spread that wide, and PCFSoft ignores the radius
@@ -439,7 +443,7 @@ function WorldLayer({ assets }: { assets: Record<string, MeshAsset> }) {
         state: WorldLayerState;
         viewer: {
           requestRender(): void;
-          renderer: THREE.WebGLRenderer;
+          renderer: THREE.WebGLRenderer | null;
           camera: THREE.PerspectiveCamera;
           controls: { target: THREE.Vector3; update(): void };
         };
@@ -529,7 +533,7 @@ function WorldLayer({ assets }: { assets: Record<string, MeshAsset> }) {
             object.visible = body.floor === floor.id && !body.mocap &&
               !["slab", "hill", "hole", "light"].includes(body.kind);
           }
-          if (!occlusion) {
+          if (!occlusion || !live.viewer.renderer) {
             clearFloorAO(shared);
             continue;
           }
@@ -613,7 +617,7 @@ function Picker({ objects }: { objects: () => Map<string, THREE.Group> | undefin
   const viewer = useViewer();
   useEffect(() => {
     if (!viewer) return;
-    const canvas = viewer.renderer.domElement;
+    const canvas = viewer.canvas;
     let down: { x: number; y: number } | null = null;
     const raycaster = new THREE.Raycaster();
     const onDown = (e: PointerEvent) => {
@@ -929,7 +933,7 @@ function Gizmo() {
 
   useEffect(() => {
     if (!viewer) return;
-    const controls = new TransformControls(viewer.camera, viewer.renderer.domElement);
+    const controls = new TransformControls(viewer.camera, viewer.canvas);
     controls.setSpace("local");
     const helper = controls.getHelper();
     viewer.scene.add(helper);

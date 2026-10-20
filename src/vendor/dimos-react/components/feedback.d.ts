@@ -62,7 +62,8 @@ export interface ModalProps extends Omit<HTMLAttributes<HTMLDivElement>, "title"
     title?: ReactNode;
     /** buttons */
     footer?: ReactNode;
-    size?: "sm" | "md" | "lg";
+    /** xl: a tall viewer (logs, a file), as big as the window allows up to 1100 × 720 */
+    size?: "sm" | "md" | "lg" | "xl";
     dismissable?: boolean;
 }
 /**
@@ -136,9 +137,18 @@ export interface EmptyStateProps extends Omit<HTMLAttributes<HTMLDivElement>, "t
     tone?: "warn" | "danger";
     /** centers it over a whole view */
     layer?: boolean;
+    /**
+     * "notice": Desktop's first-run card (dim-app's emptyState): a micro-label (`label`), a sentence, the details and
+     * the next steps, left-aligned; no icon. Default "centered": icon, title and text centered.
+     */
+    variant?: "centered" | "notice";
+    /** the notice's micro-label (what state this is: "No blueprint running") */
+    label?: ReactNode;
+    /** the notice is waiting on something (its label ends in "…") */
+    busy?: boolean;
 }
 /** A first-run / empty / error message with next steps. `layer` centers it over a whole view (a canvas, a 3D scene). */
-export declare function EmptyState({ icon, title, message, actions, tone, layer, className, children, ...rest }: EmptyStateProps): import('react').JSX.Element;
+export declare function EmptyState({ icon, title, message, actions, tone, layer, variant, label, busy, className, children, ...rest }: EmptyStateProps): import('react').JSX.Element;
 export interface ErrorBoundaryProps {
     children?: ReactNode;
     /** an element, or `({ error, reset }) => element` */

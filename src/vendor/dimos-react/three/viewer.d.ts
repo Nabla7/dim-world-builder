@@ -41,7 +41,11 @@ export interface PickResult {
 export declare function limitPolar(direction: THREE.Vector3, maxPolar: number): THREE.Vector3 | null;
 export declare class Viewer {
     #private;
-    renderer: THREE.WebGLRenderer;
+    /** null when the browser couldn't start WebGL: the scene still updates but nothing draws (`webglError` says why) */
+    renderer: THREE.WebGLRenderer | null;
+    webglError: string | null;
+    /** what the view draws into and takes pointer input on: the renderer's canvas, or a blank one without WebGL */
+    canvas: HTMLCanvasElement;
     labels: CSS2DRenderer;
     scene: THREE.Scene;
     camera: THREE.PerspectiveCamera;

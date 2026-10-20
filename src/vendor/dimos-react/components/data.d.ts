@@ -103,6 +103,7 @@ export interface ListRowProps extends Omit<HTMLAttributes<HTMLDivElement>, "titl
     /** show a drag grip (an object = props for it, e.g. from useDrag) */
     handle?: boolean | HTMLAttributes<HTMLSpanElement>;
     disabled?: boolean;
+    ref?: Ref<HTMLDivElement>;
 }
 /** A list row: icon, title, subtitle, meta on the right, actions. `handle`: a drag grip. */
 export declare function ListRow({ icon, title, subtitle, meta, actions, selected, onClick, handle, disabled, className, ...rest }: ListRowProps): import('react').JSX.Element;
@@ -137,10 +138,19 @@ export interface CodeBlockProps extends Omit<HTMLAttributes<HTMLDivElement>, "ti
     copy?: boolean;
     /** the header's text (default: the language) */
     title?: ReactNode;
+    /** false: no header (no language, no copy button) */
+    header?: boolean;
     maxHeight?: string | number;
+    /** a line (1-based) to mark and scroll to */
+    highlightLine?: number;
+    /** fills its parent (a flex column) and scrolls inside, without a border */
+    fill?: boolean;
 }
-/** Code with light highlighting (the theme's --code-* colors), line numbers and a copy button. */
-export declare function CodeBlock({ code, language, lineNumbers, copy, title, maxHeight, className, style, ...rest }: CodeBlockProps): import('react').JSX.Element;
+/**
+ * Code with light highlighting (the theme's --code-* colors), line numbers and a copy button. `highlightLine` marks a
+ * line and scrolls it into view; `fill` makes it fill its parent.
+ */
+export declare function CodeBlock({ code, language, lineNumbers, copy, title, header, maxHeight, highlightLine, fill, className, style, ...rest }: CodeBlockProps): import('react').JSX.Element;
 export interface AttitudeIndicatorProps extends HTMLAttributes<HTMLDivElement> {
     roll?: number | null;
     pitch?: number | null;

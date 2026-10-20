@@ -1,112 +1,8 @@
-import { $ as StickIndicator, $n as watchDesktopTheme, $t as Slider, A as depthScale, An as useConnectionState, At as toast, B as PALETTE_NAMES, Bn as headerFrameId, Bt as ConnectionStatus, C as useStore, Cn as decodeMessage, Ct as Progress, D as ImageView, Dn as parseKey, Dt as ToastProvider, E as IMAGE_OVERLAY_TYPES, En as memorySource, Et as Spinner, F as DEFAULT_GRADIENT, Fn as useZenoh, Ft as Badge, G as otherPalette, Gn as applyTheme, Gt as IconButton, H as cyclePhase, Hn as CORNERS_KEY, Ht as Fab, I as DEFAULT_PALETTE, In as zenohSource, It as Button, J as ColorSwatch, Jn as installInsets, Jt as Radio, K as paletteAt, Kn as desktopCorners, Kt as Kbd, L as DEFAULT_PERIOD, Ln as decode, Lt as ButtonGroup, M as normalizeFrame, Mn as useSubscription, Mt as usePrompt, N as playbackClock, Nn as useTopic, Nt as useToast, O as PlaybackBar, On as useBackendEvents, Ot as ToastViewport, P as rawToImageData, Pn as useTopicList, Pt as AngleDial, Q as KeyHints, Qn as themeColors, Qt as Select, R as GRADIENTS, Rn as encode, Rt as Checkbox, Sn as ZenohProvider, St as Modal, T as DEPTH_COLORMAPS, Tn as keyMatches, Tt as Skeleton, U as heightColor, Un as DESKTOP_THEME_URL, Ut as Field, V as RAMPS, Vn as schemas, Vt as CopyButton, W as isPalette, Wn as SKIN_KEY, Wt as HoldButton, X as FileDrop, Xn as onDesktop, Xt as RangeSlider, Y as DPad, Yn as installThemeCss, Yt as RadioGroup, Z as Joystick, Zn as signalReady, Zt as SearchInput, _ as useVideoQuality, _n as useMediaQuery, _t as useCommandPalette, a as VIDEO_PRESETS, an as Toggle, at as Menu, b as Store, bn as usePersistentState, bt as EmptyState, c as cameraTabs, cn as ICONS, ct as NavRail, d as lowLatencyRendering, dn as useDrag, dt as Sidebar, en as StatusDot, er as COMPONENT_CSS, et as stickValue, f as needsNewReceiver, fn as useEscape, ft as Stepper, g as useCameraStreams, gn as useLatest, gt as placeFloating, h as useCameraStream, hn as useHotkeys, ht as fuzzyScore, i as CameraView, in as TextInput, it as ContextMenu, j as drawDetections2D, jn as useDataSource, jt as useConfirm, k as colorizeDepth, kn as useBackendState, kt as dismissToast, l as isDepthTopic, ln as copyText, lt as Popover, m as retargetCameras, mn as useHeldKeys, mt as Tooltip, n as CameraStreamsProvider, nn as TagList, nr as TOKENS_CSS, nt as Breadcrumbs, o as cameraInfoFor, on as normalizeOptions, ot as MenuAt, p as pickCamera, pn as useGamepad, pt as Tabs, q as sampleGradient, qn as desktopSkin, qt as NumberInput, r as CameraTabs, rn as TextArea, rr as cx, rt as CommandPalette, s as cameraStreamsFor, sn as Icon, st as MenuList, t as CameraStreams, tn as Switch, tr as SKINS, tt as useRepeatWhileHeld, u as isImageTopic, un as matchesHotkey, ut as Segmented, v as videoPreset, vn as useMobile, vt as Alert, wn as dimosKey, wt as ProgressRing, xn as DataSourceProvider, xt as ErrorBoundary, y as videoPresetChanges, yn as useNow, yt as DialogProvider, z as PALETTES, zn as fingerprint, zt as Chip } from "./chunks/camera-Bd0gZkzw.js";
+import { $ as useLatest, A as NumberInput, B as TextArea, C as ConnectionStatus, D as HoldButton, E as Field, F as Select, G as ICONS, H as Toggle, I as Slider, J as useDrag, K as copyText, L as StatusDot, M as RadioGroup, N as RangeSlider, O as IconButton, P as SearchInput, Q as useHotkeys, R as Switch, S as Chip, T as Fab, U as normalizeOptions, V as TextInput, W as Icon, X as useGamepad, Y as useEscape, Z as useHeldKeys, _ as AngleDial, _t as SKINS, a as MenuAt, at as DESKTOP_THEME_URL, b as ButtonGroup, c as Popover, ct as desktopCorners, d as Stepper, dt as installThemeCss, et as useMediaQuery, f as Tabs, ft as onDesktop, g as useCommandPalette, gt as COMPONENT_CSS, h as placeFloating, ht as watchDesktopTheme, i as Menu, it as CORNERS_KEY, j as Radio, k as Kbd, l as Segmented, lt as desktopSkin, m as fuzzyScore, mt as themeColors, n as CommandPalette, nt as useNow, o as MenuList, ot as SKIN_KEY, p as Tooltip, pt as signalReady, q as matchesHotkey, r as ContextMenu, rt as usePersistentState, s as NavRail, st as applyTheme, t as Breadcrumbs, tt as useMobile, u as Sidebar, ut as installInsets, v as Badge, vt as TOKENS_CSS, w as CopyButton, x as Checkbox, y as Button, yt as cx, z as TagList } from "./chunks/nav-D57o5csA.js";
+import { a as messageTypeColor, c as DimThemeProvider, i as heatStyle, l as useTheme, n as formatBandwidth, o as messageTypeName, r as formatRate, s as messageTypeToken, t as TopicRates, u as useThemeColors } from "./chunks/topics-BhpQvSa3.js";
+import { $ as StickIndicator, A as depthScale, At as useTopic, B as PALETTE_NAMES, C as useStore, Ct as memorySource, D as ImageView, Dt as useConnectionState, E as IMAGE_OVERLAY_TYPES, Et as useBackendState, F as DEFAULT_GRADIENT, Ft as encode, G as otherPalette, H as cyclePhase, I as DEFAULT_PALETTE, It as fingerprint, J as ColorSwatch, K as paletteAt, L as DEFAULT_PERIOD, Lt as headerFrameId, M as normalizeFrame, Mt as useZenoh, N as playbackClock, Nt as zenohSource, O as PlaybackBar, Ot as useDataSource, P as rawToImageData, Pt as decode, Q as KeyHints, R as GRADIENTS, Rt as schemas, St as keyMatches, T as DEPTH_COLORMAPS, Tt as useBackendEvents, U as heightColor, V as RAMPS, W as isPalette, X as FileDrop, Y as DPad, Z as Joystick, _ as useVideoQuality, _t as useToast, a as VIDEO_PRESETS, at as ErrorBoundary, b as Store, bt as decodeMessage, c as cameraTabs, ct as ProgressRing, d as lowLatencyRendering, dt as ToastProvider, et as stickValue, f as needsNewReceiver, ft as ToastViewport, g as useCameraStreams, gt as usePrompt, h as useCameraStream, ht as useConfirm, i as CameraView, it as EmptyState, j as drawDetections2D, jt as useTopicList, k as colorizeDepth, kt as useSubscription, l as isDepthTopic, lt as Skeleton, m as retargetCameras, mt as toast, n as CameraStreamsProvider, nt as Alert, o as cameraInfoFor, ot as Modal, p as pickCamera, pt as dismissToast, q as sampleGradient, r as CameraTabs, rt as DialogProvider, s as cameraStreamsFor, st as Progress, t as CameraStreams, tt as useRepeatWhileHeld, u as isImageTopic, ut as Spinner, v as videoPreset, vt as DataSourceProvider, wt as parseKey, xt as dimosKey, y as videoPresetChanges, yt as ZenohProvider, z as PALETTES } from "./chunks/camera-IXP0snTY.js";
 import { Fragment, createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { jsx, jsxs } from "react/jsx-runtime";
-//#region src/theme/provider.tsx
-var useIsoLayoutEffect$1 = typeof document === "undefined" ? useEffect : useLayoutEffect;
-var ThemeContext = createContext({
-	skin: "portal",
-	corners: "theme",
-	dark: true,
-	square: true,
-	colors: {},
-	setSkin: () => {},
-	setCorners: () => {}
-});
-/**
-* `skin` / `corners`: pin them (default: Desktop's saved choice, followed live). `themeUrl`: Desktop's tokens
-* stylesheet (default /theme.css on Desktop, the bundled copy elsewhere). `global`: style <body> too (default true).
-*/
-function DimThemeProvider({ skin, corners, themeUrl, bundled, global = true, children }) {
-	const [desktop, setDesktop] = useState(() => ({
-		skin: typeof window === "undefined" ? "portal" : desktopSkin(),
-		corners: typeof window === "undefined" ? "theme" : desktopCorners()
-	}));
-	const [override, setOverride] = useState({});
-	const [state, setState] = useState({
-		dark: true,
-		square: true,
-		colors: {},
-		ready: false
-	});
-	const wantedSkin = skin ?? override.skin ?? desktop.skin;
-	const wantedCorners = corners ?? override.corners ?? desktop.corners;
-	useEffect(() => {
-		installInsets();
-		return watchDesktopTheme(() => setDesktop({
-			skin: desktopSkin(),
-			corners: desktopCorners()
-		}));
-	}, []);
-	useIsoLayoutEffect$1(() => {
-		if (typeof document === "undefined") return;
-		let live = true;
-		const update = () => {
-			if (!live) return;
-			const applied = applyTheme({
-				skin: wantedSkin,
-				corners: wantedCorners
-			});
-			setState({
-				dark: applied.dark,
-				square: applied.square,
-				colors: themeColors(),
-				ready: true
-			});
-			document.body?.classList.toggle("dr-body", global);
-			dispatchEvent(new CustomEvent("dimos-react-theme", { detail: applied }));
-		};
-		update();
-		installThemeCss({
-			themeUrl,
-			bundled
-		}).then(() => {
-			update();
-			signalReady();
-		});
-		return () => {
-			live = false;
-		};
-	}, [
-		wantedSkin,
-		wantedCorners,
-		themeUrl,
-		bundled,
-		global
-	]);
-	const value = useMemo(() => ({
-		skin: wantedSkin,
-		corners: wantedCorners,
-		dark: state.dark,
-		square: state.square,
-		colors: state.colors,
-		ready: state.ready,
-		setSkin: (next) => setOverride((old) => ({
-			...old,
-			skin: next
-		})),
-		setCorners: (next) => setOverride((old) => ({
-			...old,
-			corners: next
-		}))
-	}), [
-		wantedSkin,
-		wantedCorners,
-		state
-	]);
-	return /* @__PURE__ */ jsx(ThemeContext.Provider, {
-		value,
-		children
-	});
-}
-/** `{ skin, corners, dark, square, colors, ready, setSkin, setCorners }` (setSkin/setCorners: this page only). */
-function useTheme() {
-	return useContext(ThemeContext);
-}
-/** The theme's colors (themeColors()), re-read on every skin change: for canvases, charts and 3D scenes. */
-function useThemeColors() {
-	return useContext(ThemeContext).colors;
-}
-//#endregion
 //#region src/url_state.tsx
 /** The params of `href` as a plain object of strings. */
 function parseUrlState(href, { mode = "search" } = {}) {
@@ -483,6 +379,23 @@ function Panel({ title, icon, actions, collapsible = false, open, onOpenChange, 
 			className: cx("dr-panel-body", bodyClassName),
 			children
 		}) : null]
+	});
+}
+/** A section that folds under its label (▸ / ▾), remembering whether it's open with `persistKey`. */
+function Disclosure({ title, count, defaultOpen = true, persistKey, className, children, ...rest }) {
+	const [open, setOpen] = usePersistentState(persistKey ?? "dr.disclosure.__unsaved", defaultOpen);
+	return /* @__PURE__ */ jsxs("details", {
+		className: cx("dr-disclosure", className),
+		open,
+		onToggle: (event) => setOpen(event.currentTarget.open),
+		...rest,
+		children: [/* @__PURE__ */ jsxs("summary", {
+			className: "dr-disclosure__summary dr-label",
+			children: [title, count !== void 0 && count !== null ? /* @__PURE__ */ jsxs("span", {
+				className: "dr-disclosure__count",
+				children: ["· ", count]
+			}) : null]
+		}), children]
 	});
 }
 /**
@@ -1267,10 +1180,19 @@ function tokenizeLine(line, language = "js") {
 	if (last < line.length) tokens.push(["plain", line.slice(last)]);
 	return tokens;
 }
-/** Code with light highlighting (the theme's --code-* colors), line numbers and a copy button. */
-function CodeBlock({ code = "", language = "js", lineNumbers = false, copy = true, title, maxHeight, className, style, ...rest }) {
+/**
+* Code with light highlighting (the theme's --code-* colors), line numbers and a copy button. `highlightLine` marks a
+* line and scrolls it into view; `fill` makes it fill its parent.
+*/
+function CodeBlock({ code = "", language = "js", lineNumbers = false, copy = true, title, header = true, maxHeight, highlightLine, fill = false, className, style, ...rest }) {
 	const [copied, setCopied] = useState(false);
+	const pre = useRef(null);
 	const lines = String(code).replace(/\n$/, "").split("\n");
+	useEffect(() => {
+		const element = pre.current;
+		const target = highlightLine ? element?.querySelectorAll(".dr-code__line")[highlightLine - 1] : null;
+		if (element && target) element.scrollTop = target.offsetTop - element.offsetTop - 8;
+	}, [code, highlightLine]);
 	const onCopy = async () => {
 		if (await copyText(code)) {
 			setCopied(true);
@@ -1278,10 +1200,10 @@ function CodeBlock({ code = "", language = "js", lineNumbers = false, copy = tru
 		}
 	};
 	return /* @__PURE__ */ jsxs("div", {
-		className: cx("dr-code", className),
+		className: cx("dr-code", fill && "dr-code--fill", className),
 		style,
 		...rest,
-		children: [title || language || copy ? /* @__PURE__ */ jsxs("div", {
+		children: [header && (title || language || copy) ? /* @__PURE__ */ jsxs("div", {
 			className: "dr-code__head",
 			children: [/* @__PURE__ */ jsx("span", {
 				className: "dr-code__lang",
@@ -1297,10 +1219,11 @@ function CodeBlock({ code = "", language = "js", lineNumbers = false, copy = tru
 				}), copied ? "Copied" : "Copy"]
 			}) : null]
 		}) : null, /* @__PURE__ */ jsx("pre", {
+			ref: pre,
 			className: "dr-code__pre dr-scroll",
 			style: { maxHeight },
 			children: /* @__PURE__ */ jsx("code", { children: lines.map((line, index) => /* @__PURE__ */ jsxs("div", {
-				className: "dr-code__line",
+				className: cx("dr-code__line", index + 1 === highlightLine && "dr-code__line--at"),
 				children: [lineNumbers ? /* @__PURE__ */ jsx("span", {
 					className: "dr-code__num",
 					children: index + 1
@@ -1711,6 +1634,633 @@ function SafeHtml({ html, className, ...rest }) {
 		dangerouslySetInnerHTML: { __html: clean },
 		...rest
 	});
+}
+//#endregion
+//#region src/components/traceback.tsx
+var FRAME = /^(\s*)File "(.+)", line (\d+)(?:, in (.*))?$/;
+var MARKER = /^\s*[\^~]+[\^~\s]*$/;
+var HEAD = /^(?:Exception Group )?Traceback \(most recent call last\):|^During handling of the above exception|^The above exception was the direct cause/;
+var LIBRARY = /\/site-packages\/|\/dist-packages\/|\/\.venv\/|\/lib\/python\d[\d.]*\/|\/uv\/python\/|\/nix\/store\/|^<frozen |^<string>/;
+/** Whether a value is a Python traceback's text. */
+var isTraceback = (text) => typeof text === "string" && /Traceback \(most recent call last\):/.test(text);
+var depthOf = (gutter) => Math.max(0, Math.round((gutter.search(/[|+]/) - 2) / 2));
+/** A traceback's lines as frames (with their code and ^^^ markers), headers and the exceptions raised. */
+function parseTraceback(text) {
+	const grouped = /^\s*\+ Exception Group Traceback/m.test(text);
+	const items = [];
+	for (const raw of text.replace(/\n$/, "").split("\n")) {
+		const gutterMatch = grouped ? /^(\s*[|+](?: |$))?(.*)$/.exec(raw) : null;
+		const gutter = gutterMatch?.[1] ?? "";
+		const body = gutterMatch ? gutterMatch[2] : raw;
+		if (grouped && /^\s*\+-[-+]*(\s.*)?$/.test(raw) && /-{4}/.test(raw)) {
+			items.push({
+				kind: "sep",
+				gutter: "",
+				text: raw
+			});
+			continue;
+		}
+		const frame = FRAME.exec(body);
+		const previous = items.at(-1);
+		if (frame) items.push({
+			kind: "frame",
+			gutter,
+			indent: frame[1],
+			file: frame[2],
+			line: Number(frame[3]),
+			func: frame[4] ?? "",
+			library: LIBRARY.test(frame[2]),
+			code: []
+		});
+		else if (HEAD.test(body)) items.push({
+			kind: "head",
+			gutter,
+			text: body
+		});
+		else if (previous?.kind === "frame" && /^\s/.test(body) && body.trim()) previous.code.push({
+			text: body,
+			marker: MARKER.test(body)
+		});
+		else if (!body.trim()) items.push({
+			kind: "text",
+			gutter,
+			text: body
+		});
+		else if (!/^\s/.test(body) && previous?.kind === "exception" && previous.gutter === gutter) previous.lines.push(body);
+		else if (!/^\s/.test(body)) items.push({
+			kind: "exception",
+			gutter,
+			depth: depthOf(gutter),
+			lines: [body]
+		});
+		else items.push({
+			kind: "text",
+			gutter,
+			text: body
+		});
+	}
+	return items;
+}
+/** What was raised, outermost first, with its nesting in an exception group. */
+var exceptionsOf = (items) => items.flatMap((item) => item.kind === "exception" ? [{
+	depth: item.depth,
+	text: item.lines.join("\n")
+}] : []);
+function Gutter({ text }) {
+	return /* @__PURE__ */ jsx("span", {
+		className: "dr-tb__gutter",
+		children: text
+	});
+}
+function frameRows(frame, key, onOpenFile, formatPath) {
+	const shown = `${formatPath(frame.file)}:${frame.line}`;
+	return [/* @__PURE__ */ jsxs("div", {
+		className: cx("dr-tb__row", frame.library ? "dr-tb__frame--lib" : "dr-tb__frame--own"),
+		children: [
+			/* @__PURE__ */ jsx(Gutter, { text: frame.gutter }),
+			frame.indent,
+			frame.library ? /* @__PURE__ */ jsxs("span", {
+				className: "dr-tb__path",
+				title: frame.file,
+				children: [
+					frame.file,
+					":",
+					frame.line
+				]
+			}) : onOpenFile ? /* @__PURE__ */ jsx("button", {
+				type: "button",
+				className: "dr-tb__file",
+				title: `${frame.file}:${frame.line} (open in the editor)`,
+				"data-tb-open": true,
+				onClick: () => onOpenFile(formatPath(frame.file), frame.line),
+				children: shown
+			}) : /* @__PURE__ */ jsx("span", {
+				className: "dr-tb__file",
+				title: `${frame.file}:${frame.line}`,
+				children: shown
+			}),
+			frame.func ? /* @__PURE__ */ jsxs("span", {
+				className: "dr-tb__func",
+				children: ["in ", frame.func]
+			}) : null
+		]
+	}, key), ...frame.code.map(({ text, marker }, index) => /* @__PURE__ */ jsxs("div", {
+		className: cx("dr-tb__row", marker ? "dr-tb__marker" : "dr-tb__code", !frame.library && "dr-tb__code--own"),
+		children: [/* @__PURE__ */ jsx(Gutter, { text: frame.gutter }), text]
+	}, `${key}.${index}`))];
+}
+/**
+* A Python traceback drawn frame by frame: your own frames stand out (and open with `onOpenFile`), each run of library
+* frames folds into one line, and what was raised is summed up below, the innermost exception in bold.
+*/
+function Traceback({ text, onOpenFile, formatPath = (file) => file, className, ...rest }) {
+	const items = parseTraceback(text);
+	const rows = [];
+	for (let index = 0; index < items.length; index++) {
+		const item = items[index];
+		if (item.kind === "frame" && item.library) {
+			let end = index;
+			while (items[end + 1]?.kind === "frame" && items[end + 1].library) end += 1;
+			const run = items.slice(index, end + 1);
+			rows.push(/* @__PURE__ */ jsxs("details", {
+				className: "dr-tb__lib",
+				children: [/* @__PURE__ */ jsxs("summary", {
+					className: "dr-tb__row",
+					children: [
+						/* @__PURE__ */ jsx(Gutter, { text: item.gutter }),
+						item.indent,
+						run.length,
+						" library frame",
+						run.length === 1 ? "" : "s"
+					]
+				}), run.flatMap((frame, at) => frameRows(frame, `${index}.${at}`, onOpenFile, formatPath))]
+			}, index));
+			index = end;
+		} else if (item.kind === "frame") rows.push(...frameRows(item, String(index), onOpenFile, formatPath));
+		else if (item.kind === "exception") rows.push(...item.lines.map((line, at) => /* @__PURE__ */ jsxs("div", {
+			className: "dr-tb__row dr-tb__exc",
+			children: [/* @__PURE__ */ jsx(Gutter, { text: item.gutter }), line]
+		}, `${index}.${at}`)));
+		else rows.push(/* @__PURE__ */ jsxs("div", {
+			className: cx("dr-tb__row", item.kind !== "text" && "dr-tb__dim"),
+			children: [/* @__PURE__ */ jsx(Gutter, { text: item.gutter }), item.text]
+		}, index));
+	}
+	const raised = exceptionsOf(items);
+	return /* @__PURE__ */ jsxs("div", {
+		className: cx("dr-tb", className),
+		...rest,
+		children: [/* @__PURE__ */ jsx("div", {
+			className: "dr-tb__lines",
+			children: rows
+		}), raised.length > 0 ? /* @__PURE__ */ jsx("div", {
+			className: "dr-tb__raised",
+			"data-tb-raised": true,
+			children: raised.map(({ depth, text: what }, index) => {
+				const innermost = !(raised[index + 1]?.depth > depth) && !/^\w*ExceptionGroup:/.test(what);
+				return /* @__PURE__ */ jsx("div", {
+					className: cx("dr-tb__raised-one", innermost && "dr-tb__raised-one--leaf"),
+					style: { "--dr-tb-depth": String(depth) },
+					children: what
+				}, index);
+			})
+		}) : null]
+	});
+}
+//#endregion
+//#region src/components/structured_log.tsx
+var LOG_LEVELS = [
+	"debug",
+	"info",
+	"warning",
+	"error",
+	"critical"
+];
+/** How far from the bottom still counts as at the bottom (px). */
+var BOTTOM_SLACK = 24;
+var shortTime = (timestamp) => /T?(\d\d:\d\d:\d\d)/.exec(timestamp)?.[1] ?? timestamp;
+var fieldText = (value) => typeof value === "string" ? value : JSON.stringify(value);
+var multiline = (value) => typeof value === "string" && value.includes("\n");
+/** A record's traceback (from `traceback_lines` or a traceback-shaped `exception`), and its other fields. */
+function splitRecord(record) {
+	const extra = { ...record.extra ?? {} };
+	const traceback = Array.isArray(extra.traceback_lines) ? extra.traceback_lines.join("") : isTraceback(extra.exception) ? extra.exception : null;
+	if (traceback) for (const key of [
+		"traceback_lines",
+		"exception",
+		"exception_type",
+		"exception_message"
+	]) delete extra[key];
+	const where = [extra.lineno !== void 0 && `line ${extra.lineno}`, extra.func_name && `in ${extra.func_name}`].filter(Boolean).join(" ");
+	delete extra.lineno;
+	delete extra.func_name;
+	return {
+		traceback,
+		where,
+		fields: Object.entries(extra)
+	};
+}
+function Record({ record, onOpenFile, formatPath }) {
+	const { traceback, where, fields } = splitRecord(record);
+	const level = record.level.toLowerCase();
+	return /* @__PURE__ */ jsxs("div", {
+		className: cx("dr-slog__rec", `dr-slog__rec--${level}`),
+		title: traceback ? void 0 : record.raw,
+		children: [
+			/* @__PURE__ */ jsxs("div", {
+				className: "dr-slog__line",
+				children: [
+					/* @__PURE__ */ jsx("span", {
+						className: "dr-slog__ts",
+						children: shortTime(record.timestamp)
+					}),
+					/* @__PURE__ */ jsx("span", {
+						className: "dr-slog__lv",
+						children: record.level
+					}),
+					/* @__PURE__ */ jsxs("span", {
+						className: "dr-slog__ev",
+						children: [
+							record.logger ? /* @__PURE__ */ jsx("span", {
+								className: "dr-slog__logger",
+								title: where ? `${record.logger} ${where}` : record.logger,
+								children: record.logger
+							}) : null,
+							record.event,
+							fields.filter(([, value]) => !multiline(value)).map(([key, value]) => /* @__PURE__ */ jsxs("span", {
+								className: "dr-slog__chip",
+								children: [/* @__PURE__ */ jsx("span", {
+									className: "dr-slog__key",
+									children: key
+								}), fieldText(value)]
+							}, key))
+						]
+					})
+				]
+			}),
+			fields.filter(([, value]) => multiline(value)).map(([key, value]) => /* @__PURE__ */ jsxs("div", {
+				className: "dr-slog__field",
+				children: [/* @__PURE__ */ jsx("span", {
+					className: "dr-slog__key",
+					children: key
+				}), /* @__PURE__ */ jsx("pre", { children: String(value).replace(/\n$/, "") })]
+			}, key)),
+			traceback ? /* @__PURE__ */ jsx(Traceback, {
+				text: traceback,
+				onOpenFile,
+				formatPath,
+				className: "dr-slog__tb"
+			}) : null
+		]
+	});
+}
+/**
+* A structured log: each record's time, level, logger and event, its short fields as chips, its multi-line fields
+* below and its traceback drawn frame by frame. The filters (level, search, follow) show when their handlers are given.
+*/
+function StructuredLog({ records, follow = true, onFollowChange, level, onLevelChange, query, onQueryChange, note, banner, onOpenFile, formatPath, className, ...rest }) {
+	const box = useRef(null);
+	const followChange = useLatest(onFollowChange);
+	useLayoutEffect(() => {
+		if (follow && box.current) box.current.scrollTop = box.current.scrollHeight;
+	}, [records, follow]);
+	useEffect(() => {
+		const element = box.current;
+		const opened = (event) => event.target.open && followChange.current?.(false);
+		element.addEventListener("toggle", opened, true);
+		return () => element.removeEventListener("toggle", opened, true);
+	}, [followChange]);
+	const atBottom = () => {
+		const element = box.current;
+		return element.scrollHeight - element.scrollTop - element.clientHeight <= BOTTOM_SLACK;
+	};
+	const filters = onLevelChange || onQueryChange || onFollowChange;
+	return /* @__PURE__ */ jsxs("div", {
+		className: cx("dr-slog", className),
+		...rest,
+		children: [
+			filters ? /* @__PURE__ */ jsxs("div", {
+				className: "dr-slog__tools",
+				children: [
+					onLevelChange ? /* @__PURE__ */ jsx(Select, {
+						size: "sm",
+						"aria-label": "lowest level",
+						className: "dr-slog__level",
+						value: level ?? "info",
+						onChange: onLevelChange,
+						options: LOG_LEVELS.map((name) => [name, `${name} and up`])
+					}) : null,
+					onQueryChange ? /* @__PURE__ */ jsx(SearchInput, {
+						placeholder: "search the log…",
+						"aria-label": "search the log",
+						value: query ?? "",
+						onChange: onQueryChange
+					}) : null,
+					onFollowChange ? /* @__PURE__ */ jsx(Checkbox, {
+						label: "follow",
+						value: follow,
+						onChange: onFollowChange
+					}) : null
+				]
+			}) : null,
+			banner,
+			/* @__PURE__ */ jsxs("div", {
+				ref: box,
+				className: "dr-slog__body dr-scroll",
+				onScroll: () => atBottom() !== follow && onFollowChange?.(atBottom()),
+				children: [note ? /* @__PURE__ */ jsx("div", {
+					className: "dr-slog__note",
+					children: note
+				}) : null, records.map((record, index) => /* @__PURE__ */ jsx(Record, {
+					record,
+					onOpenFile,
+					formatPath
+				}, index))]
+			})
+		]
+	});
+}
+//#endregion
+//#region src/settings.ts
+/** What a gateway sends in place of a saved secret. */
+var HIDDEN_SECRET = "•••";
+/** Equal as JSON (null and undefined alike). */
+var sameValue = (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+/** A schema with its $ref followed and an optional (anyOf [T, null]) unwrapped to T. */
+function resolveSchema(schema, root = schema) {
+	if (schema.$ref) {
+		const key = String(schema.$ref).split("/").pop();
+		const target = root.$defs?.[key] ?? root.definitions?.[key];
+		if (target) return resolveSchema({
+			...target,
+			...schema,
+			$ref: void 0
+		}, root);
+	}
+	const variants = schema.anyOf ?? schema.oneOf;
+	if (variants && !schema.type) {
+		const nonNull = variants.filter((variant) => variant.type !== "null");
+		if (nonNull.length === 1) return {
+			...resolveSchema(nonNull[0], root),
+			description: schema.description,
+			default: schema.default
+		};
+	}
+	return schema;
+}
+/** Whether a schema takes null. */
+var schemaNullable = (schema) => (schema.anyOf ?? schema.oneOf ?? []).some((variant) => variant.type === "null") || Array.isArray(schema.type) && schema.type.includes("null");
+/** The input a (resolved) schema takes; "json" for anything without a typed input. */
+function schemaKind(schema) {
+	if (schema.enum) return "enum";
+	const type = Array.isArray(schema.type) ? schema.type.find((name) => name !== "null") : schema.type;
+	if (type === "boolean") return "bool";
+	if (type === "integer" || type === "number") return type;
+	if (type === "string") return schema.format === "path" ? "path" : "string";
+	return "json";
+}
+var PYTHON_KINDS = {
+	bool: "bool",
+	int: "integer",
+	float: "number",
+	str: "string"
+};
+/** The input a Python annotation (`int`, `str | None`, `Optional[Path]`) takes; "json" for anything else. */
+function pythonTypeKind(type) {
+	const parts = (type ?? "").split("|").map((part) => part.trim()).filter(Boolean);
+	const nullable = parts.includes("None") || /^Optional\[/.test(type ?? "");
+	const main = parts.filter((part) => part !== "None");
+	if (main.length !== 1) return {
+		kind: "json",
+		nullable
+	};
+	const one = main[0].replace(/^Optional\[(.*)\]$/, "$1");
+	return {
+		kind: PYTHON_KINDS[one] ?? (/(^|\.)Path$/.test(one) ? "path" : "json"),
+		nullable
+	};
+}
+/** A value as the text in its box ("" for none; JSON for anything not a string). */
+var settingText = (value) => value === null || value === void 0 ? "" : typeof value === "string" ? value : JSON.stringify(value);
+/** A value as a person reads it ("—" for none, "" quoted). */
+var settingLabel = (value) => value === null || value === void 0 ? "—" : value === "" ? "\"\"" : typeof value === "string" ? value : JSON.stringify(value);
+/** The value typed text means for this setting, or what it should have been. */
+function parseSettingText(field, text) {
+	const trimmed = text.trim();
+	if (trimmed === "" && field.nullable) return { value: null };
+	if (field.kind === "integer" || field.kind === "number") {
+		const number = Number(trimmed);
+		if (trimmed === "" || !Number.isFinite(number)) return { error: "a number" };
+		if (field.kind === "integer" && !Number.isInteger(number)) return { error: "a whole number" };
+		return { value: number };
+	}
+	if (field.kind === "json") try {
+		return { value: JSON.parse(text) };
+	} catch {
+		return { error: "JSON" };
+	}
+	return { value: text };
+}
+//#endregion
+//#region src/components/settings.tsx
+var optionLabel = (field, option) => field.optionLabels?.[(field.options ?? []).indexOf(option)] ?? (option === null ? "(none)" : option === "" ? "(empty)" : String(option));
+/**
+* The input a setting's kind takes: a Toggle (bool), a Select (enum; "(none)" too when nullable), or a box that
+* reports on Enter / blur and parses by kind (integer, number, JSON; empty = null when nullable). A secret is a
+* password box with show / hide that selects the gateway's "•••" placeholder on focus.
+*/
+function SettingInput({ field, value, onChange }) {
+	const [problem, setProblem] = useState(null);
+	const [revealed, setRevealed] = useState(false);
+	if (field.kind === "bool") return /* @__PURE__ */ jsx(Toggle, {
+		size: "sm",
+		"aria-label": field.name,
+		value: value === true,
+		onChange
+	});
+	if (field.kind === "enum") {
+		const options = [...field.nullable ? [null] : [], ...field.options ?? []];
+		return /* @__PURE__ */ jsx("span", {
+			className: "dr-setting-input",
+			children: /* @__PURE__ */ jsx(Select, {
+				size: "sm",
+				"aria-label": field.name,
+				value: options.find((option) => JSON.stringify(option) === JSON.stringify(value ?? null)),
+				onChange,
+				options: options.map((option) => [option, optionLabel(field, option)])
+			})
+		});
+	}
+	const commit = (text) => {
+		const parsed = parseSettingText(field, text);
+		setProblem("error" in parsed ? `needs ${parsed.error}` : null);
+		if ("value" in parsed) onChange(parsed.value);
+	};
+	return /* @__PURE__ */ jsxs("span", {
+		className: "dr-setting-input",
+		children: [/* @__PURE__ */ jsxs("span", {
+			className: "dr-setting-input__box",
+			children: [/* @__PURE__ */ jsx(TextInput, {
+				size: "sm",
+				mono: field.kind !== "string" || field.secret,
+				"aria-label": field.name,
+				type: field.secret && !revealed ? "password" : "text",
+				autoComplete: field.secret ? "off" : void 0,
+				placeholder: field.placeholder ?? (field.nullable ? "(none)" : field.kind === "path" ? "path" : ""),
+				value: settingText(value),
+				invalid: !!problem,
+				onCommit: commit,
+				onFocus: (event) => field.secret && event.target.value === "•••" && event.target.select()
+			}), field.secret ? /* @__PURE__ */ jsx("button", {
+				type: "button",
+				className: "dr-setting__link",
+				title: "Saved; never shown again. Type a new one to replace it.",
+				onClick: () => setRevealed(!revealed),
+				children: revealed ? "hide" : "show"
+			}) : null]
+		}), problem ? /* @__PURE__ */ jsx("span", {
+			className: "dr-setting-input__problem",
+			children: problem
+		}) : null]
+	});
+}
+/** One of a few named choices: a Segmented control for up to four, a Select past that. */
+function SettingChoice({ labels, value, onChange, label }) {
+	return labels.length <= 4 ? /* @__PURE__ */ jsx(Segmented, {
+		size: "sm",
+		label,
+		items: labels.map((text, index) => ({
+			value: index,
+			label: text
+		})),
+		value: value < 0 ? null : value,
+		onChange: (index) => index !== value && onChange(index)
+	}) : /* @__PURE__ */ jsx(Select, {
+		size: "sm",
+		"aria-label": label,
+		value,
+		placeholder: "—",
+		options: labels.map((text, index) => [index, text]),
+		onChange
+	});
+}
+/** A setting: its name (and "saved"), its control and a reset, and a docs link under them. */
+function SettingRow({ label, children, saved = false, onReset, resetTo, docs, description, wide = false, className, ...rest }) {
+	return /* @__PURE__ */ jsxs("div", {
+		className: cx("dr-setting", saved && "dr-setting--saved", wide && "dr-setting--wide", className),
+		title: description ?? void 0,
+		...rest,
+		children: [
+			/* @__PURE__ */ jsxs("span", {
+				className: "dr-setting__name",
+				children: [label, saved ? /* @__PURE__ */ jsx("span", {
+					className: "dr-setting__mark",
+					children: "saved"
+				}) : null]
+			}),
+			/* @__PURE__ */ jsxs("span", {
+				className: "dr-setting__control",
+				children: [children, onReset ? saved ? /* @__PURE__ */ jsx("button", {
+					type: "button",
+					className: "dr-setting__link dr-setting__reset",
+					title: `back to ${settingLabel(resetTo)}`,
+					"aria-label": `reset ${typeof label === "string" ? label : ""}`.trim(),
+					onClick: onReset,
+					children: "reset"
+				}) : /* @__PURE__ */ jsx("span", { className: "dr-setting__reset" }) : null]
+			}),
+			docs ? /* @__PURE__ */ jsx("a", {
+				className: "dr-setting__docs",
+				href: docs,
+				target: "_blank",
+				rel: "noopener noreferrer",
+				children: "How do I find this?"
+			}) : null
+		]
+	});
+}
+/** A bordered group of SettingRows under a header, with how many of them are saved. */
+function SettingGroup({ title, count = 0, accent = false, className, children, ...rest }) {
+	return /* @__PURE__ */ jsxs("div", {
+		className: cx("dr-setting-group", accent && "dr-setting-group--accent", className),
+		...rest,
+		children: [/* @__PURE__ */ jsxs("div", {
+			className: "dr-setting-group__head",
+			children: [title, /* @__PURE__ */ jsx("span", {
+				className: "dr-setting-group__count",
+				children: count || ""
+			})]
+		}), children]
+	});
+}
+/** A titled section of a settings form. */
+function SettingSection({ title, note, hint, highlight = false, className, children, ...rest }) {
+	return /* @__PURE__ */ jsxs("section", {
+		className: cx("dr-setting-section", highlight && "dr-setting-section--highlight", className),
+		...rest,
+		children: [
+			/* @__PURE__ */ jsxs("div", {
+				className: "dr-setting-section__head",
+				children: [title, note ? /* @__PURE__ */ jsx("span", {
+					className: "dr-setting-section__note",
+					children: note
+				}) : null]
+			}),
+			hint ? /* @__PURE__ */ jsx("p", {
+				className: "dr-setting-section__hint",
+				children: hint
+			}) : null,
+			children
+		]
+	});
+}
+//#endregion
+//#region src/components/desktop_frame.tsx
+/** Whether this page is in a frame (Desktop's), so it can ask Desktop for things. */
+var framedByDesktop = () => typeof window !== "undefined" && window.parent !== window;
+/** Posts a dimos:* message to the Desktop framing this page. */
+var toDesktop = (message) => window.parent.postMessage(message, location.origin);
+/** Calls `handler` with each message Desktop (the parent, same origin) posts of this type. */
+function useDesktopMessage(type, handler) {
+	const latest = useLatest(handler);
+	useEffect(() => {
+		const listen = (event) => {
+			if (event.origin === location.origin && event.source === window.parent && event.data?.type === type) latest.current(event.data);
+		};
+		addEventListener("message", listen);
+		return () => removeEventListener("message", listen);
+	}, [type, latest]);
+}
+/**
+* Whether to draw the page's own top bar: always off Desktop; framed, once Desktop says so (dimos:chrome-ok).
+* `{ pausable: true }` tells Desktop the page stops polling while hidden (useDesktopVisible), so it may preload it.
+*/
+function useDesktopChrome(features = {}) {
+	const framed = framedByDesktop();
+	const [chrome, setChrome] = useState(!framed);
+	useDesktopMessage("dimos:chrome-ok", () => setChrome(true));
+	const pausable = !!features.pausable;
+	useEffect(() => {
+		if (framed) toDesktop({
+			type: "dimos:chrome",
+			...pausable ? { pausable } : {}
+		});
+	}, [framed, pausable]);
+	return chrome;
+}
+/** Whether the page is shown: false from the start with ?hidden=1 (Desktop preloading it), then per dimos:visible. */
+function useDesktopVisible() {
+	const [visible, setVisible] = useState(() => typeof location === "undefined" || new URLSearchParams(location.search).get("hidden") !== "1");
+	useDesktopMessage("dimos:visible", (data) => setVisible(!!data.visible));
+	return visible;
+}
+/** `open(file, line)` asks Desktop to open a file in the user's editor (null when not framed); `status` is its answer. */
+function useDesktopEditor() {
+	const [status, setStatus] = useState(null);
+	useDesktopMessage("dimos:open-in-editor-result", (data) => setStatus({
+		ok: !!data.ok,
+		text: String(data.text ?? "")
+	}));
+	const open = (file, line) => {
+		setStatus(null);
+		toDesktop({
+			type: "dimos:open-in-editor",
+			file,
+			line
+		});
+	};
+	return {
+		open: framedByDesktop() ? open : null,
+		status
+	};
+}
+/** One line saying how opening a file in the editor went (nothing before an answer). */
+function EditorNote({ status, className }) {
+	return status ? /* @__PURE__ */ jsx("div", {
+		className: cx("dr-editor-note", !status.ok && "dr-editor-note--failed", className),
+		title: status.text,
+		children: status.text
+	}) : null;
 }
 //#endregion
 //#region src/components/view_panel.tsx
@@ -2236,5 +2786,5 @@ function KeyCap({ label, down = false, empty = false, wide = false, title, class
 	});
 }
 //#endregion
-export { Alert, AngleDial, AppProvider, AppShell, AttitudeIndicator, Badge, BottomBar, Breadcrumbs, Button, ButtonGroup, COMPONENT_CSS, CORNERS_KEY, CameraStreams, CameraStreamsProvider, CameraTabs, CameraView, Card, Checkbox, Chip, CodeBlock, ColorSwatch, Column, CommandPalette, ConnectionStatus, ContextMenu, CopyButton, DEFAULT_GRADIENT, DEFAULT_PALETTE, DEFAULT_PERIOD, DEPTH_COLORMAPS, DESKTOP_THEME_URL, DPad, DataSourceProvider, DialogProvider, DimThemeProvider, Embed, EmptyState, ErrorBoundary, Fab, Field, FileDrop, FloatingPanel, GRADIENTS, Heading, HoldButton, Hud, ICONS, IMAGE_OVERLAY_TYPES, Icon, IconButton, ImageView, Joystick, Kbd, KeyCap, KeyHints, KeyPad, KeyValue, KeyValueRow, Label, Link, List, ListRow, LiveValue, LogView, Markdown, MediaFrame, Menu, MenuAt, MenuList, Modal, NavRail, NumberInput, PALETTES, PALETTE_NAMES, Panel, PanelInfo, PlaybackBar, Popover, Progress, ProgressRing, RAMPS, Radio, RadioGroup, RangeSlider, ResizeHandle, Row, SKINS, SKIN_KEY, STICK_DEAD_ZONE, STICK_EXPO, STICK_SMOOTH_MS, SafeHtml, SearchInput, Segmented, Select, Separator, Sidebar, Skeleton, Slider, Spacer, Sparkline, Spinner, SplitPane, Stat, StatusDot, Stepper, StickIndicator, Store, Switch, TOKENS_CSS, Table, Tabs, TagList, Text, TextArea, TextInput, ThumbStick, Tile, TileGrid, Timeline, ToastProvider, ToastViewport, Toggle, Toolbar, Tooltip, TopBar, Tree, UrlStateProvider, VIDEO_PRESETS, VIEW_PANEL_HEAD_PX, ViewPanel, ZenohProvider, applyTheme, applyUrlEvent, bindUrlEvents, cameraInfoFor, cameraStreamsFor, cameraTabs, captureFrame, clampPanelBox, colorizeDepth, copyText, createMemoryWindow, createUrlStore, cx, cyclePhase, decode as decodeLcm, decodeMessage, depthScale, desktopCorners, desktopSkin, dimosKey, dismissToast, drawDetections2D, encode as encodeLcm, formatDuration, fuzzyScore, headerFrameId, heightColor, installInsets, installThemeCss, isDepthTopic, isImageTopic, isPalette, keyMatches, fingerprint as lcmFingerprint, schemas as lcmSchemas, lowLatencyRendering, markdownInline, matchesHotkey, memorySource, needsNewReceiver, normalizeFrame, normalizeOptions, onDesktop, otherPalette, paletteAt, parseKey, parseUrlState, pickCamera, placeFloating, playbackClock, rawToImageData, releaseAllThumbSticks, retargetCameras, sampleGradient, sanitizeHtml, shapeStick, signalReady, smoothToward, startPanelDrag, startPanelResize, stickValue, swapTiles, themeColors, toast, tokenizeLine, urlWith, useBackendEvents, useBackendState, useCameraStream, useCameraStreams, useCommandPalette, useConfirm, useConnectionState, useDataSource, useDrag, useEscape, useGamepad, useHeldKeys, useHotkeys, useLatest, useMediaQuery, useMobile, useNow, usePersistentState, usePrompt, useRepeatWhileHeld, useStore, useSubscription, useTheme, useThemeColors, useToast, useTopic, useTopicList, useUrlParams, useUrlState, useUrlStore, useVideoQuality, useZenoh, videoPreset, videoPresetChanges, watchDesktopTheme, zenohSource };
+export { Alert, AngleDial, AppProvider, AppShell, AttitudeIndicator, Badge, BottomBar, Breadcrumbs, Button, ButtonGroup, COMPONENT_CSS, CORNERS_KEY, CameraStreams, CameraStreamsProvider, CameraTabs, CameraView, Card, Checkbox, Chip, CodeBlock, ColorSwatch, Column, CommandPalette, ConnectionStatus, ContextMenu, CopyButton, DEFAULT_GRADIENT, DEFAULT_PALETTE, DEFAULT_PERIOD, DEPTH_COLORMAPS, DESKTOP_THEME_URL, DPad, DataSourceProvider, DialogProvider, DimThemeProvider, Disclosure, EditorNote, Embed, EmptyState, ErrorBoundary, Fab, Field, FileDrop, FloatingPanel, GRADIENTS, HIDDEN_SECRET, Heading, HoldButton, Hud, ICONS, IMAGE_OVERLAY_TYPES, Icon, IconButton, ImageView, Joystick, Kbd, KeyCap, KeyHints, KeyPad, KeyValue, KeyValueRow, LOG_LEVELS, Label, Link, List, ListRow, LiveValue, LogView, Markdown, MediaFrame, Menu, MenuAt, MenuList, Modal, NavRail, NumberInput, PALETTES, PALETTE_NAMES, Panel, PanelInfo, PlaybackBar, Popover, Progress, ProgressRing, RAMPS, Radio, RadioGroup, RangeSlider, ResizeHandle, Row, SKINS, SKIN_KEY, STICK_DEAD_ZONE, STICK_EXPO, STICK_SMOOTH_MS, SafeHtml, SearchInput, Segmented, Select, Separator, SettingChoice, SettingGroup, SettingInput, SettingRow, SettingSection, Sidebar, Skeleton, Slider, Spacer, Sparkline, Spinner, SplitPane, Stat, StatusDot, Stepper, StickIndicator, Store, StructuredLog, Switch, TOKENS_CSS, Table, Tabs, TagList, Text, TextArea, TextInput, ThumbStick, Tile, TileGrid, Timeline, ToastProvider, ToastViewport, Toggle, Toolbar, Tooltip, TopBar, TopicRates, Traceback, Tree, UrlStateProvider, VIDEO_PRESETS, VIEW_PANEL_HEAD_PX, ViewPanel, ZenohProvider, applyTheme, applyUrlEvent, bindUrlEvents, cameraInfoFor, cameraStreamsFor, cameraTabs, captureFrame, clampPanelBox, colorizeDepth, copyText, createMemoryWindow, createUrlStore, cx, cyclePhase, decode as decodeLcm, decodeMessage, depthScale, desktopCorners, desktopSkin, dimosKey, dismissToast, drawDetections2D, encode as encodeLcm, exceptionsOf, formatBandwidth, formatDuration, formatRate, framedByDesktop, fuzzyScore, headerFrameId, heatStyle, heightColor, installInsets, installThemeCss, isDepthTopic, isImageTopic, isPalette, isTraceback, keyMatches, fingerprint as lcmFingerprint, schemas as lcmSchemas, lowLatencyRendering, markdownInline, matchesHotkey, memorySource, messageTypeColor, messageTypeName, messageTypeToken, needsNewReceiver, normalizeFrame, normalizeOptions, onDesktop, otherPalette, paletteAt, parseKey, parseSettingText, parseTraceback, parseUrlState, pickCamera, placeFloating, playbackClock, pythonTypeKind, rawToImageData, releaseAllThumbSticks, resolveSchema, retargetCameras, sameValue, sampleGradient, sanitizeHtml, schemaKind, schemaNullable, settingLabel, settingText, shapeStick, signalReady, smoothToward, splitRecord, startPanelDrag, startPanelResize, stickValue, swapTiles, themeColors, toDesktop, toast, tokenizeLine, urlWith, useBackendEvents, useBackendState, useCameraStream, useCameraStreams, useCommandPalette, useConfirm, useConnectionState, useDataSource, useDesktopChrome, useDesktopEditor, useDesktopMessage, useDesktopVisible, useDrag, useEscape, useGamepad, useHeldKeys, useHotkeys, useLatest, useMediaQuery, useMobile, useNow, usePersistentState, usePrompt, useRepeatWhileHeld, useStore, useSubscription, useTheme, useThemeColors, useToast, useTopic, useTopicList, useUrlParams, useUrlState, useUrlStore, useVideoQuality, useZenoh, videoPreset, videoPresetChanges, watchDesktopTheme, zenohSource };
 

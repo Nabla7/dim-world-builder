@@ -29,6 +29,17 @@ export interface PanelProps extends Omit<HTMLAttributes<HTMLElement>, "title"> {
  * `defaultOpen`; `persistKey` remembers it; `glass` for panels floating over a 3D/video view; `icon`, `actions`.
  */
 export declare function Panel({ title, icon, actions, collapsible, open, onOpenChange, defaultOpen, persistKey, glass, className, bodyClassName, children, ...rest }: PanelProps): import('react').JSX.Element;
+export interface DisclosureProps extends Omit<HTMLAttributes<HTMLDetailsElement>, "title"> {
+    /** the summary, in the theme's micro-label type */
+    title: ReactNode;
+    /** after the title ("· 9"); hidden when null */
+    count?: ReactNode;
+    defaultOpen?: boolean;
+    /** remembers the open state (localStorage) under this key */
+    persistKey?: string;
+}
+/** A section that folds under its label (▸ / ▾), remembering whether it's open with `persistKey`. */
+export declare function Disclosure({ title, count, defaultOpen, persistKey, className, children, ...rest }: DisclosureProps): import('react').JSX.Element;
 /** px from the top-left; negative = from the right/bottom */
 export interface PanelPosition {
     x: number;
@@ -171,6 +182,7 @@ export interface TileProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>,
     selected?: boolean;
     loading?: boolean;
     align?: "center" | "start";
+    ref?: Ref<HTMLButtonElement>;
 }
 /**
  * A big selectable card (a picker's choice: a robot, a template, a recording). A button: `onClick`, `selected`,
