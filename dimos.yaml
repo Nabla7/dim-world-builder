@@ -1,6 +1,6 @@
 # the app's contract with Desktop: https://github.com/jeff-hykin/dimos-desktop-mirror/blob/main/docs/create-apps/index.md
 title: World Builder
-spec-version: v1.2
+spec-version: v1.3
 uses:
     # viewer mode: the running simulation's TF (robot + moving objects) and lidar, through Desktop's zenoh-gateway
     "@zenoh-gateway": ">=0.5 <0.6"
@@ -25,138 +25,210 @@ caches:
     - url: https://dimos-desktop.cachix.org
       key: "dimos-desktop.cachix.org-1:A4P35aGJGmCan92LWyamtSFXMqaVE+VRFYnrJ8QMTeQ="
 provides:
-    when: you need to build a 3D world for a simulated robot or export one to dimos sim2
-    description: "World Builder: makes 3D worlds (rooms, floors, stairs, hills, furniture, moving obstacles) for simulated robots and exports them for dimos sim2"
-    endpoints:
-        - method: POST
-          path: api/export
-          when: you want a world as a dimos sim2 scene to run in simulation
-          description: "Write a world as a dimos sim2 scene folder <parentDir>/<name>/ (scene.xml, scene.json, a Python package) and also save the project. Returns { dir, name, files, bodies, movers, warnings }; warnings lists items that clip into each other"
-          params:
-              project:
-                  type: object
-                  description: the world (dim-world-builder.project.v1); or give name
-              name:
-                  type: string
-                  description: the name of a saved world to export instead of a project
-              parentDir:
-                  type: string
-                  description: the folder to write <name>/ into (default ~/dimos_worlds)
-        - method: GET
-          path: api/library
-          when: you need the ids and sizes of the assets you can place in a world
-          description: Every placeable 3D asset (built-in library and cooked imports) as a JSON list, each with its id, size and collision pieces
-          role: context
-        - method: GET
-          path: api/projects
-          when: you need to know which worlds are saved
-          description: "The names of the saved worlds, as { projects: [name] }"
-          role: context
-        - method: GET
-          path: api/project
-          when: you need to read the full contents of a saved world
-          description: A saved world's project (rooms, stairs, items, floors, movers, nav test) as JSON; 404 if there is no such world
-          params:
-              name:
-                  type: string
-                  description: the world's name
-        - method: POST
-          path: api/project
-          when: you want to save a whole world you built or edited yourself
-          description: "Save (create or replace) a world project under its name (snake_cased). Returns { saved: name, items: count }; 400 if the project is not dim-world-builder.project.v1"
-          params:
-              project:
-                  type: object
-                  description: the world (dim-world-builder.project.v1)
-        - method: POST
-          path: api/project/items
-          when: you want to add objects, rooms, stairs or obstacles to a saved world
-          description: "Add items to a saved world. Each item: kind (primitive|mesh|room|stairs|hill|hole|apriltag|light), params, and optionally name, floor (default the active floor), position [x,y,z], rotation [x,y,z,w], scale, mover. Returns { added: [item id], items: count, warnings }; warnings lists items that now clip into each other"
-          params:
-              name:
-                  type: string
-                  description: the world's name
-              items:
-                  type: array
-                  description: the items to add
-        - method: POST
-          path: api/generate
-          when: you want a ready-made test world to start from
-          description: "Generate and save a world (playground is a big two-floor test scene; test_course, clutter_yard, empty). Returns { saved: name, items: count, warnings }; warnings lists items that clip into each other"
-          params:
-              kind:
-                  type: string
-                  description: playground | test_course | clutter_yard | empty
-              name:
-                  type: string
-                  description: the new world's name (optional)
-              seed:
-                  type: number
-                  description: for playground (optional)
-        - method: POST
-          path: api/check
-          when: you need to know whether items in a world overlap
-          description: "Which items clip into each other: MuJoCo checks every pair of collision shapes (floors and hills excluded). clips: [{a, b (key, name, kind), depth_m, at [x,y,z]}], warnings: one line each"
-          role: context
-          params:
-              name:
-                  type: string
-                  description: a saved world's name
-              project:
-                  type: object
-                  description: a world (dim-world-builder.project.v1) instead of a saved one
-              tolerance:
-                  type: number
-                  description: meters of overlap to ignore (default 0.02)
-        - method: GET
-          path: api/views
-          when: you need the camera views remembered for a saved world
-          description: "A saved world's remembered camera views as { views: [{ key, name, eye, target, fov }] }; each is a MuJoCo camera named by its key in the export"
-          role: context
-          params:
-              name:
-                  type: string
-                  description: the world's name
-        - method: POST
-          path: api/views
-          when: you want to remember a camera angle on a saved world
-          description: "Remember a camera view in a saved world (its key comes from the view's name; the same key replaces it). Returns { saved: key, views: count }"
-          params:
-              name:
-                  type: string
-                  description: the world's name
-              view:
-                  type: object
-                  description: "{ name, eye: [x,y,z], target: [x,y,z], fov (vertical degrees, default 50) }"
-        - method: POST
-          path: api/views/remove
-          when: you want to forget a remembered camera view
-          description: "Forget a remembered view of a saved world. Returns { removed: count }"
-          params:
-              name:
-                  type: string
-                  description: the world's name
-              view:
-                  type: string
-                  description: the view's key
-        - method: GET
-          path: api/views/image
-          when: you want to see what a world looks like from a remembered view
-          description: A PNG of the world (as exported, rendered by MuJoCo) seen from a remembered view
-          role: view
-          params:
-              name:
-                  type: string
-                  description: the world's name
-              view:
-                  type: string
-                  description: the view's key
-              width:
-                  type: number
-                  description: pixels (default 960, at most 1920)
-              height:
-                  type: number
-                  description: pixels (default 540, at most 1920)
-    private:
+    openapi: 3.1.0
+    info:
+        title: World Builder
+        version: 1.0.0
+        description: >-
+            World Builder: makes 3D worlds (rooms, floors, stairs, hills, furniture, moving obstacles) for simulated robots
+            and exports them for dimos sim2
+        x-when: you need to build a 3D world for a simulated robot or export one to dimos sim2
+    x-private:
         - api/internal/*
         - files/*
+    paths:
+        /api/export:
+            post:
+                description: >-
+                    Write a world as a dimos sim2 scene folder <parentDir>/<name>/ (scene.xml, scene.json, a Python package)
+                    and also save the project. Returns { dir, name, files, bodies, movers, warnings }; warnings lists items
+                    that clip into each other
+                x-when: you want a world as a dimos sim2 scene to run in simulation
+                requestBody:
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    project:
+                                        type: object
+                                        description: the world (dim-world-builder.project.v1); or give name
+                                    name:
+                                        type: string
+                                        description: the name of a saved world to export instead of a project
+                                    parentDir:
+                                        type: string
+                                        description: the folder to write <name>/ into (default ~/dimos_worlds)
+        /api/library:
+            get:
+                description: >-
+                    Every placeable 3D asset (built-in library and cooked imports) as a JSON list, each with its id, size
+                    and collision pieces
+                x-when: you need the ids and sizes of the assets you can place in a world
+                x-dimos-role: context
+        /api/projects:
+            get:
+                summary: 'The names of the saved worlds, as { projects: [name] }'
+                x-when: you need to know which worlds are saved
+                x-dimos-role: context
+        /api/project:
+            get:
+                description: >-
+                    A saved world's project (rooms, stairs, items, floors, movers, nav test) as JSON; 404 if there is no such
+                    world
+                x-when: you need to read the full contents of a saved world
+                parameters:
+                    -   name: name
+                        in: query
+                        schema:
+                            type: string
+                        description: the world's name
+            post:
+                description: >-
+                    Save (create or replace) a world project under its name (snake_cased). Returns { saved: name, items: count
+                    }; 400 if the project is not dim-world-builder.project.v1
+                x-when: you want to save a whole world you built or edited yourself
+                requestBody:
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    project:
+                                        type: object
+                                        description: the world (dim-world-builder.project.v1)
+        /api/project/items:
+            post:
+                description: >-
+                    Add items to a saved world. Each item: kind (primitive|mesh|room|stairs|hill|hole|apriltag|light), params,
+                    and optionally name, floor (default the active floor), position [x,y,z], rotation [x,y,z,w], scale, mover.
+                    Returns { added: [item id], items: count, warnings }; warnings lists items that now clip into each other
+                x-when: you want to add objects, rooms, stairs or obstacles to a saved world
+                requestBody:
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    name:
+                                        type: string
+                                        description: the world's name
+                                    items:
+                                        type: array
+                                        description: the items to add
+        /api/generate:
+            post:
+                description: >-
+                    Generate and save a world (playground is a big two-floor test scene; test_course, clutter_yard, empty).
+                    Returns { saved: name, items: count, warnings }; warnings lists items that clip into each other
+                x-when: you want a ready-made test world to start from
+                requestBody:
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    kind:
+                                        type: string
+                                        description: playground | test_course | clutter_yard | empty
+                                    name:
+                                        type: string
+                                        description: the new world's name (optional)
+                                    seed:
+                                        type: number
+                                        description: for playground (optional)
+        /api/check:
+            post:
+                description: >-
+                    Which items clip into each other: MuJoCo checks every pair of collision shapes (floors and hills excluded).
+                    clips: [{a, b (key, name, kind), depth_m, at [x,y,z]}], warnings: one line each
+                x-when: you need to know whether items in a world overlap
+                x-dimos-role: context
+                requestBody:
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    name:
+                                        type: string
+                                        description: a saved world's name
+                                    project:
+                                        type: object
+                                        description: a world (dim-world-builder.project.v1) instead of a saved one
+                                    tolerance:
+                                        type: number
+                                        description: meters of overlap to ignore (default 0.02)
+        /api/views:
+            get:
+                description: >-
+                    A saved world's remembered camera views as { views: [{ key, name, eye, target, fov }] }; each is a MuJoCo
+                    camera named by its key in the export
+                x-when: you need the camera views remembered for a saved world
+                x-dimos-role: context
+                parameters:
+                    -   name: name
+                        in: query
+                        schema:
+                            type: string
+                        description: the world's name
+            post:
+                description: >-
+                    Remember a camera view in a saved world (its key comes from the view's name; the same key replaces it).
+                    Returns { saved: key, views: count }
+                x-when: you want to remember a camera angle on a saved world
+                requestBody:
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    name:
+                                        type: string
+                                        description: the world's name
+                                    view:
+                                        type: object
+                                        description: '{ name, eye: [x,y,z], target: [x,y,z], fov (vertical degrees, default
+                                            50) }'
+        /api/views/remove:
+            post:
+                summary: 'Forget a remembered view of a saved world. Returns { removed: count }'
+                x-when: you want to forget a remembered camera view
+                requestBody:
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    name:
+                                        type: string
+                                        description: the world's name
+                                    view:
+                                        type: string
+                                        description: the view's key
+        /api/views/image:
+            get:
+                summary: A PNG of the world (as exported, rendered by MuJoCo) seen from a remembered view
+                x-when: you want to see what a world looks like from a remembered view
+                x-dimos-role: view
+                parameters:
+                    -   name: name
+                        in: query
+                        schema:
+                            type: string
+                        description: the world's name
+                    -   name: view
+                        in: query
+                        schema:
+                            type: string
+                        description: the view's key
+                    -   name: width
+                        in: query
+                        schema:
+                            type: number
+                        description: pixels (default 960, at most 1920)
+                    -   name: height
+                        in: query
+                        schema:
+                            type: number
+                        description: pixels (default 540, at most 1920)

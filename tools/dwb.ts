@@ -1,4 +1,4 @@
-// dwb: World Builder from the shell, one subcommand per public endpoint in dimos.yaml (the app's OpenAPI-style
+// dwb: World Builder from the shell, one subcommand per public endpoint in dimos.yaml (the app's OpenAPI
 // contract), so it stays in step with the server. Talks to the app through Desktop.
 //   deno run -A tools/dwb.ts --help
 //   deno run -A tools/dwb.ts generate --kind playground --name my_playground --seed 3
@@ -9,19 +9,56 @@
 import { Command } from "jsr:@cliffy/command@1.0.0-rc.7";
 import { parse } from "jsr:@std/yaml@1";
 
+interface Param {
+  type: string;
+  description: string;
+}
 interface Endpoint {
   method: string;
   path: string;
   description: string;
-  params?: Record<string, { type: string; description: string }>;
+  params: Record<string, Param>;
+}
+interface Operation {
+  summary?: string;
+  description?: string;
+  parameters?: { name: string; schema?: { type?: string }; description?: string }[];
+  requestBody?: {
+    content?: { "application/json"?: { schema?: { properties?: Record<string, Param> } } };
+  };
 }
 
+const METHODS = ["get", "post", "put", "patch", "delete"];
 const here = new URL("..", import.meta.url);
 const yamlText =
   await (here.protocol === "file:"
     ? Deno.readTextFile(new URL("dimos.yaml", here))
     : (await fetch(new URL("dimos.yaml", here))).text());
-const contract = parse(yamlText) as { provides: { endpoints: Endpoint[] } };
+const contract = parse(yamlText) as {
+  provides: { paths: Record<string, Record<string, Operation>> };
+};
+// one endpoint per path and method; its params are the path/query parameters plus the JSON body's
+const endpoints: Endpoint[] = Object.entries(contract.provides.paths).flatMap(([path, item]) =>
+  Object.entries(item).filter(([method]) => METHODS.includes(method)).map(([method, operation]) => {
+    const params: Record<string, Param> = {};
+    for (const parameter of operation.parameters ?? []) {
+      params[parameter.name] = {
+        type: parameter.schema?.type ?? "string",
+        description: parameter.description ?? "",
+      };
+    }
+    Object.assign(
+      params,
+      operation.requestBody?.content?.["application/json"]?.schema?.properties ?? {},
+    );
+    return {
+      method: method.toUpperCase(),
+      path: path.replace(/^\//, ""),
+      description: operation.summary ?? operation.description ?? "",
+      params,
+    };
+  })
+);
 
 /** "POST api/project/items" -> "project-items"; a GET and a POST of one path get get-/save- prefixes */
 function commandName(endpoint: Endpoint, all: Endpoint[]): string {
@@ -52,8 +89,8 @@ let cli: AnyCommand = new Command()
   })
   .globalOption("--out <file:string>", "where an image answer is saved (default <view>.png)");
 
-for (const endpoint of contract.provides.endpoints) {
-  const params = endpoint.params ?? {};
+for (const endpoint of endpoints) {
+  const params = endpoint.params;
   let sub: AnyCommand = new Command().description(
     `${endpoint.method} ${endpoint.path}: ${endpoint.description}`,
   );
@@ -90,7 +127,7 @@ for (const endpoint of contract.provides.endpoints) {
     }
     if (!response.ok) Deno.exit(1);
   });
-  cli = cli.command(commandName(endpoint, contract.provides.endpoints), sub);
+  cli = cli.command(commandName(endpoint, endpoints), sub);
 }
 
 await cli.parse(Deno.args);
