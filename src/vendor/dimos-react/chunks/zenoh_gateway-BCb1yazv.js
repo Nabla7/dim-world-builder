@@ -773,7 +773,6 @@ function encodePut(payload, sentAtMs) {
 	frame.set(payload, putHeaderBytes);
 	return frame;
 }
-var sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 function waitOpen(channel, timeoutMs) {
 	if (channel.readyState === "open") return Promise.resolve();
 	return new Promise((resolve, reject) => {
@@ -1487,35 +1486,33 @@ var ZenohGateway = class {
 			...options
 		};
 		this.now = this.options.clock ?? (() => performance.timeOrigin + performance.now());
-		if (typeof document !== "undefined" && typeof document.addEventListener === "function") document.addEventListener("visibilitychange", this.#onVisibility);
+		if (typeof document !== "undefined" && typeof document.addEventListener === "function") {
+			document.addEventListener("visibilitychange", this.#onVisibility);
+			document.addEventListener("freeze", this.#onAway);
+			document.addEventListener("resume", this.#onBack);
+		}
 	}
 	/** the timer that starts a fresh connection once one stays "disconnected" `freshAfterMs` */
 	#freshTimer;
-	/** Back from hidden: a connection that isn't up, or receives nothing within `freshAfterMs`, starts over. A
-	*  connection the gateway already dropped (it stopped hearing the page's heartbeat) receives nothing; one that is
-	*  only resuming does (a ping alone waited on SCTP's retransmission backoff and threw away a live connection). */
-	#onVisibility = async () => {
-		if (document.visibilityState !== "visible" || !this.options.reconnect || this.#closed) return;
-		const generation = this.#generation;
-		const peer = this.#peer;
-		if (this.state === "connecting" || this.#reconnecting) {
-			if (this.state === "lost" && this.#reconnecting) this.#startFresh();
-			return;
-		}
-		if (this.state === "lost" || peer === null || peer.connectionState === "failed" || peer.connectionState === "closed") {
-			this.#startFresh();
-			return;
-		}
-		const t0 = this.now();
-		this._request({
-			op: "ping",
-			t0,
-			offsetMs: this.clockOffsetMs,
-			rttMs: this.rttMs
-		}, this.options.freshAfterMs).catch(() => {});
-		const before = await bytesReceived(peer);
-		await sleep(this.options.freshAfterMs);
-		if (generation === this.#generation && !this.#closed && await bytesReceived(peer) <= before) this.#startFresh();
+	/** when the page was hidden or frozen (performance.now()), while it is */
+	#awayAt = null;
+	#onAway = () => {
+		this.#awayAt ??= performance.now();
+	};
+	/** Back from hidden or frozen: away longer than `freshAfterMs` (or not connected), it starts a fresh connection
+	*  rather than catch up. A connection kept through 40 s frozen (Chrome keeps it up below a frozen page) had heard
+	*  no acks, so the gateway had written its link off, and video took 12 s to climb back. */
+	#onBack = () => {
+		if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
+		const awayFor = this.#awayAt === null ? 0 : performance.now() - this.#awayAt;
+		this.#awayAt = null;
+		if (!this.options.reconnect || this.#closed) return;
+		if (this.state === "connecting" || this.#reconnecting && this.state !== "lost") return;
+		if (awayFor > this.options.freshAfterMs || this.state === "lost") this.#startFresh();
+	};
+	#onVisibility = () => {
+		if (document.visibilityState === "hidden") this.#onAway();
+		else this.#onBack();
 	};
 	/** Drops the connection and opens a new one now: its subscriptions and declarations come back fresh. A reconnect
 	*  waiting out its retry delay tries again now. */
@@ -2091,7 +2088,11 @@ var ZenohGateway = class {
 	close() {
 		this.#closed = true;
 		clearTimeout(this.#freshTimer);
-		if (typeof document !== "undefined" && typeof document.removeEventListener === "function") document.removeEventListener("visibilitychange", this.#onVisibility);
+		if (typeof document !== "undefined" && typeof document.removeEventListener === "function") {
+			document.removeEventListener("visibilitychange", this.#onVisibility);
+			document.removeEventListener("freeze", this.#onAway);
+			document.removeEventListener("resume", this.#onBack);
+		}
 		if (this.#statsTimer) clearInterval(this.#statsTimer);
 		if (this.#heartbeatTimer) clearInterval(this.#heartbeatTimer);
 		for (const endpoint of [...this.#endpoints]) endpoint.close();
@@ -2100,12 +2101,6 @@ var ZenohGateway = class {
 		this.#setState("lost");
 	}
 };
-/** Bytes the connection's transports received, ever. */
-async function bytesReceived(peer) {
-	let bytes = 0;
-	for (const report of (await peer.getStats().catch(() => /* @__PURE__ */ new Map())).values()) if (report.type === "transport") bytes += Number(report.bytesReceived ?? 0);
-	return bytes;
-}
 /** Connects to a zenoh-gateway server, e.g. `await connect("http://robot.local:7448")`. */
 async function connect(url, options = {}) {
 	const client = new ZenohGateway(url, options);

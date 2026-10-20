@@ -125,7 +125,7 @@ var AppZenoh = class {
 			if (!response.ok) throw new Error(`GET ${discovery.pathname}: HTTP ${response.status}`);
 			return await response.json();
 		});
-		const connect = this.#options.connect ?? (await import("./zenoh_gateway-BBDs-j4j.js")).connect;
+		const connect = this.#options.connect ?? (await import("./zenoh_gateway-BCb1yazv.js")).connect;
 		const gateway = this.#options.zenohGatewayUrl ?? this.info.zenohGatewayUrl ?? "/zenoh-gateway";
 		const url = /^[a-z]+:\/\//i.test(gateway) ? gateway : new URL(gateway.replace(/^\/+/, ""), this.base).href;
 		this.client = await this.#retry("connecting to zenoh-gateway", () => connect(url, this.#options.connectOptions ?? {}));

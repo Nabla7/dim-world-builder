@@ -1,5 +1,5 @@
 import { A as NumberInput, E as Field, F as Select, H as Toggle, I as Slider, O as IconButton, W as Icon, mt as themeColors, v as Badge, y as Button, yt as cx } from "./chunks/nav-D57o5csA.js";
-import { A as depthScale, C as useStore, F as DEFAULT_GRADIENT, J as ColorSwatch, Lt as headerFrameId, Ot as useDataSource, Pt as decode, R as GRADIENTS, S as readLocal, T as DEPTH_COLORMAPS, V as RAMPS, W as isPalette, b as Store, bt as decodeMessage, it as EmptyState, jt as useTopicList, l as isDepthTopic, nt as Alert, o as cameraInfoFor, q as sampleGradient, s as cameraStreamsFor, w as writeLocal, wt as parseKey, x as localStore, z as PALETTES } from "./chunks/camera-IXP0snTY.js";
+import { A as depthScale, C as useStore, F as DEFAULT_GRADIENT, J as ColorSwatch, Lt as headerFrameId, Ot as useDataSource, Pt as decode, R as GRADIENTS, S as readLocal, T as DEPTH_COLORMAPS, V as RAMPS, W as isPalette, b as Store, bt as decodeMessage, it as EmptyState, jt as useTopicList, l as isDepthTopic, nt as Alert, o as cameraInfoFor, q as sampleGradient, s as cameraStreamsFor, w as writeLocal, wt as parseKey, x as localStore, z as PALETTES } from "./chunks/camera-CrJh4Fgi.js";
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { jsx, jsxs } from "react/jsx-runtime";
 import * as THREE from "three";
