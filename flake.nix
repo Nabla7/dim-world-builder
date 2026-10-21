@@ -27,16 +27,72 @@
                     text = "#!${linux.runtimeShell}\n${serverLine linux server frontend}\n";
                 };
         in {
-            packages = forAll (pkgs: rec {
-                # the page: vite's build of src/ (plain JS once built, so one build serves every target)
-                frontend = pkgs.buildNpmPackage {
-                    pname = "dim-world-builder-frontend";
-                    version = "0.1.0";
-                    src = files pkgs [ ./package.json ./package-lock.json ./index.html ./vite.config.ts ./tsconfig.json ./src ];
-                    # `nix build .#frontend` prints the right hash when package-lock.json changes
-                    npmDepsHash = "sha256-4rCVN+vm/WcRllXSm+In8rQda7zmrdbcY/OAF1d38Ck=";
-                    installPhase = "cp -r dist $out";
-                };
+            packages = forAll (pkgs:
+                let
+                    denoEnv = "export HOME=$TMPDIR DENO_DIR=$TMPDIR/deno DENO_NO_UPDATE_CHECK=1 DENO_NO_PROMPT=1";
+                    # `deno install --frozen` (deno.lock pins every package) with network, so fixed-output. Its hash is per
+                    # build machine (vite's native rollup and esbuild differ by OS and CPU): `deno task update-hashes` refreshes
+                    # this machine's after deno.json or deno.lock change.
+                    frontendModules = pkgs.stdenvNoCC.mkDerivation {
+                        name = "dim-world-builder-frontend-modules";
+                        src = files pkgs [ ./deno.json ./deno.lock ];
+                        nativeBuildInputs = [ pkgs.deno ];
+                        buildPhase = ''
+                            ${denoEnv}
+                            export SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt
+                            deno install --frozen
+                            # deno's own record of the install: not needed, and not byte-identical between installs
+                            rm -f node_modules/.deno/.setup-cache.bin
+                        '';
+                        installPhase = "cp -R node_modules $out";
+                        dontFixup = true;
+                        outputHashMode = "recursive";
+                        outputHashAlgo = "sha256";
+                        outputHash = {
+                            aarch64-darwin = "sha256-38Ew3qwupjrYF18qXYnDoDst1Cc3AwNiLIbkZRI9glA=";
+                            x86_64-darwin = "";
+                            x86_64-linux = "sha256-/VZfnn9Y9RtseSP37OHn6EFBakoUM0kwEv+lyzqrV6Y=";
+                            aarch64-linux = "";
+                        }.${pkgs.stdenv.hostPlatform.system};
+                    };
+
+                    pageFiles = files pkgs [ ./deno.json ./deno.lock ./index.html ./vite.config.ts ./tsconfig.json ./tools/esm_fetch.ts ./src ];
+                    # dimos-react as esm.sh builds its tag (tools/esm_fetch.ts): a vite build with network that
+                    # keeps only what it fetched, so fixed-output; the same on every system. `deno task update-hashes` refreshes it.
+                    frontendEsm = pkgs.stdenvNoCC.mkDerivation {
+                        name = "dim-world-builder-frontend-esm";
+                        src = pageFiles;
+                        nativeBuildInputs = [ pkgs.deno ];
+                        buildPhase = ''
+                            ${denoEnv}
+                            export SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt
+                            cp -R ${frontendModules} node_modules
+                            chmod -R u+w node_modules
+                            ESM_CACHE=$TMPDIR/esm deno run -A --cached-only --node-modules-dir=manual npm:vite build --logLevel warn
+                        '';
+                        installPhase = "cp -R $TMPDIR/esm $out";
+                        dontFixup = true;
+                        outputHashMode = "recursive";
+                        outputHashAlgo = "sha256";
+                        outputHash = "sha256-4ty8hSqT2w2LcHl4TWvXZy0O1Uf+sB/RdHuzKwf0ORU=";
+                    };
+
+                    # the page: React + Vite against those modules and that esm.sh cache, offline (plain JS once built, so one build serves every target)
+                    frontend = pkgs.stdenvNoCC.mkDerivation {
+                        name = "dim-world-builder-frontend";
+                        src = pageFiles;
+                        nativeBuildInputs = [ pkgs.deno ];
+                        buildPhase = ''
+                            ${denoEnv}
+                            cp -R ${frontendModules} node_modules
+                            chmod -R u+w node_modules
+                            ESM_CACHE=${frontendEsm} ESM_OFFLINE=1 deno run -A --cached-only --node-modules-dir=manual npm:vite build
+                        '';
+                        installPhase = "cp -R dist $out";
+                    };
+                in
+                rec {
+                inherit frontend frontendModules frontendEsm;
                 # the server and what it reads: the shared world model, the asset library, the cooker's locked project
                 server = files pkgs [ ./backend ./src/world ./assets ./cooker/pyproject.toml ./cooker/uv.lock ./cooker/cook.py ./cooker/render_view.py ./cooker/check_clips.py ];
                 dimosApp = pkgs.writeShellScriptBin "dimos-app-server" (serverLine pkgs server frontend);

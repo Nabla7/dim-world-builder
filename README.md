@@ -58,5 +58,6 @@ that way: [tools/examples/office_555.ts](tools/examples/office_555.ts).
 
 ```sh
 deno run -A backend/main.ts --port 8797 & API_PORT=8797 deno task dev
-npx vitest run && npx tsc --noEmit -p . && dimos-desktop app check .
+deno task test && deno task check && dimos-desktop app check .
+deno task update-hashes   # after changing deno.json or deno.lock: flake.nix's hashes for the page
 ```

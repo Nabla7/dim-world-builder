@@ -4,10 +4,44 @@
     "dev": "deno run -A npm:vite",
     "build": "deno run -A npm:vite build",
     "test": "deno run -A npm:vitest run",
-    "check": "deno run -A npm:typescript/tsc --noEmit && deno check --config backend/deno.json backend/main.ts",
+    "check": "deno check src/ vite.config.ts tools/esm_fetch.ts && deno check --config backend/deno.json backend/main.ts",
     "serve": "deno run -A --watch backend/main.ts --port 8787",
-    "vendor-dimos-react": "deno run -A --no-lock tools/vendor_dimos_react.ts",
-    "examples": "deno run -A tools/export_example.ts"
+    "examples": "deno run -A tools/export_example.ts",
+    "update-hashes": "deno run -A tools/update_hashes.ts"
+  },
+  "imports": {
+    "react": "npm:react@^19.2.0",
+    "react/": "npm:/react@^19.2.0/",
+    "react-dom": "npm:react-dom@^19.2.0",
+    "react-dom/": "npm:/react-dom@^19.2.0/",
+    "three": "npm:three@0.180.0",
+    "three/": "npm:/three@0.180.0/",
+    "@types/node": "npm:@types/node@^24.10.1",
+    "@types/react": "npm:@types/react@^19.2.0",
+    "@types/react-dom": "npm:@types/react-dom@^19.2.0",
+    "@types/three": "npm:@types/three@0.180.0",
+    "@vitejs/plugin-react": "npm:@vitejs/plugin-react@^5.1.0",
+    "vite": "npm:vite@^7.1.0",
+    "vitest": "npm:vitest@^3.2.4",
+    "vitest/": "npm:/vitest@^3.2.4/",
+    "dimos-react": "https://raw.githubusercontent.com/jeff-hykin/dimos-react/v0.2.0-beta16/src/index.ts",
+    "dimos-react/three": "https://raw.githubusercontent.com/jeff-hykin/dimos-react/v0.2.0-beta16/src/three.ts"
+  },
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
+    "jsxImportSourceTypes": "@types/react",
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable",
+      "deno.ns"
+    ],
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "verbatimModuleSyntax": true
   },
   "fmt": {
     "lineWidth": 100,
@@ -15,16 +49,13 @@
       "dist/",
       "icon.svg",
       "dimos.yaml",
-      "src/vendor/dimos-react/",
       "assets/",
-      "examples/",
-      "package-lock.json"
+      "examples/"
     ]
   },
   "lint": {
     "exclude": [
       "dist/",
-      "src/vendor/dimos-react/",
       "assets/",
       "examples/"
     ],
