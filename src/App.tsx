@@ -445,10 +445,10 @@ function useKeyboard() {
         else select(null);
       } else if (!mod && getState().mode === "edit") {
         const key = e.key.toLowerCase();
-        if (key === "w") setGizmo("translate");
-        if (key === "e") setGizmo("rotate");
-        if (key === "r") setGizmo("scale");
-        if (key === "t") setGizmo("extend");
+        if (key === "t") setGizmo("translate");
+        if (key === "r") setGizmo("rotate");
+        if (key === "s") setGizmo("scale");
+        if (key === "e") setGizmo("extend");
       }
     };
     addEventListener("keydown", onKey);
@@ -514,10 +514,10 @@ function EditToolbar({ phone }: { phone: boolean }) {
             { value: "extend", label: "Extend" },
           ]
           : [
-            { value: "translate", label: "Move (W)" },
-            { value: "rotate", label: "Rotate (E)" },
-            { value: "scale", label: "Scale (R)" },
-            { value: "extend", label: "Extend (T)" },
+            { value: "translate", label: "Move (T)" },
+            { value: "rotate", label: "Rotate (R)" },
+            { value: "scale", label: "Scale (S)" },
+            { value: "extend", label: "Extend (E)" },
           ]}
         onChange={(g: string) => setGizmo(g as "translate")}
         data-testid="gizmo"

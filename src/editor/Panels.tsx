@@ -1320,7 +1320,7 @@ export function Inspector({ assets }: { assets: MeshAsset[] }) {
     return (
       <div style={section}>
         <Text small muted>
-          Select something to edit it. W / E / R: move, rotate, scale · Delete: remove · Ctrl+D:
+          Select something to edit it. T / R / S / E: move, rotate, scale, extend · Delete: remove · Ctrl+D:
           duplicate · Ctrl+Z: undo.
         </Text>
         {pickedFloor && (
