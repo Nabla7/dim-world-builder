@@ -34,6 +34,7 @@ import { fadeGrid, gridFocus, SKY, skyDome, SUN_DIRECTION, windTime } from "./na
 import {
   addItem,
   addLabelPoint,
+  edit,
   fancyOn,
   getState,
   noticeRenderer,
@@ -285,7 +286,11 @@ function Lighting() {
     ground.position.z = -0.001;
     // the world's own floor at z = 0 is 1 mm above it, too close for the depth buffer from a distance: push the
     // ground back in depth so a floor always wins (else the shadow catcher's shadows stripe through it)
-    Object.assign(ground.material, { polygonOffset: true, polygonOffsetFactor: 4, polygonOffsetUnits: 4 });
+    Object.assign(ground.material, {
+      polygonOffset: true,
+      polygonOffsetFactor: 4,
+      polygonOffsetUnits: 4,
+    });
     ground.userData.ground = true;
     root.add(sky, fill, sun, sun.target, ground);
     // the sky stays centered on the camera
@@ -919,6 +924,136 @@ function posedFrom(object: THREE.Object3D, item: Item): Item {
   return next;
 }
 
+// ── extend: a scale drag that moves only the grabbed side; the opposite face stays where it was ──
+
+const AXES = { X: 0, Y: 1, Z: 2 } as const;
+const UNIT = [new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1)];
+
+interface ExtendAxis {
+  axis: 0 | 1 | 2;
+  /** +1: the + side was grabbed (the - face is the anchor); -1 the reverse */
+  side: 1 | -1;
+  /** the anchor face's coordinate along the axis, in the object's own frame */
+  anchor: number;
+  /** the object's size along the axis when the drag started */
+  size: number;
+}
+interface ExtendDrag {
+  axes: ExtendAxis[];
+  position: THREE.Vector3;
+}
+
+/** the meshes' bounds in `frame`'s own coordinates (what `frame` draws, or for the group pivot, its members) */
+function localBounds(frame: THREE.Object3D, objects: THREE.Object3D[]): THREE.Box3 {
+  frame.updateWorldMatrix(true, true);
+  const toFrame = frame.matrixWorld.clone().invert();
+  const box = new THREE.Box3();
+  const part = new THREE.Box3();
+  for (const object of objects) {
+    object.updateWorldMatrix(true, true);
+    object.traverse((child) => {
+      const mesh = child as THREE.Mesh;
+      if (!mesh.isMesh || !mesh.visible || mesh.userData.outline || !mesh.geometry) return;
+      if (!mesh.geometry.boundingBox) mesh.geometry.computeBoundingBox();
+      box.union(
+        part.copy(mesh.geometry.boundingBox!).applyMatrix4(
+          toFrame.clone().multiply(mesh.matrixWorld),
+        ),
+      );
+    });
+  }
+  return box;
+}
+
+/** at a drag's start: the axes being extended, which side of each was grabbed, and where the anchor faces are */
+function startExtend(
+  controls: TransformControls,
+  object: THREE.Object3D,
+  contents: THREE.Object3D[],
+): ExtendDrag | null {
+  const letters = (controls.axis ?? "").split("").filter((l): l is keyof typeof AXES => l in AXES);
+  // the center handle (uniform) has no side: it stays a plain scale
+  if (letters.length === 0 || controls.axis === "XYZ") return null;
+  const bounds = localBounds(object, contents);
+  if (bounds.isEmpty()) return null;
+  const quaternion = object.getWorldQuaternion(new THREE.Quaternion());
+  const grabbed = (controls as unknown as { pointStart: THREE.Vector3 }).pointStart;
+  const axes = letters.map((letter): ExtendAxis => {
+    const axis = AXES[letter];
+    const side = grabbed.dot(UNIT[axis].clone().applyQuaternion(quaternion)) >= 0 ? 1 : -1;
+    const [min, max] = [bounds.min.getComponent(axis), bounds.max.getComponent(axis)];
+    return { axis, side, anchor: side > 0 ? min : max, size: max - min };
+  });
+  return { axes, position: object.position.clone() };
+}
+
+/** during the drag: the grabbed face follows the pointer, the anchor face stays put */
+function applyExtend(
+  controls: TransformControls,
+  object: THREE.Object3D,
+  drag: ExtendDrag,
+  snap: boolean,
+) {
+  const { pointStart, pointEnd } = controls as unknown as {
+    pointStart: THREE.Vector3;
+    pointEnd: THREE.Vector3;
+  };
+  const moved = pointEnd.clone().sub(pointStart);
+  const quaternion = object.getWorldQuaternion(new THREE.Quaternion());
+  object.position.copy(drag.position);
+  for (const { axis, side, anchor, size } of drag.axes) {
+    let length = size + side * moved.dot(UNIT[axis].clone().applyQuaternion(quaternion));
+    if (snap) length = Math.round(length / SNAP.translate) * SNAP.translate;
+    // a commit keeps each factor within 1/10..10x (applyScale)
+    const factor = Math.min(10, Math.max(0.1, length / size));
+    object.scale.setComponent(axis, factor);
+    object.position.addScaledVector(
+      UNIT[axis].clone().applyQuaternion(object.quaternion),
+      (1 - factor) * anchor,
+    );
+  }
+}
+
+/** after an extend commits, the rebuilt item may differ a little (generators round their dimensions, walls keep
+ * their thickness): slide it so each anchor face lands exactly where it was, in the same undo step */
+function settleExtend(
+  viewer: NonNullable<ReturnType<typeof useViewer>>,
+  id: string,
+  axes: ExtendAxis[],
+  targets: number[],
+  step: string,
+) {
+  requestAnimationFrame(() => {
+    const object = viewer.scene.getObjectByName("world")?.children.find((o) =>
+      o.userData.itemId === id
+    );
+    if (!object) return;
+    const bounds = localBounds(object, [object]);
+    const shift = new THREE.Vector3();
+    axes.forEach(({ axis, side }, i) => {
+      const direction = UNIT[axis].clone().applyQuaternion(object.quaternion);
+      const face = object.position.dot(direction) +
+        object.scale.getComponent(axis) *
+          (side > 0 ? bounds.min.getComponent(axis) : bounds.max.getComponent(axis));
+      shift.addScaledVector(direction, targets[i] - face);
+    });
+    if (shift.length() < 1e-4) return;
+    edit((p) => ({
+      ...p,
+      items: p.items.map((item) =>
+        item.id === id
+          ? {
+            ...item,
+            position: item.position.map((v, i) =>
+              Math.round((v + shift.getComponent(i)) * 1000) / 1000
+            ) as Vec3,
+          }
+          : item
+      ),
+    }), step);
+  });
+}
+
 function Gizmo() {
   const viewer = useViewer();
   const selected = useEditor((s) => s.selected);
@@ -933,6 +1068,11 @@ function Gizmo() {
   const pivot = useRef(new THREE.Object3D());
   const members = useRef<{ object: THREE.Object3D; start: THREE.Matrix4 }[]>([]);
   const pivotStart = useRef(new THREE.Matrix4());
+  const extend = useRef<ExtendDrag | null>(null);
+  const gizmoRef = useRef(gizmo);
+  gizmoRef.current = gizmo;
+  const snapRef = useRef(snap);
+  snapRef.current = snap;
 
   useEffect(() => {
     if (!viewer) return;
@@ -946,6 +1086,9 @@ function Gizmo() {
     controls.getRaycaster().layers.enableAll();
     controls.addEventListener("change", () => viewer.requestRender());
     controls.addEventListener("objectChange", () => {
+      if (extend.current && controls.object) {
+        applyExtend(controls, controls.object, extend.current, snapRef.current);
+      }
       if (controls.object !== pivot.current) return;
       pivot.current.updateMatrix();
       const delta = pivot.current.matrix.clone().multiply(pivotStart.current.clone().invert());
@@ -964,8 +1107,17 @@ function Gizmo() {
           pivotStart.current.copy(pivot.current.matrix);
           for (const m of members.current) m.object.updateMatrix(), m.start.copy(m.object.matrix);
         }
+        extend.current = object && gizmoRef.current === "extend"
+          ? startExtend(
+            controls,
+            object,
+            object === pivot.current ? members.current.map((m) => m.object) : [object],
+          )
+          : null;
         return;
       }
+      const extended = extend.current;
+      extend.current = null;
       // drag ended: write the poses back to the items (all members in one undo step)
       if (object === pivot.current) {
         const byId = new Map(
@@ -977,7 +1129,21 @@ function Gizmo() {
       const id = object?.userData.itemId as string | undefined;
       const item = getState().project.items.find((i) => i.id === id);
       if (!object || !item) return;
-      updateItem(item.id, (current) => posedFrom(object, current));
+      if (!extended) {
+        updateItem(item.id, (current) => posedFrom(object, current));
+        return;
+      }
+      // where each anchor face is now, along its axis (the commit and its settling are one undo step)
+      const targets = extended.axes.map(({ axis, anchor }) =>
+        object.position.dot(UNIT[axis].clone().applyQuaternion(object.quaternion)) +
+        object.scale.getComponent(axis) * anchor
+      );
+      const step = `extend-${crypto.randomUUID()}`;
+      edit((p) => ({
+        ...p,
+        items: p.items.map((i) => (i.id === item.id ? posedFrom(object, i) : i)),
+      }), step);
+      settleExtend(viewer, item.id, extended.axes, targets, step);
     });
     controlsRef.current = controls;
     (globalThis as unknown as { dimWorldBuilderGizmo?: TransformControls }).dimWorldBuilderGizmo =
@@ -994,7 +1160,7 @@ function Gizmo() {
   useEffect(() => {
     const controls = controlsRef.current;
     if (!controls || !viewer) return;
-    controls.setMode(gizmo);
+    controls.setMode(gizmo === "extend" ? "scale" : gizmo);
     // things in a world turn about the vertical: rotate is the yaw ring (exact roll/pitch stay in the inspector)
     controls.showX = gizmo !== "rotate";
     controls.showY = gizmo !== "rotate";

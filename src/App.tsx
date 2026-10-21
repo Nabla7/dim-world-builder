@@ -427,6 +427,7 @@ function useKeyboard() {
         if (key === "w") setGizmo("translate");
         if (key === "e") setGizmo("rotate");
         if (key === "r") setGizmo("scale");
+        if (key === "t") setGizmo("extend");
       }
     };
     addEventListener("keydown", onKey);
@@ -489,11 +490,13 @@ function EditToolbar({ phone }: { phone: boolean }) {
             { value: "translate", label: "Move" },
             { value: "rotate", label: "Rotate" },
             { value: "scale", label: "Scale" },
+            { value: "extend", label: "Extend" },
           ]
           : [
             { value: "translate", label: "Move (W)" },
             { value: "rotate", label: "Rotate (E)" },
             { value: "scale", label: "Scale (R)" },
+            { value: "extend", label: "Extend (T)" },
           ]}
         onChange={(g: string) => setGizmo(g as "translate")}
         data-testid="gizmo"

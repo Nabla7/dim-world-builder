@@ -15,7 +15,8 @@ import type {
 import { keyedProject, slug, withKeys, withViewKeys } from "../world/keys.ts";
 import { NAV_GOAL, NAV_MAPPING, withAnnotations } from "../world/annotations.ts";
 
-export type Gizmo = "translate" | "rotate" | "scale";
+/** extend: scale one side, the opposite face stays put */
+export type Gizmo = "translate" | "rotate" | "scale" | "extend";
 export type Mode = "edit" | "view";
 
 export interface Fancy {
