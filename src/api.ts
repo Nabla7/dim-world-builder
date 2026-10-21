@@ -23,11 +23,17 @@ export const listProjects = () => json<{ projects: string[] }>("api/projects");
 export const loadProject = (name: string) =>
   json<Project>(`api/internal/projects/${encodeURIComponent(name)}`);
 export const saveProject = (project: Project) =>
-  send<{ saved: string }>(
+  send<{ saved: string; alsoSaved?: string }>(
     "PUT",
     `api/internal/projects/${encodeURIComponent(project.name)}`,
     project,
   );
+
+/** write the project to a .json anywhere (a folder: <name>.json in it); later saves go there too */
+export const saveAs = (project: Project, path: string) =>
+  send<{ saved: string }>("POST", "api/internal/save-as", { project, path });
+/** saved worlds that also save to a file elsewhere: { name: path } */
+export const linkedFiles = () => json<Record<string, string>>("api/internal/linked");
 
 export interface ExportResult {
   dir: string;

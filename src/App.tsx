@@ -3,12 +3,14 @@ import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter.js";
 import * as api from "./api.ts";
 import {
   Button,
+  ButtonGroup,
   Checkbox,
   CodeBlock,
   Field,
   IconButton,
   List,
   ListRow,
+  Menu,
   Modal,
   NumberInput,
   Progress,
@@ -199,6 +201,7 @@ export function App() {
           data-testid="world-name"
         />
         <ProjectMenu phone={phone} />
+        <SaveMenu phone={phone} />
         {!phone && <div style={{ flex: 1 }} />}
         <ClipBadge />
         <Segmented
@@ -372,6 +375,19 @@ function openSaved(name: string) {
   );
 }
 
+/** save right away (autosave also does, a moment after each change); says where it went */
+function saveNow() {
+  const project = getState().project;
+  api.saveProject(project).then((r) => {
+    localStorageSet("dim-world-builder.project", project.name);
+    toast({
+      title: "Saved",
+      message: r.alsoSaved ? `${project.name} → ${r.alsoSaved}` : project.name,
+      tone: "ok",
+    });
+  }).catch((e) => toast({ title: "Save failed", message: String(e), tone: "danger" }));
+}
+
 function localStorageGet(key: string): string | null {
   try {
     return localStorage.getItem(key);
@@ -390,6 +406,11 @@ function localStorageSet(key: string, value: string) {
 function useKeyboard() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        saveNow();
+        return;
+      }
       const target = e.target as HTMLElement;
       if (target.closest("input, textarea, select, [contenteditable]")) {
         // Esc in a field leaves the field (and the selection alone)
@@ -853,6 +874,76 @@ function OpenDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
           )}
         </div>
       </div>
+    </Modal>
+  );
+}
+
+function SaveMenu({ phone }: { phone: boolean }) {
+  const [saveAs, setSaveAs] = useState(false);
+  return (
+    <>
+      <ButtonGroup>
+        {phone
+          ? <IconButton icon="check" label="Save" onClick={saveNow} data-testid="save" />
+          : (
+            <Button icon="check" size="sm" onClick={saveNow} title="Save (⌘S)" data-testid="save">
+              Save
+            </Button>
+          )}
+        <Menu
+          trigger={<IconButton icon="chevron-down" label="More save options" size="sm" />}
+          items={[{ label: "Save as file…", icon: "file", onSelect: () => setSaveAs(true) }]}
+        />
+      </ButtonGroup>
+      <SaveAsDialog open={saveAs} onClose={() => setSaveAs(false)} />
+    </>
+  );
+}
+
+/** write the world to a .json anywhere; from then on its saves go there too */
+function SaveAsDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const name = useEditor((s) => s.project.name);
+  const [path, setPath] = useState("");
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    const fallback = `~/dimos_worlds/${name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_")}.json`;
+    setPath(fallback);
+    api.linkedFiles().then((links) => {
+      const linked = links[name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_")];
+      if (linked) setPath(linked);
+    }).catch(() => {});
+  }, [open, name]);
+  const save = async () => {
+    setBusy(true);
+    try {
+      const result = await api.saveAs(getState().project, path);
+      toast({
+        title: "Saved",
+        message: `${name} → ${result.saved} (later saves go there too)`,
+        tone: "ok",
+      });
+      onClose();
+    } catch (error) {
+      toast({ title: "Save failed", message: String(error), tone: "danger" });
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="Save as file"
+      footer={
+        <Button variant="primary" loading={busy} onClick={save} data-testid="save-as-go">
+          Save
+        </Button>
+      }
+    >
+      <Field label="File" hint="a .json path on this machine (a folder: <name>.json in it)">
+        <TextInput value={path} onChange={setPath} mono data-testid="save-as-path" />
+      </Field>
     </Modal>
   );
 }

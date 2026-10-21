@@ -12,6 +12,8 @@
 //   GET  /api/views/image?name=&view=&width=&height=   public: a PNG of the world from one view (MuJoCo)
 //   POST /api/check                  public: items whose collision shapes interpenetrate (clips), as warnings
 //   GET|PUT /api/internal/projects/<name>   private: load / autosave one project
+//   GET  /api/internal/linked        private: saved worlds that also save to a file elsewhere ({ name: path })
+//   POST /api/internal/save-as       private: write the project to a .json anywhere; later saves go there too (body: { project, path })
 //   POST /api/internal/import?name=&height=  private: upload a .glb/.gltf/.obj; cooks it in the background
 //   GET  /api/internal/import/<job>  private: a cook's progress and result
 //   POST /api/internal/visual?dir=   private: the page's baked visual.glb for an export
@@ -414,7 +416,6 @@ async function api(request: Request, url: URL): Promise<Response | null> {
       ...(file ? { savesTo: file } : {}),
       ...await showWorld(name, body.show ?? true),
     });
-
   }
   if (route === "GET /api/project") {
     const project = await readJson<Project | null>(
@@ -622,6 +623,35 @@ async function api(request: Request, url: URL): Promise<Response | null> {
       files: files.sort(),
       worlds,
     });
+  }
+  if (route === "POST /api/internal/save-as") {
+    const body = await request.json() as { project?: unknown; path?: string };
+    const project = projectIn(body.project);
+    if (!project || !body.path) return json({ error: "give { project, path }" }, 400);
+    let path = body.path.replace(/^~(?=$|\/)/, home);
+    if (await Deno.stat(path).then((s) => s.isDirectory, () => false)) {
+      path = `${path.replace(/\/$/, "")}/${packageName(project.name)}.json`;
+    }
+    if (!path.endsWith(".json")) path += ".json";
+    // never write over a file that isn't a world
+    const existing = await readJson<unknown>(path, undefined);
+    const occupied = await Deno.stat(path).then(() => true, () => false);
+    if (occupied && !projectIn(existing)) {
+      return json({ error: `${path} exists and isn't a World Builder project` }, 409);
+    }
+    try {
+      await Deno.writeTextFile(path, JSON.stringify(project, null, 2));
+    } catch (error) {
+      return json({ error: (error as Error).message }, 400);
+    }
+    await saveProject(project);
+    const links = await linkedFiles();
+    links[packageName(project.name)] = await Deno.realPath(path);
+    await Deno.writeTextFile(linksFile, JSON.stringify(links, null, 2));
+    return json({ saved: links[packageName(project.name)] });
+  }
+  if (route === "GET /api/internal/linked") {
+    return json(await linkedFiles());
   }
   if (route === "POST /api/internal/import") {
     const name = url.searchParams.get("name") || "imported";
