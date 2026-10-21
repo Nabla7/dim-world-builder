@@ -7,6 +7,7 @@
 //   POST /api/export                 public: write a project as a dimos world directory (body: { project, parentDir })
 //   GET  /api/library                public: every placeable mesh asset (library + cooked imports)
 //   GET  /api/projects               public: saved projects
+//   POST /api/open                   public: open a world in the user's World Builder (body: { name } | { path } | { project })
 //   GET|POST /api/views, POST /api/views/remove   public: a saved world's remembered camera views
 //   GET  /api/views/image?name=&view=&width=&height=   public: a PNG of the world from one view (MuJoCo)
 //   POST /api/check                  public: items whose collision shapes interpenetrate (clips), as warnings
@@ -14,7 +15,7 @@
 //   POST /api/internal/import?name=&height=  private: upload a .glb/.gltf/.obj; cooks it in the background
 //   GET  /api/internal/import/<job>  private: a cook's progress and result
 //   POST /api/internal/visual?dir=   private: the page's baked visual.glb for an export
-//   GET  /api/internal/dirs?path=    private: folders under a path (the export folder picker)
+//   GET  /api/internal/dirs?path=    private: folders (and .json files) under a path (the export and open pickers)
 //   GET  /files/library/<id>/<file>, /files/imports/<id>/<file>   private: mesh files
 
 import { exportProject, packageName } from "./export.ts";
@@ -221,6 +222,108 @@ async function saveProject(unkeyed: Project) {
   );
 }
 
+// ── opening a world from anywhere: a project .json, an export's scene.json, or an export's folder ──
+
+// a project opened from a file keeps saving to that file too: saved name -> its path
+const linksFile = `${dataDir}/linked_files.json`;
+const linkedFiles = () => readJson<Record<string, string>>(linksFile, {});
+
+/** the editor's project inside some JSON: a project itself, or an export's scene.json (extensions.dim_world_builder) */
+function projectIn(value: unknown): Project | null {
+  const candidate = value as {
+    format?: string;
+    extensions?: Record<string, { project?: Project }>;
+  } | null;
+  if (candidate?.format === "dim-world-builder.project.v1") {
+    return candidate as Project;
+  }
+  const project = candidate?.extensions?.dim_world_builder?.project;
+  return project?.format === "dim-world-builder.project.v1" ? project : null;
+}
+
+/** read a world from a path; `linkable` is the file to keep saving into (a plain project file) */
+async function projectFromPath(
+  given: string,
+): Promise<{ project: Project; linkable: string | null }> {
+  let path = given.replace(/^~(?=$|\/)/, home);
+  if ((await Deno.stat(path)).isDirectory) {
+    const inside = [`${path}/scene.json`, `${path}/world.project.json`];
+    const found = (await Promise.all(inside.map((f) => Deno.stat(f).then(() => f, () => null))))
+      .find(Boolean);
+    if (!found) {
+      throw new Error(`${path} has no scene.json (not a World Builder export)`);
+    }
+    path = found;
+  }
+  const contents = JSON.parse(await Deno.readTextFile(path));
+  const project = projectIn(contents);
+  if (!project) {
+    throw new Error(
+      `${path} isn't a World Builder project or an export's scene.json`,
+    );
+  }
+  // an export's scene.json is the export's, not the editor's: open a copy (export again to update it)
+  return {
+    project,
+    linkable: project === contents ? await Deno.realPath(path) : null,
+  };
+}
+
+/** save an opened world among the saved ones without clobbering a different saved world of the same name */
+async function adopt(project: Project, source: string | null): Promise<string> {
+  const links = await linkedFiles();
+  const base = packageName(project.name);
+  let name = base;
+  let free = false;
+  const same = JSON.stringify(keyedProject({ ...project, name: base }));
+  for (let n = 2;; n++) {
+    const saved = await readJson<Project | null>(
+      `${projectsDir}/${name}.json`,
+      null,
+    );
+    // free, this same file opened again, or a world identical to it (an export of a saved world): reuse the name
+    free = !saved;
+    if (
+      !saved || (source && links[name] === source) ||
+      JSON.stringify(keyedProject({ ...saved, name: base })) === same
+    ) break;
+    name = `${base}_${n}`;
+  }
+  project.name = name;
+  await saveProject(project);
+  if (source) links[name] = source;
+  else if (free) delete links[name]; // a stale link of a deleted world
+  await Deno.writeTextFile(linksFile, JSON.stringify(links, null, 2));
+  return name;
+}
+
+/** show a saved world to the user: open World Builder at it (Desktop's window) and switch any page already open */
+async function showWorld(name: string, focus: boolean) {
+  const post = (path: string, body: unknown) =>
+    fetch(`${desktopUrl}${path}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    }).then(async (r) => ({ ok: r.ok, status: r.status, text: await r.text() }))
+      .catch((error) => ({ ok: false, status: 0, text: String(error) }));
+  const appName = app.name ?? "dim-world-builder";
+  await post(`/desktop/frontend/${appName}/open`, { name });
+  if (!focus) {
+    return {
+      shown: false,
+      note: "show: false: only World Builder pages already open switch to it",
+    };
+  }
+  const opened = await post("/api/open-app", {
+    app: appName,
+    path: `?open=${encodeURIComponent(name)}`,
+  });
+  return opened.ok ? { shown: true } : {
+    shown: false,
+    note: opened.status === 409 ? "no Desktop window is open" : opened.text.slice(0, 300),
+  };
+}
+
 /** fill in what a caller may leave out of an item: an id, a name, the floor, a pose */
 function completeItem(item: Partial<Item>, floor: string): Item {
   return {
@@ -258,10 +361,60 @@ async function api(request: Request, url: URL): Promise<Response | null> {
       return project ? json(project) : json({ error: "no such project" }, 404);
     }
     if (request.method === "PUT") {
+      const text = JSON.stringify(await request.json(), null, 2);
       await Deno.mkdir(projectsDir, { recursive: true });
-      await Deno.writeTextFile(file, JSON.stringify(await request.json(), null, 2));
-      return json({ saved: file });
+      await Deno.writeTextFile(file, text);
+      const linked = (await linkedFiles())[
+        safeName(path.slice("/api/internal/projects/".length))
+      ];
+      if (linked) await Deno.writeTextFile(linked, text);
+      return json({ saved: file, ...(linked ? { alsoSaved: linked } : {}) });
     }
+  }
+  if (route === "POST /api/open") {
+    const body = await request.json() as {
+      name?: string;
+      path?: string;
+      project?: unknown;
+      show?: boolean;
+    };
+    let name: string;
+    let file: string | null = null;
+    try {
+      if (body.path) {
+        const { project, linkable } = await projectFromPath(body.path);
+        file = linkable;
+        name = await adopt(project, linkable);
+      } else if (body.project) {
+        const project = projectIn(body.project);
+        if (!project) {
+          return json({
+            error: "project isn't a World Builder project or an export's scene.json",
+          }, 400);
+        }
+        name = await adopt(project, null);
+      } else {
+        name = safeName(body.name ?? "");
+        await Deno.stat(`${projectsDir}/${name}.json`);
+      }
+    } catch (error) {
+      return json({
+        error: error instanceof Deno.errors.NotFound
+          ? `not found: ${body.path ?? body.name}`
+          : (error as Error).message ?? String(error),
+      }, 404);
+    }
+    const project = await readJson<Project | null>(
+      `${projectsDir}/${name}.json`,
+      null,
+    );
+    return json({
+      opened: name,
+      items: project?.items.length ?? 0,
+      ...(file ? { savesTo: file } : {}),
+      ...await showWorld(name, body.show ?? true),
+    });
+
   }
   if (route === "GET /api/project") {
     const project = await readJson<Project | null>(
@@ -436,17 +589,39 @@ async function api(request: Request, url: URL): Promise<Response | null> {
     return json({ written: `${dir}/visual.glb` });
   }
   if (route === "GET /api/internal/dirs") {
-    const requested = (url.searchParams.get("path") || home).replace(/^~(?=$|\/)/, home);
+    const requested = (url.searchParams.get("path") || home).replace(
+      /^~(?=$|\/)/,
+      home,
+    );
     const dirs: string[] = [];
+    const files: string[] = [];
     try {
       for await (const entry of Deno.readDir(requested)) {
-        if (entry.isDirectory && !entry.name.startsWith(".")) dirs.push(entry.name);
+        if (entry.name.startsWith(".")) continue;
+        if (entry.isDirectory) dirs.push(entry.name);
+        else if (entry.name.endsWith(".json")) files.push(entry.name);
       }
     } catch (error) {
-      return json({ path: requested, error: String(error), dirs: [] });
+      return json({
+        path: requested,
+        error: String(error),
+        dirs: [],
+        files: [],
+      });
     }
+    // exported worlds: folders with a scene.json, which open like a file
+    const worlds = (await Promise.all(
+      dirs.map((d) => Deno.stat(`${requested}/${d}/scene.json`).then(() => d, () => null)),
+    )).filter((d): d is string => !!d).sort();
     const parent = requested.replace(/\/[^/]+\/?$/, "") || "/";
-    return json({ path: requested, parent, home, dirs: dirs.sort() });
+    return json({
+      path: requested,
+      parent,
+      home,
+      dirs: dirs.sort(),
+      files: files.sort(),
+      worlds,
+    });
   }
   if (route === "POST /api/internal/import") {
     const name = url.searchParams.get("name") || "imported";

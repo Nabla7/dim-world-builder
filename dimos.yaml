@@ -71,6 +71,33 @@ provides:
                 summary: 'The names of the saved worlds, as { projects: [name] }'
                 x-when: you need to know which worlds are saved
                 x-dimos-role: context
+        /api/open:
+            post:
+                description: >-
+                    Open a world in World Builder for the user: Desktop opens (or switches to) World Builder showing it, and
+                    any World Builder page already open switches to it. Give the name of a saved world, a path on this
+                    machine (a project .json, an export's scene.json, or an export's folder), or a project as JSON. A
+                    project file opened by path keeps saving back to that file. Returns { opened, items, savesTo?, shown,
+                    note? }; shown is false when no Desktop window is open (note says why)
+                x-when: you want to show the user a world, or open a world file for them to edit
+                requestBody:
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    name:
+                                        type: string
+                                        description: a saved world's name (GET /api/projects lists them)
+                                    path:
+                                        type: string
+                                        description: a file or export folder on this machine (~ allowed)
+                                    project:
+                                        type: object
+                                        description: a dim-world-builder.project.v1 project, or an export's scene.json
+                                    show:
+                                        type: boolean
+                                        description: open World Builder in front of the user (default true); false only switches pages already open
         /api/project:
             get:
                 description: >-

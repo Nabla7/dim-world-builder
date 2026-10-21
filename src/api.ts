@@ -50,8 +50,17 @@ export interface DirListing {
   parent: string;
   home: string;
   dirs: string[];
+  /** .json files */
+  files: string[];
+  /** the dirs that are exported worlds (they have a scene.json) */
+  worlds: string[];
   error?: string;
 }
+/** a saved world by name, a file or export folder by path, or a project / scene.json as JSON; show: false = no Desktop */
+export const openWorld = (
+  body: { name?: string; path?: string; project?: unknown; show?: boolean },
+) => send<{ opened: string; items: number; savesTo?: string }>("POST", "api/open", body);
+
 export const listDirs = (path: string) =>
   json<DirListing>(`api/internal/dirs?path=${encodeURIComponent(path)}`);
 

@@ -13,12 +13,12 @@ import {
   NumberInput,
   Progress,
   Segmented,
-  Select,
   Tabs,
   Text,
   TextInput,
   toast,
   Toggle,
+  useBackendEvents,
 } from "./ui.ts";
 import { emptyProject } from "./world/defaults.ts";
 import { testCourse } from "./world/examples.ts";
@@ -88,7 +88,14 @@ export function App() {
   );
   useEffect(() => {
     refreshAssets();
-    // #example opens the test course (handy for demos); otherwise the last world worked on
+    // ?open=<name>: a saved world (POST api/open sends Desktop here); #example opens the test course (handy for
+    // demos); otherwise the last world worked on
+    const asked = new URLSearchParams(location.search).get("open");
+    if (asked) {
+      history.replaceState(null, "", location.pathname + location.hash);
+      openSaved(asked);
+      return;
+    }
     if (location.hash === "#example" || location.hash === "#clutter") {
       loadProject(location.hash === "#example" ? testCourse() : clutterYard());
       return;
@@ -96,6 +103,11 @@ export function App() {
     const last = localStorageGet("dim-world-builder.project");
     if (last) api.loadProject(last).then(loadProject).catch(() => {});
   }, [refreshAssets]);
+
+  // POST api/open (an agent, or this page's own Open dialog) announces the world to switch to
+  useBackendEvents((event: { name?: string }) => {
+    if (event?.name) openSaved(event.name);
+  }, { topic: "open" });
 
   // autosave: the project file in the app's data folder, a moment after the last change
   useEffect(() => {
@@ -186,7 +198,7 @@ export function App() {
           style={phone ? { flex: "1 1 0", minWidth: 0 } : { maxWidth: 240 }}
           data-testid="world-name"
         />
-        <ProjectMenu width={phone ? 84 : 220} />
+        <ProjectMenu phone={phone} />
         {!phone && <div style={{ flex: 1 }} />}
         <ClipBadge />
         <Segmented
@@ -348,6 +360,16 @@ function useAssetMap(assets: MeshAsset[]) {
   const [map, setMap] = useState<Record<string, MeshAsset>>({});
   useEffect(() => setMap(Object.fromEntries(assets.map((a) => [a.id, a]))), [assets]);
   return map;
+}
+
+// the same world asked for twice within a moment (the dialog loads it, then api/open's announcement arrives) loads once
+let lastOpened = { name: "", at: 0 };
+function openSaved(name: string) {
+  if (name === lastOpened.name && Date.now() - lastOpened.at < 3000) return;
+  lastOpened = { name, at: Date.now() };
+  api.loadProject(name).then(loadProject).catch((e) =>
+    toast({ title: "Open", message: `${name}: ${e}`, tone: "danger" })
+  );
 }
 
 function localStorageGet(key: string): string | null {
@@ -635,44 +657,200 @@ function FancyToggle() {
   );
 }
 
-function ProjectMenu({ width }: { width: number }) {
-  const [projects, setProjects] = useState<string[]>([]);
-  // refreshed on mount and on blur, never while open: a phone's picker drops the pick if its options change under it
-  const refresh = () =>
-    api.listProjects().then((r) =>
-      setProjects((old) => old.join("\n") === r.projects.join("\n") ? old : r.projects)
-    ).catch(() => {});
-  useEffect(() => {
-    refresh();
-  }, []);
-  const choices = [
-    { value: "", label: "Open…" },
-    { value: "new", label: "New empty world" },
-    { value: "example", label: "Example: nav test course" },
-    { value: "clutter", label: "Example: cluttered yard" },
-    { value: "office", label: "Example: the office (555)" },
-    ...projects.map((p) => ({ value: `project:${p}`, label: p, group: "Saved" })),
-  ];
+function ProjectMenu({ phone }: { phone: boolean }) {
+  const [open, setOpen] = useState(false);
   return (
-    <Select
-      size="sm"
-      value=""
-      style={{ width }}
-      options={choices}
-      onBlur={refresh}
-      aria-label="Open a world"
-      data-testid="open-world"
-      onChange={(choice: string) => {
-        if (choice === "new") {
-          loadProject(
-            emptyProject(`world_${new Date().toISOString().slice(5, 10).replace("-", "")}`),
-          );
-        } else if (choice === "example") loadProject(testCourse());
-        else if (choice === "clutter") loadProject(clutterYard());
-        else if (choice === "office") loadProject(office555());
-        else if (choice.startsWith("project:")) api.loadProject(choice.slice(8)).then(loadProject);
-      }}
-    />
+    <>
+      {phone
+        ? (
+          <IconButton
+            icon="folder"
+            label="Open"
+            onClick={() => setOpen(true)}
+            data-testid="open-world"
+          />
+        )
+        : (
+          <Button icon="folder" size="sm" onClick={() => setOpen(true)} data-testid="open-world">
+            Open
+          </Button>
+        )}
+      <OpenDialog open={open} onClose={() => setOpen(false)} />
+    </>
+  );
+}
+
+type OpenTab = "saved" | "examples" | "file";
+
+/** Open a world: a saved one, an example, a blank one, or any project file / export folder (or an upload) */
+function OpenDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [tab, setTab] = useState<OpenTab>("saved");
+  const [projects, setProjects] = useState<string[]>([]);
+  const [folder, setFolder] = useState(() =>
+    localStorageGet("dim-world-builder.open-folder") ?? "~"
+  );
+  const [listing, setListing] = useState<api.DirListing | null>(null);
+  const [busy, setBusy] = useState(false);
+  const upload = useRef<HTMLInputElement>(null);
+  const current = useEditor((s) => s.project.name);
+  useEffect(() => {
+    if (open) api.listProjects().then((r) => setProjects(r.projects)).catch(() => {});
+  }, [open]);
+  useEffect(() => {
+    if (!open || tab !== "file") return;
+    api.listDirs(folder).then(setListing).catch(() => setListing(null));
+    localStorageSet("dim-world-builder.open-folder", folder);
+  }, [open, tab, folder]);
+  const done = (project: Parameters<typeof loadProject>[0]) => {
+    loadProject(project);
+    onClose();
+  };
+  // a file: the backend adopts it among the saved worlds (a project file keeps saving back to itself), then it loads
+  const openFile = async (body: { path?: string; project?: unknown }) => {
+    setBusy(true);
+    try {
+      const result = await api.openWorld({ ...body, show: false });
+      openSaved(result.opened);
+      if (result.savesTo) toast({ title: "Opened", message: `edits save to ${result.savesTo}` });
+      onClose();
+    } catch (error) {
+      toast({ title: "Open", message: String(error), tone: "danger" });
+    } finally {
+      setBusy(false);
+    }
+  };
+  const join = (name: string) => `${listing?.path.replace(/\/$/, "") ?? folder}/${name}`;
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="Open a world"
+      size="lg"
+      footer={
+        <Button
+          icon="plus"
+          data-testid="open-new"
+          onClick={() =>
+            done(emptyProject(`world_${new Date().toISOString().slice(5, 10).replace("-", "")}`))}
+        >
+          New empty world
+        </Button>
+      }
+    >
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <Tabs
+          value={tab}
+          onChange={(t: string) => setTab(t as OpenTab)}
+          items={[
+            { value: "saved", label: "Saved" },
+            { value: "examples", label: "Examples" },
+            { value: "file", label: "File" },
+          ]}
+        />
+        <div style={{ height: 360, overflow: "auto" }}>
+          {tab === "saved" && (
+            <List divided>
+              {projects.map((name) => (
+                <ListRow
+                  key={name}
+                  icon="map"
+                  title={name}
+                  selected={name === current}
+                  onClick={() => {
+                    openSaved(name);
+                    onClose();
+                  }}
+                  data-testid={`open-saved-${name}`}
+                />
+              ))}
+            </List>
+          )}
+          {tab === "examples" && (
+            <List divided>
+              <ListRow icon="map" title="Nav test course" onClick={() => done(testCourse())} />
+              <ListRow icon="map" title="Cluttered yard" onClick={() => done(clutterYard())} />
+              <ListRow icon="map" title="The office (555)" onClick={() => done(office555())} />
+            </List>
+          )}
+          {tab === "file" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ display: "flex", gap: 8 }}>
+                <TextInput
+                  value={folder}
+                  onChange={setFolder}
+                  mono
+                  style={{ flex: 1 }}
+                  aria-label="Folder or file"
+                  data-testid="open-path"
+                />
+                <Button
+                  loading={busy}
+                  disabled={!folder.endsWith(".json")}
+                  onClick={() => openFile({ path: folder })}
+                >
+                  Open path
+                </Button>
+                <Button icon="upload" onClick={() => upload.current?.click()}>Upload…</Button>
+                <input
+                  ref={upload}
+                  type="file"
+                  accept=".json,application/json"
+                  hidden
+                  onChange={async (event) => {
+                    const file = event.target.files?.[0];
+                    event.target.value = "";
+                    if (!file) return;
+                    try {
+                      await openFile({ project: JSON.parse(await file.text()) });
+                    } catch (error) {
+                      toast({ title: "Open", message: `${file.name}: ${error}`, tone: "danger" });
+                    }
+                  }}
+                />
+              </div>
+              <Text small muted>
+                A project .json (edits keep saving back to it), or an exported world's folder (opens
+                a copy).
+              </Text>
+              {listing?.error && <Text tone="danger">{listing.error}</Text>}
+              {listing && !listing.error && (
+                <List divided>
+                  <ListRow icon="arrow-up" title=".." onClick={() => setFolder(listing.parent)} />
+                  {listing.dirs.map((d) =>
+                    listing.worlds.includes(d)
+                      ? (
+                        <ListRow
+                          key={d}
+                          icon="map"
+                          title={d}
+                          subtitle="exported world"
+                          onClick={() => openFile({ path: join(d) })}
+                        />
+                      )
+                      : (
+                        <ListRow
+                          key={d}
+                          icon="folder"
+                          title={d}
+                          onClick={() => setFolder(join(d))}
+                        />
+                      )
+                  )}
+                  {listing.files.map((f) => (
+                    <ListRow
+                      key={f}
+                      icon="file"
+                      title={f}
+                      onClick={() => openFile({ path: join(f) })}
+                    />
+                  ))}
+                </List>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </Modal>
   );
 }
 
