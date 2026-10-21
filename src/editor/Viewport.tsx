@@ -283,6 +283,9 @@ function Lighting() {
     );
     ground.receiveShadow = true;
     ground.position.z = -0.001;
+    // the world's own floor at z = 0 is 1 mm above it, too close for the depth buffer from a distance: push the
+    // ground back in depth so a floor always wins (else the shadow catcher's shadows stripe through it)
+    Object.assign(ground.material, { polygonOffset: true, polygonOffsetFactor: 4, polygonOffsetUnits: 4 });
     ground.userData.ground = true;
     root.add(sky, fill, sun, sun.target, ground);
     // the sky stays centered on the camera
