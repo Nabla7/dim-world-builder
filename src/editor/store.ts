@@ -88,7 +88,7 @@ let state: EditorState = {
   selection: [],
   gizmo: "translate",
   mode: "edit",
-  snap: true,
+  snap: false,
   showCollision: false,
   fancy: loadFancy(),
   previewMotion: false,
