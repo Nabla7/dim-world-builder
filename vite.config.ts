@@ -36,7 +36,7 @@ export default defineConfig({
       "/files": backend,
       "/theme.css": desktop,
       "/shell": desktop,
-      "/dimos": desktop,
+      "/gateways": desktop,
       "/apps": desktop,
       "/zenoh-gateway": { target: desktop, ws: true },
     },
