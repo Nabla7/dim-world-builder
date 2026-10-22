@@ -37,6 +37,63 @@ provides:
         - api/internal/*
         - files/*
     paths:
+        /api/context:
+            get:
+                summary: Current scene review and saved World Builder projects
+                description: Returns the active review revision, metric camera/object/point, saved spatial feedback, source provenance, limitations and the World Builder project list. Feedback does not imply a Blender change has been applied.
+                x-when: you need the user's current scene context and spatial feedback before editing the Blender source
+                x-dimos-role: context
+        /api/review/bundle:
+            get:
+                summary: Faithful review bundle, source objects and calibrated viewpoints
+                x-when: you need source object IDs, material mappings or recorded cameras
+        /api/review/context:
+            get:
+                summary: Active review context and saved feedback
+                x-when: you need the selected object, project-frame point, camera, recording and review notes
+        /api/review/focus:
+            post:
+                summary: Share the browser's current review focus
+                description: Body is a Focus record with revision, camera pose/target/FOV/aspect, sourceSecond or null, objectId or null, metric point or null, cutHeight and presentation mode. Does not change source geometry.
+                x-when: you need to share the current review camera and selection
+                requestBody:
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                description: Review Focus record in original project metres and Z-up coordinates
+        /api/review/notes:
+            get:
+                summary: Saved scene review feedback
+                x-when: you need unresolved or resolved feedback attached to this scene revision
+            post:
+                summary: Save spatial feedback with optional drawing and reference photograph
+                description: Body is a Focus record plus text, normalized strokes and optional PNG/JPEG data-URL screenshot and attachment. Returns the saved note. This records a request; it does not apply Blender edits.
+                x-when: you want to record a specific scene correction for the authoring agent
+                requestBody:
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                description: Focus fields plus text, strokes, optional screenshot and attachment
+        /api/review/notes/status:
+            post:
+                summary: Resolve or reopen a saved review note
+                x-when: you have reviewed a correction or want to reopen feedback
+                requestBody:
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                required: [id, status]
+                                properties:
+                                    id:
+                                        type: string
+                                        description: Saved review note UUID
+                                    status:
+                                        type: string
+                                        enum: [open, resolved]
+                                        description: Reviewed completion state; not automatic proof of an applied change
         /api/export:
             post:
                 description: >-
@@ -65,12 +122,10 @@ provides:
                     Every placeable 3D asset (built-in library and cooked imports) as a JSON list, each with its id, size
                     and collision pieces
                 x-when: you need the ids and sizes of the assets you can place in a world
-                x-dimos-role: context
         /api/projects:
             get:
                 summary: 'The names of the saved worlds, as { projects: [name] }'
                 x-when: you need to know which worlds are saved
-                x-dimos-role: context
         /api/open:
             post:
                 description: >-
@@ -170,7 +225,6 @@ provides:
                     Which items clip into each other: MuJoCo checks every pair of collision shapes (floors and hills excluded).
                     clips: [{a, b (key, name, kind), depth_m, at [x,y,z]}], warnings: one line each
                 x-when: you need to know whether items in a world overlap
-                x-dimos-role: context
                 requestBody:
                     content:
                         application/json:
@@ -192,7 +246,6 @@ provides:
                     A saved world's remembered camera views as { views: [{ key, name, eye, target, fov }] }; each is a MuJoCo
                     camera named by its key in the export
                 x-when: you need the camera views remembered for a saved world
-                x-dimos-role: context
                 parameters:
                     -   name: name
                         in: query

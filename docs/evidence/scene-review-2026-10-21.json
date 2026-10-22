@@ -1,0 +1,88 @@
+{
+  "date": "2026-10-21",
+  "status": "local prototype",
+  "upstream": "647c8f19cf0886a4df93633bbc1ec9fbdc5390bd",
+  "source_revision": "V11",
+  "source_sha256": "8e9e5d720f74e0c14a758378d362b660c5cb1ecf8771528051defc09ec3b2158",
+  "objects": 12008,
+  "image_maps": 84,
+  "source_cameras": 360,
+  "cycles_views": 76,
+  "geometry_bytes": 65860000,
+  "export_approximations": [
+    "front_hazard_tape/Base Color: unsupported color node MATH",
+    "Service_cladding_tone_0/Base Color: unsupported color node VALTORGB",
+    "Service_cladding_tone_1/Base Color: unsupported color node VALTORGB",
+    "Service_cladding_tone_2/Base Color: unsupported color node VALTORGB",
+    "Service_cladding_tone_3/Base Color: unsupported color node VALTORGB",
+    "Service_cladding_tone_4/Base Color: unsupported color node VALTORGB",
+    "Service_cladding_tone_5/Base Color: unsupported color node VALTORGB",
+    "Service_cladding_tone_6/Base Color: unsupported color node VALTORGB",
+    "Service_cladding_tone_7/Base Color: unsupported color node VALTORGB"
+  ],
+  "browser": "Local Chrome headless with Metal ANGLE; 1600x1000, deviceScaleFactor 1",
+  "checks": [
+    "Full baseline loads with source camera 580",
+    "Recorded optical pose and asymmetric intrinsics agree with browser projection",
+    "Picking retains calibrated camera and real source object ID",
+    "Comparison swipe shows source RGB and matching Cycles still",
+    "Saved feedback carries camera, point, selected object, drawing and attached photo",
+    "Agent feedback exports as a downloadable JSON record",
+    "Saved note restores the exact recorded viewpoint and drawing",
+    "Feedback survives page reload",
+    "Resolve/reopen workflow updates durable note status",
+    "Keyboard navigation moves the camera and exits calibrated comparison",
+    "Navigation across six areas retains the whole-building model",
+    "Whole-building and both level cutaways are available",
+    "Narrow-screen layout keeps feedback and scene reachable",
+    "Original World Builder remains available"
+  ],
+  "max_projection_error_ndc": 5.6066262743570405e-15,
+  "performance_samples": [
+    {
+      "view": "kitchen",
+      "second": 580,
+      "status": "Matched to recorded camera\n61 fps \u00b7 72 draws \u00b7 0.21M triangles"
+    },
+    {
+      "view": "reception",
+      "second": 124,
+      "status": "Matched to recorded camera\n60 fps \u00b7 78 draws \u00b7 0.21M triangles"
+    },
+    {
+      "view": "workshop",
+      "second": 268,
+      "status": "Matched to recorded camera\n60 fps \u00b7 66 draws \u00b7 0.12M triangles"
+    },
+    {
+      "view": "stairs",
+      "second": 544,
+      "status": "Matched to recorded camera\n60 fps \u00b7 48 draws \u00b7 0.07M triangles"
+    },
+    {
+      "view": "meeting",
+      "second": 640,
+      "status": "Matched to recorded camera\n60 fps \u00b7 52 draws \u00b7 0.09M triangles"
+    },
+    {
+      "view": "lounge",
+      "second": 708,
+      "status": "Matched to recorded camera\n60 fps \u00b7 248 draws \u00b7 0.66M triangles"
+    },
+    {
+      "view": "building",
+      "status": "Free camera \u00b7 traversal is not physics-tested\n60 fps \u00b7 971 draws \u00b7 1.89M triangles"
+    }
+  ],
+  "browser_errors": [],
+  "notes": "QA used a separate dataDir. Geometry/camera consistency is not physical collision verification. Memory, update latency and interactive Blender revision jobs are unmeasured/unimplemented.",
+  "nix_build": "Passed for local aarch64-darwin",
+  "tests": {
+    "existing_vitest": 35,
+    "review_persistence_concurrency": "passed",
+    "typescript": "passed",
+    "production_build": "passed"
+  },
+  "nix_socket_startup": "Verified with DIMOS_APP socket/dataDir and configured local bundle; aggregate context returned correct V11 SHA, world list and asset library.",
+  "vite_dev": "Review loaded with no uncaught browser errors"
+}

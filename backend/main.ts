@@ -21,6 +21,7 @@
 //   GET  /files/library/<id>/<file>, /files/imports/<id>/<file>   private: mesh files
 
 import { exportProject, packageName } from "./export.ts";
+import { reviewRoutes } from "./review.ts";
 import type { Item, MeshAsset, Project, Vec3 } from "../src/world/types.ts";
 import { emptyProject } from "../src/world/defaults.ts";
 import { testCourse } from "../src/world/examples.ts";
@@ -47,6 +48,7 @@ const projectsDir = `${dataDir}/projects`;
 const cookerDir = `${root}/cooker`;
 const home = Deno.env.get("HOME") ?? "/";
 const desktopUrl = app.desktopUrl ?? "http://127.0.0.1:5555";
+const review = reviewRoutes(flag("review") ?? Deno.env.get("DIM_SCENE_REVIEW_BUNDLE"), dataDir);
 
 const json = (value: unknown, status = 200) =>
   new Response(JSON.stringify(value), { status, headers: { "content-type": "application/json" } });
@@ -342,6 +344,17 @@ function completeItem(item: Partial<Item>, floor: string): Item {
 async function api(request: Request, url: URL): Promise<Response | null> {
   const path = url.pathname;
   const route = `${request.method} ${path}`;
+  if (route === "GET /api/context") {
+    const reviewUrl = new URL("/api/review/context", url);
+    const reviewResponse = await review(new Request(reviewUrl), reviewUrl);
+    const projectsUrl = new URL("/api/projects", url);
+    const projectsResponse = await api(new Request(projectsUrl), projectsUrl);
+    return json({
+      review: reviewResponse?.ok ? await reviewResponse.json() : null,
+      worlds: projectsResponse ? await projectsResponse.json() : { projects: [] },
+      library: (await assets()).list,
+    });
+  }
   if (route === "GET /api/library") {
     return json((await assets()).list);
   }
@@ -708,6 +721,8 @@ async function serve(request: Request): Promise<Response> {
   const url = new URL(request.url);
   const path = url.pathname;
   try {
+    const reviewAnswer = await review(request, url);
+    if (reviewAnswer) return reviewAnswer;
     const answer = await api(request, url);
     if (answer) return answer;
     if (path.startsWith("/files/library/")) {
@@ -745,7 +760,7 @@ if (app.socket) {
   }, serve);
 } else {
   // outside Desktop: `deno task serve` serves on a port (http://localhost:8787/)
-  Deno.serve({ port: Number(flag("port") ?? 8787) }, serve);
+  Deno.serve({ hostname: "127.0.0.1", port: Number(flag("port") ?? 8787) }, serve);
 }
 
 export { desktopUrl };

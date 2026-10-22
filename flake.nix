@@ -94,7 +94,7 @@
                 rec {
                 inherit frontend frontendModules frontendEsm;
                 # the server and what it reads: the shared world model, the asset library, the cooker's locked project
-                server = files pkgs [ ./backend ./src/world ./assets ./cooker/pyproject.toml ./cooker/uv.lock ./cooker/cook.py ./cooker/render_view.py ./cooker/check_clips.py ];
+                server = files pkgs [ ./backend ./src/world ./src/review/types.ts ./assets ./cooker/pyproject.toml ./cooker/uv.lock ./cooker/cook.py ./cooker/render_view.py ./cooker/check_clips.py ];
                 dimosApp = pkgs.writeShellScriptBin "dimos-app-server" (serverLine pkgs server frontend);
                 default = dimosApp;
                 dimosApp-aarch64-linux = linuxApp pkgs "aarch64" server frontend;

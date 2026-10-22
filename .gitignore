@@ -3,6 +3,7 @@ result-*
 .DS_Store
 /.data
 node_modules
+.vite
 dist
 /backend/vendor
 cooker/.venv

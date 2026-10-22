@@ -1,5 +1,7 @@
 # World Builder
 
+
+Experimental: [Scene Review workspace](docs/SCENE_REVIEW.md) for calibrated Blender reconstruction review and spatial feedback.
 Build 3D worlds for dimos's MuJoCo sim (sim2), export them, drop a robot in.
 
 ## How to install

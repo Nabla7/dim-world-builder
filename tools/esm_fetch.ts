@@ -11,6 +11,9 @@ import process from "node:process";
 import type { Plugin } from "vite";
 
 const isUrl = (id: string) => /^https?:\/\//.test(id);
+// Vite treats an http module ID as external in dev. A virtual ID makes its
+// import analysis rewrite the bare React/Three imports just as the build does.
+const prefix = "\0esm-fetch:";
 
 export function esmFetch(aliases: Record<string, string>): Plugin {
   const cacheDir = process.env.ESM_CACHE ?? join(process.cwd(), "node_modules", ".esm-cache");
@@ -22,33 +25,34 @@ export function esmFetch(aliases: Record<string, string>): Plugin {
     enforce: "pre",
     resolveId(id, importer) {
       if (id in aliases) {
-        return aliases[id];
+        return prefix + aliases[id];
       }
       if (isUrl(id)) {
-        return id;
+        return prefix + id;
       }
       // inside a fetched module: its absolute and relative imports are on its host
-      if (importer && isUrl(importer) && (id.startsWith("/") || id.startsWith("."))) {
-        return new URL(id, importer).href;
+      if (importer?.startsWith(prefix) && (id.startsWith("/") || id.startsWith("."))) {
+        return prefix + new URL(id, importer.slice(prefix.length)).href;
       }
       return null;
     },
     async load(id) {
-      if (!isUrl(id)) {
+      if (!id.startsWith(prefix)) {
         return null;
       }
-      const file = fileFor(id);
+      const url = id.slice(prefix.length);
+      const file = fileFor(url);
       if (existsSync(file)) {
         return readFileSync(file, "utf8");
       }
       if (offline) {
         throw new Error(
-          `${id} isn't in the prefetched cache ${cacheDir} (ESM_OFFLINE): its nix hash needs updating`,
+          `${url} isn't in the prefetched cache ${cacheDir} (ESM_OFFLINE): its nix hash needs updating`,
         );
       }
-      const response = await fetch(id);
+      const response = await fetch(url);
       if (!response.ok) {
-        throw new Error(`${id}: ${response.status} ${response.statusText}`);
+        throw new Error(`${url}: ${response.status} ${response.statusText}`);
       }
       const code = await response.text();
       mkdirSync(cacheDir, { recursive: true });
