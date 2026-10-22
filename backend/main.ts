@@ -309,17 +309,20 @@ async function showWorld(name: string, focus: boolean) {
     }).then(async (r) => ({ ok: r.ok, status: r.status, text: await r.text() }))
       .catch((error) => ({ ok: false, status: 0, text: String(error) }));
   const appName = app.name ?? "dim-world-builder";
-  await post(`/desktop/frontend/${appName}/open`, { name });
+  await post(
+    `/gateways/desktop/ui/apps/${encodeURIComponent(appName)}/frontend/open`,
+    { name },
+  );
   if (!focus) {
     return {
       shown: false,
       note: "show: false: only World Builder pages already open switch to it",
     };
   }
-  const opened = await post("/api/open-app", {
-    app: appName,
-    path: `?open=${encodeURIComponent(name)}`,
-  });
+  const opened = await post(
+    `/gateways/desktop/ui/apps/${encodeURIComponent(appName)}/open`,
+    { path: `?open=${encodeURIComponent(name)}` },
+  );
   return opened.ok ? { shown: true } : {
     shown: false,
     note: opened.status === 409 ? "no Desktop window is open" : opened.text.slice(0, 300),
