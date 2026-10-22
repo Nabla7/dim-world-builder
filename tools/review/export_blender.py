@@ -19,6 +19,7 @@ from mathutils import Vector
 p = argparse.ArgumentParser()
 p.add_argument('--out', required=True)
 p.add_argument('--revision', default='V11', help='Unique name for a derived scene revision')
+p.add_argument('--lighting', type=Path, help='Completed static lighting bake metadata')
 a = p.parse_args(sys.argv[sys.argv.index('--') + 1:])
 out = Path(a.out)
 out.mkdir(parents=True, exist_ok=True)
@@ -132,10 +133,10 @@ for i, obj in enumerate(objects):
     copy = bpy.data.objects.new(f'export_{i}', mesh)
     export_scene.collection.objects.link(copy)
     copy.matrix_world = obj.matrix_world
-    copy['review_id'] = obj.name
-    copy['source_collection'] = obj.users_collection[0].name if obj.users_collection else ''
+    copy['review_id'] = obj.get('review_id', obj.name)
+    copy['source_collection'] = obj.get('source_collection', obj.users_collection[0].name if obj.users_collection else '')
     bounds = [obj.matrix_world @ Vector(corner) for corner in evaluated.bound_box]
-    records.append({'id':obj.name, 'collection':copy['source_collection'],
+    records.append({'id':copy['review_id'], 'collection':copy['source_collection'],
                     'min':[min(v[j] for v in bounds) for j in range(3)],
                     'max':[max(v[j] for v in bounds) for j in range(3)]})
     if i % 2000 == 0: print('PREPARE', i, len(objects), flush=True)
@@ -151,5 +152,8 @@ manifest = {'format':'scene-review.bundle.v1', 'id':'sf555-v11', 'title':'SF555 
                    'Navigation is a free camera, not a collision or robot traversal test.',
                    'Source observations and inferred geometry retain the baseline reconstruction uncertainty.'],
     'warnings':warnings, 'export_seconds':round(time.monotonic()-start,2)}
+if a.lighting:
+    manifest['lighting'] = json.loads(a.lighting.read_text())
+    manifest['limitations'][0] = 'Static Cycles diffuse lighting; glass and view-dependent reflections remain approximate. Re-bake after scene or lighting changes.'
 (out/'scene.json').write_text(json.dumps(manifest,indent=2)+'\n')
 print('EXPORT_COMPLETE', len(records),len(images),len(warnings),manifest['export_seconds'], flush=True)

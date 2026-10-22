@@ -5,6 +5,41 @@ normalizing its geometry through the asset cooker. It preserves original metre
 coordinates, whole-building structure and source object IDs. The original World
 Builder remains at the app root.
 
+## Install on another computer
+
+The shared prototype is on `Nabla7/dim-world-builder`, branch
+`pim/feat/scene-review`. Use [DimOS Desktop `v0.2.217`](https://github.com/jeff-hykin/dimos-desktop-mirror/releases/tag/v0.2.217),
+its dimcode agent, Nix and the separately supplied office review bundle.
+Office photographs, Blender files and the MCAP are **not** in this public repo.
+Desktop `v0.2.221` and World Builder `v0.2.0` changed gateway routes after this
+prototype's base. Compatibility with those new routes has not been verified;
+do not silently substitute the latest Desktop release for the tested one.
+
+```sh
+# Use a separate profile so this prototype does not replace an existing app.
+export DIMOS_HOME="$HOME/.dimos-scene-review"
+dimos-desktop install github.com/Nabla7/dim-world-builder --ref pim/feat/scene-review
+export DIM_SCENE_REVIEW_BUNDLE="/absolute/path/to/scene-review-v11"
+dimos-desktop serve --no-service
+```
+
+Open `http://127.0.0.1:5555/?app=dim-world-builder#/?workspace=review`.
+The bundle directory must contain `scene.json`, `scene.glb`, `evidence.json`,
+`textures/` and `views/`. Configure the agent/model credentials in Desktop on
+this computer; another person's credentials are not included. If Desktop is
+already using its default port, stop that instance before starting this profile.
+
+Start with a named view, **Walk**, select an object, draw/attach a photograph,
+then **Share view with agent**. The standalone setup below supports review and
+saved feedback without Desktop chat. This is a prototype for reviewing a Blender
+reconstruction with an agent; it is not yet a complete drag-and-drop interior
+design editor or an automatic, verified Blender editing workflow.
+
+To author changes, also obtain the source `.blend` and its textures (or a packed
+copy). Set `source_blend` in the transferred bundle's `scene.json` to that file's
+absolute local path. Preserve its `source_sha256`; moving a file does not change
+its content hash. The raw MCAP is not needed for walkthrough or review.
+
 ## Desktop conversation — 2026-10-22
 
 The review now shares Desktop's existing dimcode conversation. Open
@@ -162,6 +197,40 @@ cooking, hinged-door interaction, controller launch, Blender revision jobs,
 variant acceptance and lighting bakes remain unfinished. Existing World Builder
 MuJoCo export still has its pre-existing metadata compatibility limits; this
 review workspace does not route the office through that exporter.
+
+## Experimental Cycles lighting bake
+
+The branch includes an opt-in static diffuse-lighting exporter and viewer.
+It bakes direct/indirect Cycles illumination into a second UV set, retains the
+original photographic color textures, and samples Blender's display transform.
+The default V11 bundle continues using the original browser lighting.
+
+**Status at publication:** two kitchen pilots ran, but the latest still has
+unacceptable mottling on some surfaces. No whole-building bake has been accepted
+or deployed. Do not present these pilot images as finished Cycles fidelity.
+The baker currently targets Blender on Apple Silicon: Metal and Blender's bundled
+OpenImageDenoise dylib. Other platforms are unverified.
+
+```sh
+/Applications/Blender.app/Contents/MacOS/Blender \
+  --background /path/to/sf555_office_v11.blend --disable-autoexec \
+  --python tools/review/bake_lighting.py -- \
+  --out /path/to/new-lighting-pilot --baseline /path/to/scene-review-v11 --pilot
+node tools/review/verify_baked_geometry.mjs \
+  /path/to/scene-review-v11 /path/to/new-lighting-pilot
+```
+
+Omit `--pilot` only after checking visual quality and resource use. Keep the
+baseline and source immutable; the exporter writes a separate bundle. Completed
+atlas/UV caches allow retrying the same bake. Static lighting needs rebaking after
+changes to geometry or lights. Glass and view-dependent reflections remain
+approximate; movable objects need a different lighting treatment.
+
+The first pilot's actual exported geometry retained all 12,008 object IDs and
+1,781,784 triangles, with maximum vertex displacement of `1.1e-6` metres.
+This checks export geometry, not reconstruction accuracy, lighting quality or
+physical collision behavior. `verify_baked_geometry.mjs` repeats this check and
+validates the secondary UV coordinates for a later bake.
 
 ### Installed Desktop results — 2026-10-22
 

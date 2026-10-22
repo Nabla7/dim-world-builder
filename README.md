@@ -4,6 +4,12 @@
 Experimental: [Scene Review workspace](docs/SCENE_REVIEW.md) for calibrated Blender reconstruction review and spatial feedback.
 Build 3D worlds for dimos's MuJoCo sim (sim2), export them, drop a robot in.
 
+For the **office walkthrough + Desktop agent** prototype, install
+`github.com/Nabla7/dim-world-builder --ref pim/feat/scene-review` instead of `main`.
+Use Desktop **v0.2.217** and follow the [Scene Review setup](docs/SCENE_REVIEW.md#install-on-another-computer):
+the private office model/reference bundle is supplied separately. The lighting
+baker is experimental; the reviewed V11 bundle remains the default.
+
 ## How to install
 
 ```sh

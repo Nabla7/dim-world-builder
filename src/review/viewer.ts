@@ -4,6 +4,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { reviewMaterials } from "./materials.ts";
+import { reviewLighting } from "./lighting.ts";
 import type { Bundle, CameraState, ObjectRecord, SourceView, Stats, Vec3 } from "./types.ts";
 
 interface Range {
@@ -33,6 +34,8 @@ export class ReviewViewer {
   private statsAt = this.last;
   private frames = 0;
   private loadSeconds = 0;
+  private lighting: Awaited<ReturnType<typeof reviewLighting>> = null;
+  private sourceMaterials: Awaited<ReturnType<typeof reviewMaterials>> | null = null;
   get ready() {
     return this.loadSeconds > 0;
   }
@@ -98,12 +101,17 @@ export class ReviewViewer {
   async load(progress: (s: string) => void) {
     const start = performance.now();
     progress("Loading the whole building and recorded materials…");
-    const [gltf, materials] = await Promise.all([
+    const [gltf, sourceMaterials, lighting] = await Promise.all([
       new GLTFLoader().loadAsync(`files/review/${this.bundle.geometry}`),
       reviewMaterials(this.bundle),
+      reviewLighting(this.bundle, this.renderer),
     ]);
+    const materials = sourceMaterials.materials;
+    this.sourceMaterials = sourceMaterials;
+    this.lighting = lighting;
     if (this.disposed) {
-      materials.forEach((m) => m.dispose());
+      sourceMaterials.dispose();
+      lighting?.dispose();
       return;
     }
     progress("Preparing selectable geometry…");
@@ -129,7 +137,9 @@ export class ReviewViewer {
       const original = Array.isArray(o.material) ? o.material[0] : o.material;
       oldMaterials.add(original);
       oldGeometries.add(o.geometry);
-      const material = materials.get(original.name) ?? original.clone();
+      const base = materials.get(original.name) ?? original.clone() as THREE.MeshStandardMaterial;
+      const atlas = this.bundle.lighting?.objects[id];
+      const material = lighting?.material(base, atlas) ?? base;
       let g = o.geometry.clone();
       g.applyMatrix4(o.matrixWorld);
       if (g.index) {
@@ -138,7 +148,7 @@ export class ReviewViewer {
         g = flat;
       }
       for (const key of Object.keys(g.attributes)) {
-        if (!["position", "normal", "uv"].includes(key)) g.deleteAttribute(key);
+        if (!["position", "normal", "uv", "uv1"].includes(key)) g.deleteAttribute(key);
       }
       if (!g.getAttribute("normal")) g.computeVertexNormals();
       if (!g.getAttribute("uv")) {
@@ -147,12 +157,19 @@ export class ReviewViewer {
           new THREE.BufferAttribute(new Float32Array(g.getAttribute("position").count * 2), 2),
         );
       }
+      if (atlas !== undefined && !g.getAttribute("uv1")) {
+        throw new Error(`Missing lighting UVs on ${id}`);
+      }
+      // All members of a batch must have matching attribute layouts.
+      if (this.bundle.lighting && !g.getAttribute("uv1")) {
+        g.setAttribute("uv1", g.getAttribute("uv").clone());
+      }
       // Keep batches bounded spatially for frustum culling; retain triangle->source IDs.
       const record = this.records.get(id)!;
       const cell = `${Math.floor((record.min[0] + record.max[0]) / 12)},${
         Math.floor((record.min[1] + record.max[1]) / 12)
       },${Math.floor(record.min[2] / 4)}`;
-      const key = `${original.name}/${cell}`;
+      const key = `${material.name}/${cell}`;
       let group = groups.get(key);
       if (!group) {
         group = { material, geometries: [], ranges: [], count: 0 };
@@ -426,6 +443,8 @@ export class ReviewViewer {
       else materials.add(m.material);
     });
     materials.forEach((m) => m.dispose());
+    this.lighting?.dispose();
+    this.sourceMaterials?.dispose();
     this.scene.environment?.dispose();
     this.renderer.dispose();
     this.renderer.domElement.remove();

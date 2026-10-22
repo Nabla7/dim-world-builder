@@ -49,6 +49,23 @@ export interface Bundle {
   images: Record<string, { file: string; source: string; size: number[] }>;
   warnings: string[];
   limitations: string[];
+  lighting?: {
+    kind: "cycles-diffuse";
+    source_sha256: string;
+    samples: number;
+    pilot: boolean;
+    atlases: { file: string; size: number }[];
+    objects: Record<string, number>;
+    display: {
+      file: string;
+      size: number;
+      minEv: number;
+      maxEv: number;
+      view: string;
+      look: string;
+      exposure: number;
+    };
+  };
   evidence: {
     calibration: { width: number; height: number; k: number[] };
     views: SourceView[];

@@ -148,7 +148,7 @@ export function ReviewApp() {
           );
         }
         if (
-          !cancelled && r.command && r.command.id !== appliedCommand.current
+          !cancelled && r.command && !r.command.applied && r.command.id !== appliedCommand.current
         ) {
           setCommand(r.command);
         }
@@ -437,6 +437,11 @@ export function ReviewApp() {
       if (command.reload) {
         resumeView.current = currentFocus();
         const next = await api<Bundle>("bundle");
+        if (next.revision === bundle.revision) {
+          resumeView.current = null;
+          await api("updates", { id: command.id });
+          return;
+        }
         reloadCommand.current = command.id;
         setReady(false);
         setBundle(next);
@@ -815,6 +820,8 @@ export function ReviewApp() {
                 <span className="sr-image-label left">
                   {presentation === "cycles"
                     ? "BLENDER / CYCLES"
+                    : bundle?.lighting
+                    ? "LIVE · CYCLES LIGHTING"
                     : "LIVE PBR PREVIEW"}
                   {matched && view ? ` · ${time(view.second)}` : ""}
                 </span>
@@ -1180,9 +1187,9 @@ export function ReviewApp() {
                 )}
                 <h3>Preview fidelity</h3>
                 <p>
-                  Recorded image textures and material values are retained. Live
-                  lighting is an approximation; procedural bump, soft shadows
-                  and indirect Cycles lighting are not baked yet.
+                  {bundle?.lighting
+                    ? "Soft shadows and bounced light are baked from the saved Blender scene. The walkthrough uses its color treatment. Glass and changing reflections remain approximate; moving objects or lights requires a new bake."
+                    : "Recorded image textures and material values are retained. Live lighting is an approximation; procedural bump, soft shadows and indirect Cycles lighting are not baked yet."}
                 </p>
                 <p>
                   “Blender still” shows the existing rendered result at 76

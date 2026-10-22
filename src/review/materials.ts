@@ -3,9 +3,7 @@ import type { Bundle, ColorExpr } from "./types.ts";
 
 const number = (n: number) => Number(n).toFixed(8);
 /** Reproduce the source's image/alpha mixes and world-space UV mappings. */
-export async function reviewMaterials(
-  bundle: Bundle,
-): Promise<Map<string, THREE.MeshStandardMaterial>> {
+export async function reviewMaterials(bundle: Bundle) {
   const loader = new THREE.TextureLoader();
   const textures = new Map<string, THREE.Texture>();
   await Promise.all(
@@ -99,5 +97,11 @@ export async function reviewMaterials(
     material.customProgramCacheKey = () => name;
     result.set(name, material);
   }
-  return result;
+  return {
+    materials: result,
+    dispose() {
+      result.forEach((material) => material.dispose());
+      textures.forEach((texture) => texture.dispose());
+    },
+  };
 }
