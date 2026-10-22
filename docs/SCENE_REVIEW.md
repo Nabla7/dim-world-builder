@@ -5,6 +5,72 @@ normalizing its geometry through the asset cooker. It preserves original metre
 coordinates, whole-building structure and source object IDs. The original World
 Builder remains at the app root.
 
+## Desktop conversation — 2026-10-22
+
+The review now shares Desktop's existing dimcode conversation. Open
+`http://127.0.0.1:5555/?app=dim-world-builder#/?workspace=review` on this Mac,
+then **Talk with agent**. Select a surface, draw or attach a photo, and use
+**Share view with agent** to send the description together with a frozen view.
+Continue the conversation in Desktop's chat while exploring the building.
+
+The agent receives current selection, metric camera/point and recording time
+through Desktop's context tool. A message about **View 1** stays attached to
+that saved view even after the user moves elsewhere. Image endpoints supply
+the annotated screenshot, recording reference and attached photo. The agent
+can move the viewer to a source camera, object, saved view or floor; it must
+check the browser's acknowledgement before saying the change was applied.
+
+This uses Desktop's native chat portal and dimcode gateway. There is no second
+chat service and no change to Desktop core, DimOS or sim2. Chat history,
+model selection, tool execution and interruption belong to dimcode. This Codex
+conversation is not automatically migrated into it. Relevant scene instructions
+and durable review context are available independently of the conversation.
+
+### Local installation
+
+Verified with Desktop `v0.2.217` and dimcode's `desktop-agent-v0.1.5` release
+(CLI reports `0.1.0-next.7`), downloaded from their official GitHub releases and
+checked against release SHA-256 sums. The isolated profile is
+`/Users/pimvandenbosch/.dimos-scene-review`. Its app link points to this checkout;
+the usual `~/.dimos` profile is untouched. Desktop's existing credential store
+uses the OpenAI key already configured for DimOS; no key is stored in this repo.
+
+Start the installed local prototype with:
+
+```sh
+DIMOS_HOME=/Users/pimvandenbosch/.dimos-scene-review \
+DIM_SCENE_REVIEW_BUNDLE=/Users/pimvandenbosch/Desktop/sf-555-office/exports/scene-review-v11 \
+  .data/desktop/bin/dimos-desktop-aarch64-apple-darwin serve --no-service
+```
+
+After changing the app, run `nix build .#dimosApp`, then POST
+`http://127.0.0.1:5555/api/apps/dim-world-builder/reload`. The binaries, profile,
+capture and derived assets are local and untracked. Native chat sends selected
+context/images to its configured model; the raw MCAP and whole asset bundle
+are not uploaded by this integration.
+
+### Publishing a scene revision
+
+Keep V11 immutable. An authoring agent uses its normal file/command tools to
+save a new `.blend` and run `tools/review/export_blender.py --revision NAME`
+through Blender into a new directory. Copy the current `evidence.json` and
+`views/` into that directory to retain the calibrated recording references.
+Derived revisions hide old Cycles stills. Set `evidence.render_source_sha256`
+to the new source hash only after regenerating those stills from that source.
+
+POST `api/review/open` with `{ "bundleDir": "/absolute/export/directory",
+"expectedRevision": "V11" }`. The backend checks the current revision,
+project identity/frame and manifest, then the browser loads the export while
+preserving the viewpoint. The header's revision picker restores older exports.
+The app stores its active directory/history in `dataDir/review-revisions.json`;
+notes stay associated with their original revision. An old saved view requires
+opening its revision before restoration.
+
+This is a verified publication/reload/rollback handoff, not a verified autonomous
+Blender authoring job. It does not validate visual accuracy, imported geometry
+integrity or MuJoCo collisions. A full actual Blender edit-and-review cycle,
+job progress/cancellation and variant acceptance remain to be exercised.
+
 ## Run locally
 
 Requires Deno and a prepared review bundle. From this repository:
@@ -44,9 +110,9 @@ in the app's `dataDir/review/<bundle-id>/`, or `.data/review/` outside Desktop.
 Source comparison is enabled only at a recorded camera. Moving the camera exits
 comparison. Drawings are view-specific, not geometric constraints. Attachments
 and notes persist; merely selecting an object or saving a note never modifies
-Blender. **There is no autonomous edit/rebuild/apply loop in this prototype.**
-An authoring agent can read `GET api/context` or `GET api/review/context` and
-perform the next source revision as a separate action.
+Blender. Inside Desktop, sharing also sends a message to dimcode. The standalone
+viewer saves feedback without launching an agent. Authoring is a separate tool
+action; completed exports can be published through the revision handoff above.
 
 ## Export the reviewed baseline
 
@@ -85,14 +151,41 @@ sim2. The existing app contract declares the new routes. One aggregate
 Desktop starts the same server using `DIMOS_APP` and its Unix socket; set
 `DIM_SCENE_REVIEW_BUNDLE` to the local bundle path in the server environment.
 Notes go to Desktop's persistent `dataDir`, not its replaceable app checkout.
-No external app calls or command topics were added. The standalone review skips
-Desktop's URL-event subscription; the installed path retains it.
+Agent readiness uses the declared `@desktop-gateway` API. Opening/sending chat
+uses Desktop's existing shell prompt message with `keepOpen: true`. The review
+declares one image `x-dimos-role: view` endpoint and view/publication endpoints;
+no new command topics were added. The standalone review skips Desktop's
+URL-event subscription; the installed path retains it.
 
-This prototype is not an installed Desktop release. MuJoCo visual/collision
+This prototype is installed locally, not a published Desktop app release. MuJoCo visual/collision
 cooking, hinged-door interaction, controller launch, Blender revision jobs,
 variant acceptance and lighting bakes remain unfinished. Existing World Builder
 MuJoCo export still has its pre-existing metadata compatibility limits; this
 review workspace does not route the office through that exporter.
+
+### Installed Desktop results — 2026-10-22
+
+The native Desktop window loaded all V11 objects and opened its real dimcode
+chat. With `openai/gpt-6-astra`, a real request identified the selected
+`Island_front_panel`, inspected its kitchen recording at second 580, and
+moved the viewer to Reception at second 124. The saved View 1 retained its
+original selection/camera, the browser acknowledged the command, and dimcode's
+persisted final response confirmed completion. No geometry was edited.
+
+Type checks, backend state/concurrency/revision tests, 35 existing tests,
+Nix build and Desktop `app check . --run` pass. An isolated browser test loaded
+a manifest-only derived revision, preserved the camera, survived a page reload
+and restored V11 through the revision picker, without uncaught page errors.
+This test uses the same geometry; it does not establish a Blender edit cycle.
+
+```sh
+node tools/review/verify_handoff.mjs /path/to/scene-review-v11
+# Optional real inference; requires the configured Desktop profile running.
+# Saves a shared view and uses the model's configured credentials.
+RUN_LIVE_AGENT=1 node tools/review/verify_desktop.mjs
+```
+
+[Recorded evidence](evidence/scene-review-desktop-2026-10-22.json).
 
 ## Verification
 

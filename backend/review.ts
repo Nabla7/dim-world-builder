@@ -1,29 +1,79 @@
 /** Review data belongs to the app's dataDir; source bundles are read-only. */
-import type { Bundle, Focus, ReviewNote } from "../src/review/types.ts";
+import type {
+  Bundle,
+  Focus,
+  ReviewNote,
+  ReviewRevision,
+  ViewCommand,
+} from "../src/review/types.ts";
 
 const json = (value: unknown, status = 200) =>
   new Response(JSON.stringify(value), {
     status,
-    headers: { "content-type": "application/json", "cache-control": "no-store" },
+    headers: {
+      "content-type": "application/json",
+      "cache-control": "no-store",
+    },
   });
 export function reviewRoutes(bundleDir: string | undefined, dataDir: string) {
   let bundle: Bundle | undefined;
-  let focus: Focus | null = null;
+  let revisions: ReviewRevision[] = [];
+  let initialize: Promise<void> | undefined;
+  const originalDir = bundleDir;
+  const revisionFile = `${dataDir}/review-revisions.json`;
+  let focus:
+    | (Focus & { screenshot?: string; attachment?: string; updatedAt: string })
+    | null = null;
+  let command: ViewCommand | null = null;
   let tail: Promise<unknown> = Promise.resolve();
   const serial = <T>(op: () => Promise<T>): Promise<T> => {
     const next = tail.then(op, op);
     tail = next.catch(() => {});
     return next;
   };
+  const readBundle = async (dir: string): Promise<Bundle> => {
+    const loaded = {
+      ...JSON.parse(await Deno.readTextFile(`${dir}/scene.json`)),
+      evidence: JSON.parse(await Deno.readTextFile(`${dir}/evidence.json`)),
+    } as Bundle;
+    // Recorded RGB remains evidence across revisions; old Cycles stills do not.
+    if (
+      dir !== await Deno.realPath(originalDir!) &&
+      loaded.evidence.render_source_sha256 !== loaded.source_sha256 &&
+      Array.isArray(loaded.evidence.views)
+    ) {
+      loaded.evidence.views = loaded.evidence.views.map((v) => ({
+        ...v,
+        render: null,
+      }));
+    }
+    return loaded;
+  };
   const load = async () => {
+    initialize ??= (async () => {
+      try {
+        const stored = JSON.parse(await Deno.readTextFile(revisionFile));
+        // A different configured project starts a different review; never silently replace it.
+        if (stored.originalDir === originalDir) {
+          bundleDir = stored.activeDirectory;
+          revisions = stored.revisions;
+        }
+      } catch (e) {
+        if (!(e instanceof Deno.errors.NotFound)) throw e;
+      }
+    })();
+    await initialize;
     if (!bundleDir) {
-      throw new Error("No review bundle configured. Start with --review /path/to/bundle.");
+      throw new Error(
+        "No review bundle configured. Start with --review /path/to/bundle.",
+      );
     }
     if (!bundle) {
-      bundle = {
-        ...JSON.parse(await Deno.readTextFile(`${bundleDir}/scene.json`)),
-        evidence: JSON.parse(await Deno.readTextFile(`${bundleDir}/evidence.json`)),
-      } as Bundle;
+      bundleDir = await Deno.realPath(bundleDir);
+      bundle = await readBundle(bundleDir);
+      if (!revisions.some((r) => r.directory === bundleDir)) {
+        revisions.push({ revision: bundle.revision, directory: bundleDir });
+      }
     }
     return bundle;
   };
@@ -31,7 +81,9 @@ export function reviewRoutes(bundleDir: string | undefined, dataDir: string) {
     `${dataDir}/review/${(await load()).id.replace(/[^a-zA-Z0-9_-]/g, "_")}`;
   const notes = async (): Promise<ReviewNote[]> => {
     try {
-      return JSON.parse(await Deno.readTextFile(`${await notesDir()}/notes.json`));
+      return JSON.parse(
+        await Deno.readTextFile(`${await notesDir()}/notes.json`),
+      );
     } catch (e) {
       if (e instanceof Deno.errors.NotFound) return [];
       throw e;
@@ -44,12 +96,17 @@ export function reviewRoutes(bundleDir: string | undefined, dataDir: string) {
     await Deno.writeTextFile(temp, JSON.stringify(all, null, 2) + "\n");
     await Deno.rename(temp, `${dir}/notes.json`);
   };
-  const image = async (data: unknown, name: string): Promise<string | undefined> => {
+  const image = async (
+    data: unknown,
+    name: string,
+  ): Promise<string | undefined> => {
     if (data === undefined || data === null) return undefined;
     if (typeof data !== "string" || data.length > 12_000_000) {
       throw new Error("Image must be PNG/JPEG, at most 9 MB.");
     }
-    const match = /^data:image\/(png|jpeg);base64,([A-Za-z0-9+/=]+)$/.exec(data);
+    const match = /^data:image\/(png|jpeg);base64,([A-Za-z0-9+/=]+)$/.exec(
+      data,
+    );
     if (!match) throw new Error("Only PNG or JPEG images are accepted.");
     const dir = await notesDir();
     await Deno.mkdir(`${dir}/images`, { recursive: true });
@@ -67,18 +124,26 @@ export function reviewRoutes(bundleDir: string | undefined, dataDir: string) {
       Array.isArray(a) && a.length === count &&
       a.every((n) => typeof n === "number" && Number.isFinite(n));
     if (
-      !v || v.revision !== b.revision || !v.camera || !finite(v.camera.position, 3) ||
+      !v || v.revision !== b.revision || !v.camera ||
+      !finite(v.camera.position, 3) ||
       !finite(v.camera.quaternion, 4) ||
-      !finite(v.camera.target, 3) || !Number.isFinite(v.camera.fov) || v.camera.fov <= 0 ||
+      !finite(v.camera.target, 3) || !Number.isFinite(v.camera.fov) ||
+      v.camera.fov <= 0 ||
       v.camera.fov >= 179 ||
-      !Number.isFinite(v.camera.aspect) || v.camera.aspect <= 0 || !Number.isFinite(v.cutHeight) ||
+      !Number.isFinite(v.camera.aspect) || v.camera.aspect <= 0 ||
+      !Number.isFinite(v.cutHeight) ||
       typeof v.mode !== "string"
     ) throw new Error("Invalid camera/revision.");
-    if (v.point !== null && !finite(v.point, 3)) throw new Error("Invalid metric point.");
+    if (v.point !== null && !finite(v.point, 3)) {
+      throw new Error("Invalid metric point.");
+    }
     if (v.objectId !== null && !b.objects.some((o) => o.id === v.objectId)) {
       throw new Error("Unknown object ID.");
     }
-    if (v.sourceSecond !== null && !b.evidence.views.some((c) => c.second === v.sourceSecond)) {
+    if (
+      v.sourceSecond !== null &&
+      !b.evidence.views.some((c) => c.second === v.sourceSecond)
+    ) {
       throw new Error("Unknown recorded camera.");
     }
     return {
@@ -111,17 +176,24 @@ export function reviewRoutes(bundleDir: string | undefined, dataDir: string) {
         },
       });
     } catch (e) {
-      if (e instanceof Deno.errors.NotFound) return json({ error: "File not found" }, 404);
+      if (e instanceof Deno.errors.NotFound) {
+        return json({ error: "File not found" }, 404);
+      }
       throw e;
     }
   };
   return async (req: Request, url: URL): Promise<Response | null> => {
     const path = url.pathname;
-    if (!path.startsWith("/api/review") && !path.startsWith("/files/review")) return null;
+    if (!path.startsWith("/api/review") && !path.startsWith("/files/review")) {
+      return null;
+    }
     try {
-      if (path === "/api/review/bundle" && req.method === "GET") return json(await load());
+      if (path === "/api/review/bundle" && req.method === "GET") {
+        return json(await load());
+      }
       if (path === "/api/review/context" && req.method === "GET") {
         const b = await load();
+        const allNotes = await notes();
         return json({
           scene: {
             id: b.id,
@@ -130,26 +202,230 @@ export function reviewRoutes(bundleDir: string | undefined, dataDir: string) {
             sha256: b.source_sha256,
             units: b.units,
             up: b.up,
+            bundleDirectory: bundleDir,
+          },
+          revisions,
+          authoring: {
+            exporterScript:
+              new URL("../tools/review/export_blender.py", import.meta.url)
+                .pathname,
+            publish:
+              "Save a new .blend (never overwrite the baseline), export it to a new directory with --revision NAME, and copy evidence.json plus views/ from the current bundle. Previous Cycles stills are hidden on derived revisions: only set evidence.render_source_sha256 to the new scene SHA after regenerating those renders from that file. POST api/review/open with bundleDir and expectedRevision to show it. Previous revisions remain available for undo through the same endpoint. This handoff does not validate reconstruction accuracy or collisions.",
           },
           focus,
-          notes: await notes(),
+          notes: allNotes,
+          recordedView: b.evidence.views.find((v) =>
+            v.second === focus?.sourceSecond
+          ) ?? null,
+          latestSharedView: allNotes.at(-1) ?? null,
+          viewCommand: command,
           limitations: b.limitations,
-          selectedObject: focus?.objectId ? b.objects.find((o) => o.id === focus!.objectId) : null,
+          selectedObject: focus?.objectId
+            ? b.objects.find((o) => o.id === focus!.objectId)
+            : null,
           instruction:
-            "Use objectId and project-frame metres. Notes are requests, not applied Blender changes. Keep the reviewed source immutable; author a new revision for review.",
+            "This is the user's shared Blender scene. A chat referring to View N means the saved note with number N, not a camera they may have moved to since. Inspect its image using GET api/review/view?noteId=ID; kind=recording or photo selects reference evidence. POST api/review/view can show a recorded camera, saved note, object or floor in the user's viewer; verify applied through GET api/review/updates. Use source object IDs and project-frame metres. Keep the reviewed source immutable; author a new Blender revision for requested geometry changes. Do not run the old reconstruction builder or use World Builder's primitive project API to replace this Blender reconstruction.",
+        });
+      }
+      if (path === "/api/review/open" && req.method === "POST") {
+        return await serial(async () => {
+          const current = await load();
+          const raw = await req.json();
+          if (raw.expectedRevision !== current.revision) {
+            return json({
+              error: "Scene revision changed. Read context before publishing.",
+            }, 409);
+          }
+          if (
+            typeof raw.bundleDir !== "string" || !raw.bundleDir.startsWith("/")
+          ) {
+            throw new Error(
+              "bundleDir must be an absolute local export directory.",
+            );
+          }
+          const dir = await Deno.realPath(raw.bundleDir);
+          const next = await readBundle(dir);
+          if (
+            next.id !== current.id || next.units !== current.units ||
+            next.up !== current.up ||
+            typeof next.revision !== "string" || !next.revision.trim() ||
+            !Array.isArray(next.objects) || !next.objects.length ||
+            !Array.isArray(next.evidence.views) ||
+            typeof next.geometry !== "string" ||
+            !/^[a-zA-Z0-9_.-]+$/.test(next.geometry)
+          ) {
+            throw new Error(
+              "The export must preserve this project's identity, metric frame and valid scene manifest.",
+            );
+          }
+          if (!(await Deno.stat(`${dir}/${next.geometry}`)).isFile) {
+            throw new Error("Missing exported geometry.");
+          }
+          const known = revisions.find((r) => r.revision === next.revision);
+          if (known && known.directory !== dir) {
+            throw new Error(
+              "Use a new revision name for a new export directory.",
+            );
+          }
+          const baseline = JSON.parse(
+            await Deno.readTextFile(`${originalDir}/scene.json`),
+          );
+          if (
+            next.source_blend === baseline.source_blend &&
+            next.source_sha256 !== baseline.source_sha256
+          ) {
+            throw new Error(
+              "Save edits as a new Blender file; the reviewed baseline is immutable.",
+            );
+          }
+          const history = known
+            ? revisions
+            : [...revisions, { revision: next.revision, directory: dir }];
+          await Deno.mkdir(dataDir, { recursive: true });
+          const temp = `${revisionFile}.${crypto.randomUUID()}.tmp`;
+          await Deno.writeTextFile(
+            temp,
+            JSON.stringify({
+              originalDir,
+              activeDirectory: dir,
+              revisions: history,
+            }),
+          );
+          await Deno.rename(temp, revisionFile);
+          bundleDir = dir;
+          bundle = next;
+          revisions = history;
+          focus = null;
+          command = { id: crypto.randomUUID(), reload: true, applied: false };
+          return json({
+            revision: next.revision,
+            command,
+            instruction:
+              "Check updates for the browser's acknowledgement. Other revisions remain available through this endpoint.",
+          });
         });
       }
       if (path === "/api/review/focus" && req.method === "POST") {
-        focus = await validFocus(await req.json());
-        return json({ saved: true });
+        return await serial(async () => {
+          const raw = await req.json();
+          const valid = await validFocus(raw);
+          focus = {
+            ...valid,
+            screenshot: await image(raw.screenshot, "live-view"),
+            attachment: await image(raw.attachment, "live-photo"),
+            updatedAt: new Date().toISOString(),
+          };
+          return json({ saved: true });
+        });
       }
-      if (path === "/api/review/notes" && req.method === "GET") return json(await notes());
+      if (path === "/api/review/view" && req.method === "GET") {
+        const b = await load();
+        const id = url.searchParams.get("noteId");
+        const view = id ? (await notes()).find((n) => n.id === id) : focus;
+        if (!view) {
+          return json(
+            {
+              error:
+                "No captured view. Open Scene Review or select a saved note.",
+            },
+            404,
+          );
+        }
+        const kind = url.searchParams.get("kind") ?? "screenshot";
+        if (kind === "recording") {
+          const source = b.evidence.views.find((v) =>
+            v.second === view.sourceSecond
+          );
+          if (!source?.image) {
+            return json(
+              { error: "This camera has no matched recording." },
+              404,
+            );
+          }
+          return await file(bundleDir!, source.image);
+        }
+        if (kind !== "screenshot" && kind !== "photo") {
+          return json({ error: "Unknown image kind" }, 400);
+        }
+        const imagePath = kind === "photo" ? view.attachment : view.screenshot;
+        if (!imagePath) {
+          return json({ error: `No ${kind} for this view.` }, 404);
+        }
+        return await file(
+          `${await notesDir()}/images`,
+          imagePath.split("/").at(-1)!,
+        );
+      }
+      if (path === "/api/review/view" && req.method === "POST") {
+        const raw = await req.json();
+        const b = await load();
+        if (
+          raw.sourceSecond === undefined && raw.objectId === undefined &&
+          raw.noteId === undefined && raw.level === undefined
+        ) {
+          throw new Error("Specify sourceSecond, objectId, noteId or level.");
+        }
+        if (
+          raw.sourceSecond !== undefined &&
+          !b.evidence.views.some((v) => v.second === raw.sourceSecond)
+        ) throw new Error("Unknown recorded camera.");
+        if (
+          raw.objectId !== undefined &&
+          !b.objects.some((o) => o.id === raw.objectId)
+        ) {
+          throw new Error("Unknown object ID.");
+        }
+        if (raw.noteId !== undefined) {
+          const saved = (await notes()).find((n) => n.id === raw.noteId);
+          if (!saved) throw new Error("Unknown shared view.");
+          if (saved.revision !== b.revision) {
+            throw new Error(
+              `Open revision ${saved.revision} before restoring this shared view.`,
+            );
+          }
+        }
+        if (
+          raw.level !== undefined &&
+          !["all", "ground", "upper"].includes(raw.level)
+        ) {
+          throw new Error("Unknown floor.");
+        }
+        command = {
+          id: crypto.randomUUID(),
+          sourceSecond: raw.sourceSecond,
+          objectId: raw.objectId,
+          noteId: raw.noteId,
+          level: raw.level,
+          applied: false,
+        };
+        return json({
+          ...command,
+          instruction:
+            "Queued for the open viewer. Check api/review/updates for applied=true; this does not edit geometry.",
+        });
+      }
+      if (path === "/api/review/updates" && req.method === "GET") {
+        const b = await load();
+        return json({ command, revision: b.revision, revisions });
+      }
+      if (path === "/api/review/updates" && req.method === "POST") {
+        const raw = await req.json();
+        if (!command || command.id !== raw.id) {
+          return json({ error: "View command was superseded." }, 409);
+        }
+        command.applied = true;
+        return json({ applied: true });
+      }
+      if (path === "/api/review/notes" && req.method === "GET") {
+        return json(await notes());
+      }
       if (path === "/api/review/notes" && req.method === "POST") {
         return await serial(async () => {
           const raw = await req.json();
           const context = await validFocus(raw);
           if (
-            typeof raw.text !== "string" || !raw.text.trim() || raw.text.length > 12000
+            typeof raw.text !== "string" || !raw.text.trim() ||
+            raw.text.length > 12000
           ) throw new Error("Write a note (at most 12,000 characters).");
           const strokes = raw.strokes ?? [];
           if (
@@ -163,9 +439,11 @@ export function reviewRoutes(bundleDir: string | undefined, dataDir: string) {
             )
           ) throw new Error("Invalid drawing.");
           const id = crypto.randomUUID();
+          const all = await notes();
           const note: ReviewNote = {
             ...context,
             id,
+            number: all.length + 1,
             text: raw.text.trim(),
             strokes,
             createdAt: new Date().toISOString(),
@@ -173,7 +451,6 @@ export function reviewRoutes(bundleDir: string | undefined, dataDir: string) {
             screenshot: await image(raw.screenshot, `${id}-view`),
             attachment: await image(raw.attachment, `${id}-photo`),
           };
-          const all = await notes();
           all.push(note);
           await save(all);
           return json(note, 201);
@@ -182,7 +459,9 @@ export function reviewRoutes(bundleDir: string | undefined, dataDir: string) {
       if (path === "/api/review/notes/status" && req.method === "POST") {
         return await serial(async () => {
           const body = await req.json();
-          if (!["open", "resolved"].includes(body.status)) throw new Error("Invalid status.");
+          if (!["open", "resolved"].includes(body.status)) {
+            throw new Error("Invalid status.");
+          }
           const all = await notes();
           const note = all.find((n) => n.id === body.id);
           if (!note) return json({ error: "Note not found" }, 404);
@@ -192,7 +471,10 @@ export function reviewRoutes(bundleDir: string | undefined, dataDir: string) {
         });
       }
       if (path.startsWith("/files/review-notes/") && req.method === "GET") {
-        return await file(`${await notesDir()}/images`, path.slice("/files/review-notes/".length));
+        return await file(
+          `${await notesDir()}/images`,
+          path.slice("/files/review-notes/".length),
+        );
       }
       if (path.startsWith("/files/review/") && req.method === "GET") {
         await load();

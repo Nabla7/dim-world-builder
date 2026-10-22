@@ -2,6 +2,8 @@
 title: World Builder
 spec-version: v1.3
 uses:
+    "@desktop-gateway":
+        - GET /api/agent
     # viewer mode: the running simulation's TF (robot + moving objects) and lidar, through Desktop's zenoh-gateway
     "@zenoh-gateway": ">=0.5 <0.6"
 # spec v1.2: the page only reads; it never publishes (no command topics)
@@ -62,6 +64,64 @@ provides:
                             schema:
                                 type: object
                                 description: Review Focus record in original project metres and Z-up coordinates
+        /api/review/view:
+            get:
+                summary: See the shared scene view, recording reference or attached photograph
+                description: Returns an image to the agent. With noteId, uses the immutable saved view attached to the user's message; otherwise uses the latest browser capture. kind selects screenshot (default, includes drawn marks), recording (calibrated source RGB) or photo (user attachment). Camera and source-object metadata are in api/review/context. A missing image returns 404.
+                x-when: you need to see the scene or reference image the user is discussing
+                x-dimos-role: view
+                parameters:
+                    - name: noteId
+                      in: query
+                      schema: { type: string }
+                      description: ID of the shared View N from review context; omit for the current view
+                    - name: kind
+                      in: query
+                      schema: { type: string, enum: [screenshot, recording, photo] }
+                      description: Which image to inspect; defaults to screenshot
+            post:
+                summary: Show a camera, shared view, floor or selected object in the user's scene
+                description: Queues a view change for the open browser; check api/review/updates for applied=true. Does not edit geometry. Use sourceSecond for a recorded camera, noteId to restore a saved View N, level for a building cutaway, or objectId to highlight a source object. The scene bundle lists available cameras and object IDs.
+                x-when: you want to point out something in the scene or show a reference viewpoint
+                requestBody:
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    sourceSecond: { type: number, description: Recorded camera second from the scene bundle }
+                                    noteId: { type: string, description: Saved view ID from review context }
+                                    level: { type: string, enum: [all, ground, upper], description: Building overview cutaway }
+                                    objectId: { type: string, description: Original Blender object ID to highlight }
+        /api/review/updates:
+            get:
+                summary: Confirm whether the browser applied an agent's view change
+                x-when: you need to verify a queued view command reached the open viewer
+            post:
+                summary: Browser acknowledgement of a view change
+                x-when: the browser has applied the queued camera or selection change
+                requestBody:
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                required: [id]
+                                properties:
+                                    id: { type: string, description: View command ID returned by POST api/review/view }
+        /api/review/open:
+            post:
+                summary: Show a new Blender export or restore a previous scene revision
+                description: Open a local review bundle containing scene.json, evidence.json and exported geometry. The export must retain the project ID and metric coordinate frame. Save edits as a new Blender file and export to a new directory with a unique revision name. expectedRevision protects against publishing over a newer revision. The browser reloads at the same viewpoint; check api/review/updates for applied=true. Previous revisions remain available for undo. This validates the handoff, not geometry accuracy or physics.
+                x-when: you have exported a requested Blender change and want to show it, or the user asks to return to a previous revision
+                requestBody:
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                required: [bundleDir, expectedRevision]
+                                properties:
+                                    bundleDir: { type: string, description: Absolute local path to an exported review bundle }
+                                    expectedRevision: { type: string, description: Currently active revision from review context }
         /api/review/notes:
             get:
                 summary: Saved scene review feedback

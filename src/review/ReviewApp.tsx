@@ -2,7 +2,16 @@ import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, PointerEvent } from "react";
 import { ReviewViewer } from "./viewer.ts";
 import type { Pick } from "./viewer.ts";
-import type { Bundle, Focus, ReviewNote, SourceView, Stats, Stroke } from "./types.ts";
+import type {
+  Bundle,
+  Focus,
+  ReviewNote,
+  ReviewRevision,
+  SourceView,
+  Stats,
+  Stroke,
+  ViewCommand,
+} from "./types.ts";
 import "./review.css";
 
 async function api<T>(path: string, body?: unknown): Promise<T> {
@@ -24,13 +33,25 @@ const time = (second: number) =>
 const readable = (id: string) => id.replace(/_/g, " ");
 
 export function ReviewApp() {
+  const inDesktop = location.pathname.startsWith("/apps/") &&
+    window.parent !== window;
+  const [agentReady, setAgentReady] = useState(false);
+  const [command, setCommand] = useState<ViewCommand | null>(null);
+  const appliedCommand = useRef<string | null>(null);
+  const resumeView = useRef<Focus | null>(null);
+  const reloadCommand = useRef<string | null>(null);
+  const [revisions, setRevisions] = useState<ReviewRevision[]>([]);
+  const captureRef = useRef<() => string | undefined>(() => undefined);
+  const attachmentRef = useRef<string | undefined>(undefined);
   const [bundle, setBundle] = useState<Bundle | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState("Opening the review bundle…");
   const [ready, setReady] = useState(false);
   const [view, setView] = useState<SourceView | null>(null);
   const [matched, setMatched] = useState(false);
-  const [presentation, setPresentation] = useState<"live" | "compare" | "cycles">("live");
+  const [presentation, setPresentation] = useState<
+    "live" | "compare" | "cycles"
+  >("live");
   const [wipe, setWipe] = useState(50);
   const [nav, setNav] = useState<"orbit" | "walk">("walk");
   const [level, setLevel] = useState<"all" | "ground" | "upper">("all");
@@ -43,6 +64,7 @@ export function ReviewApp() {
   const [drawing, setDrawing] = useState(false);
   const [strokes, setStrokes] = useState<Stroke[]>([]);
   const [attachment, setAttachment] = useState<string | undefined>();
+  attachmentRef.current = attachment;
   const [stats, setStats] = useState<Stats | null>(null);
   const [notice, setNotice] = useState("");
   const [panel, setPanel] = useState<"notes" | "source">("notes");
@@ -58,7 +80,7 @@ export function ReviewApp() {
   state.current = { pick, view, presentation };
   const currentFocus = (): Focus | null => {
     const v = viewer.current;
-    if (!v || !bundle) return null;
+    if (!v?.ready || !bundle) return null;
     return {
       revision: bundle.revision,
       camera: v.state(),
@@ -75,18 +97,80 @@ export function ReviewApp() {
     if (focusTimer.current) clearTimeout(focusTimer.current);
     focusTimer.current = setTimeout(() => {
       const focus = focusRef.current();
-      if (focus) api("focus", focus).catch((e) => setError(e.message));
-    }, 300);
+      if (focus) {
+        let screenshot: string | undefined;
+        try {
+          screenshot = captureRef.current();
+        } catch { /* Comparison still loading. */ }
+        api("focus", {
+          ...focus,
+          screenshot,
+          attachment: attachmentRef.current,
+        }).catch((e) => setError(e.message));
+      }
+    }, 500);
   };
+  const openAgent = (message = "", send = false) => {
+    if (!inDesktop) {
+      setNotice("Open this workspace in DimOS Desktop to talk with the agent.");
+      return;
+    }
+    window.parent.postMessage({
+      dimosShell: 1,
+      type: "prompt",
+      text: message,
+      send,
+      keepOpen: true,
+    }, location.origin);
+  };
+  useEffect(() => {
+    if (!inDesktop) return;
+    const check = () =>
+      fetch("../../api/agent").then((r) => r.json()).then((s) =>
+        setAgentReady(s.ready === true)
+      )
+        .catch(() => setAgentReady(false));
+    check();
+    const timer = setInterval(check, 5000);
+    return () => clearInterval(timer);
+  }, [inDesktop]);
+  useEffect(() => {
+    let cancelled = false;
+    const poll = () =>
+      api<{ command: ViewCommand | null; revisions: ReviewRevision[] }>(
+        "updates",
+      ).then((r) => {
+        if (!cancelled) {
+          setRevisions((previous) =>
+            JSON.stringify(previous) === JSON.stringify(r.revisions)
+              ? previous
+              : r.revisions
+          );
+        }
+        if (
+          !cancelled && r.command && r.command.id !== appliedCommand.current
+        ) {
+          setCommand(r.command);
+        }
+      }).catch(() => {});
+    poll();
+    const timer = setInterval(poll, 1000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, []);
   useEffect(() => {
     document.title = "SF555 · Scene Review";
     let cancelled = false;
-    Promise.all([api<Bundle>("bundle"), api<ReviewNote[]>("notes")]).then(([b, n]) => {
-      if (!cancelled) {
-        setBundle(b);
-        setNotes(n);
-      }
-    }).catch((e) => setError(e.message));
+    Promise.all([api<Bundle>("bundle"), api<ReviewNote[]>("notes")]).then(
+      ([b, n]) => {
+        if (!cancelled) {
+          setBundle(b);
+          setNotes(n);
+        }
+      },
+    ).catch((e) => setError(e.message));
     return () => {
       cancelled = true;
       if (focusTimer.current) clearTimeout(focusTimer.current);
@@ -96,7 +180,10 @@ export function ReviewApp() {
     if (!stage.current) return;
     const observer = new ResizeObserver(([entry]) => {
       const { width, height } = entry.contentRect;
-      const w = Math.max(16, Math.floor(Math.min(width, height * 16 / 9) / 16) * 16);
+      const w = Math.max(
+        16,
+        Math.floor(Math.min(width, height * 16 / 9) / 16) * 16,
+      );
       setFrameSize({ width: w, height: w * 9 / 16 });
     });
     observer.observe(stage.current);
@@ -109,7 +196,11 @@ export function ReviewApp() {
     let cancelled = false;
     v.onPick = (p) => {
       setPick(p);
-      setNotice("Object selected. Describe the change in the review panel.");
+      setNotice(
+        inDesktop
+          ? "Selected. Share this view or keep talking in Desktop's chat."
+          : "Object selected. Describe the change in the review panel.",
+      );
       setPanel("notes");
       syncFocus();
     };
@@ -124,11 +215,36 @@ export function ReviewApp() {
       if (cancelled) return;
       setReady(true);
       v.setMode("walk");
-      const initial = bundle.evidence.views.find((c) => c.second === 580) ??
+      const resumed = resumeView.current;
+      const initial = bundle.evidence.views.find((c) =>
+        c.second === (resumed?.sourceSecond ?? 580)
+      ) ??
         bundle.evidence.views[0];
       setView(initial);
       state.current.view = initial;
-      v.source(initial);
+      if (resumed) {
+        v.restore(
+          resumed.camera,
+          resumed.sourceSecond !== null ? initial : null,
+          resumed.cutHeight,
+        );
+        const object = bundle.objects.find((o) =>
+          o.id === resumed.objectId
+        );
+        const selected = object && resumed.point
+          ? { object, point: resumed.point }
+          : null;
+        setPick(selected);
+        state.current.pick = selected;
+        v.select(selected?.object.id ?? null);
+        resumeView.current = null;
+      } else v.source(initial);
+      if (reloadCommand.current) {
+        api("updates", { id: reloadCommand.current }).catch((e) =>
+          setError(String(e))
+        );
+        reloadCommand.current = null;
+      }
       syncFocus();
     }).catch((e) => {
       if (!cancelled) {
@@ -190,53 +306,69 @@ export function ReviewApp() {
     viewer.current?.setMode(mode);
     host.current?.focus();
   };
+  const captureView = () => {
+    if (!viewer.current?.ready) return undefined;
+    // Save what the reviewer actually saw, including the swipe and marks.
+    // The separate camera/point/stroke fields remain machine-readable.
+    const capture = document.createElement("canvas");
+    capture.width = 1280;
+    capture.height = 720;
+    const ctx = capture.getContext("2d")!;
+    const live = viewer.current!.renderer.domElement;
+    ctx.drawImage(live, 0, 0, capture.width, capture.height);
+    const stillImage = document.querySelector<HTMLImageElement>(
+      ".sr-frame .sr-render",
+    );
+    const recordedImage = document.querySelector<HTMLImageElement>(
+      ".sr-frame .sr-recording",
+    );
+    for (const image of [stillImage, recordedImage]) {
+      if (!image) continue;
+      if (!image.complete || !image.naturalWidth) {
+        throw new Error(
+          "Wait for the comparison image to finish loading, then save again.",
+        );
+      }
+      ctx.save();
+      if (image === recordedImage) {
+        ctx.beginPath();
+        ctx.rect(capture.width * wipe / 100, 0, capture.width, capture.height);
+        ctx.clip();
+      }
+      ctx.drawImage(image, 0, 0, capture.width, capture.height);
+      ctx.restore();
+    }
+    ctx.strokeStyle = getComputedStyle(document.documentElement)
+      .getPropertyValue("--primary");
+    ctx.lineWidth = 4;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    for (const stroke of strokes) {
+      ctx.beginPath();
+      stroke.points.forEach(([x, y], i) => {
+        if (i === 0) ctx.moveTo(x * capture.width, y * capture.height);
+        else ctx.lineTo(x * capture.width, y * capture.height);
+      });
+      ctx.stroke();
+    }
+    return capture.toDataURL("image/jpeg", .86);
+  };
+  captureRef.current = captureView;
+  useEffect(() => {
+    if (ready) syncFocus();
+  }, [attachment, strokes, presentation, wipe]);
   const save = async () => {
     const focus = currentFocus();
-    if (!focus || !text.trim()) return;
+    if (!focus || (!inDesktop && !text.trim())) return;
     setSaving(true);
     setError("");
     try {
-      // Save what the reviewer actually saw, including the swipe and marks.
-      // The separate camera/point/stroke fields remain machine-readable.
-      const capture = document.createElement("canvas");
-      capture.width = 1280;
-      capture.height = 720;
-      const ctx = capture.getContext("2d")!;
-      const live = viewer.current!.renderer.domElement;
-      ctx.drawImage(live, 0, 0, capture.width, capture.height);
-      const stillImage = document.querySelector<HTMLImageElement>(".sr-frame .sr-render");
-      const recordedImage = document.querySelector<HTMLImageElement>(".sr-frame .sr-recording");
-      for (const image of [stillImage, recordedImage]) {
-        if (!image) continue;
-        if (!image.complete || !image.naturalWidth) {
-          throw new Error("Wait for the comparison image to finish loading, then save again.");
-        }
-        ctx.save();
-        if (image === recordedImage) {
-          ctx.beginPath();
-          ctx.rect(capture.width * wipe / 100, 0, capture.width, capture.height);
-          ctx.clip();
-        }
-        ctx.drawImage(image, 0, 0, capture.width, capture.height);
-        ctx.restore();
-      }
-      ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue("--primary");
-      ctx.lineWidth = 4;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-      for (const stroke of strokes) {
-        ctx.beginPath();
-        stroke.points.forEach(([x, y], i) => {
-          if (i === 0) ctx.moveTo(x * capture.width, y * capture.height);
-          else ctx.lineTo(x * capture.width, y * capture.height);
-        });
-        ctx.stroke();
-      }
+      const message = text.trim() || "Let's discuss this view.";
       const note = await api<ReviewNote>("notes", {
         ...focus,
-        text,
+        text: message,
         strokes,
-        screenshot: capture.toDataURL("image/jpeg", .86),
+        screenshot: captureView(),
         attachment,
       });
       setNotes((n) => [...n, note]);
@@ -245,8 +377,16 @@ export function ReviewApp() {
       setDrawing(false);
       setAttachment(undefined);
       setNotice(
-        "Saved with object, metric point, camera and evidence. Ready for the next agent pass.",
+        inDesktop
+          ? `View ${note.number} shared with the agent. Continue in Desktop's chat.`
+          : "Saved with object, metric point, camera and evidence.",
       );
+      if (inDesktop) {
+        openAgent(
+          `About View ${note.number} in Scene Review: ${message}`,
+          true,
+        );
+      }
     } catch (e) {
       setError(String(e));
     } finally {
@@ -255,7 +395,12 @@ export function ReviewApp() {
   };
   const restore = (note: ReviewNote) => {
     if (!bundle || !viewer.current) return;
-    const source = bundle.evidence.views.find((s) => s.second === note.sourceSecond) ?? null;
+    if (note.revision !== bundle.revision) {
+      setError(`Choose revision ${note.revision} to restore this shared view.`);
+      return;
+    }
+    const source =
+      bundle.evidence.views.find((s) => s.second === note.sourceSecond) ?? null;
     const object = bundle.objects.find((o) => o.id === note.objectId);
     setView(source);
     state.current.view = source;
@@ -275,11 +420,72 @@ export function ReviewApp() {
     );
     setNotice(
       `Viewing saved feedback from ${
-        new Date(note.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+        new Date(note.createdAt).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        })
       }.`,
     );
     syncFocus();
   };
+  useEffect(() => {
+    if (
+      !ready || !bundle || !command || appliedCommand.current === command.id
+    ) return;
+    appliedCommand.current = command.id;
+    const apply = async () => {
+      if (command.reload) {
+        resumeView.current = currentFocus();
+        const next = await api<Bundle>("bundle");
+        reloadCommand.current = command.id;
+        setReady(false);
+        setBundle(next);
+        setNotice(`Opening revision ${next.revision}…`);
+        return;
+      }
+      if (command.noteId) {
+        const all = await api<ReviewNote[]>("notes");
+        setNotes(all);
+        const note = all.find((n) => n.id === command.noteId);
+        if (!note) {
+          throw new Error("The requested shared view no longer exists.");
+        }
+        if (note.revision !== bundle.revision) {
+          throw new Error(
+            `Open revision ${note.revision} before restoring this shared view.`,
+          );
+        }
+        restore(note);
+      }
+      if (command.level) overview(command.level);
+      if (command.sourceSecond !== undefined) {
+        const source = bundle.evidence.views.find((v) =>
+          v.second === command.sourceSecond
+        );
+        if (source) jump(source);
+      }
+      if (command.objectId) {
+        const object = bundle.objects.find((o) => o.id === command.objectId);
+        if (object) {
+          const selected: Pick = {
+            object,
+            point: object.min.map((x, i) => (x + object.max[i]) / 2) as [
+              number,
+              number,
+              number,
+            ],
+          };
+          setPick(selected);
+          state.current.pick = selected;
+          viewer.current?.select(object.id);
+          syncFocus();
+        }
+      }
+      await api("updates", { id: command.id });
+      setNotice("The agent updated this view.");
+    };
+    apply().catch((e) => setError(String(e)));
+  }, [command, ready, bundle]);
   const status = async (note: ReviewNote) => {
     try {
       const updated = await api<ReviewNote>("notes/status", {
@@ -295,7 +501,9 @@ export function ReviewApp() {
     try {
       const context = await api("context");
       const url = URL.createObjectURL(
-        new Blob([JSON.stringify(context, null, 2)], { type: "application/json" }),
+        new Blob([JSON.stringify(context, null, 2)], {
+          type: "application/json",
+        }),
       );
       const a = document.createElement("a");
       a.href = url;
@@ -324,19 +532,25 @@ export function ReviewApp() {
     if (!drawingNow.current) return;
     const point = drawPoint(e);
     setStrokes((s) =>
-      s.map((stroke, i) => i === s.length - 1 ? { points: [...stroke.points, point] } : stroke)
+      s.map((stroke, i) =>
+        i === s.length - 1 ? { points: [...stroke.points, point] } : stroke
+      )
     );
   };
   const views = bundle?.evidence.views ?? [];
   const visible = views.filter((v) =>
-    (showAll || v.label || v.reviewed) && (level === "all" || v.level === level) &&
+    (showAll || v.label || v.reviewed) &&
+    (level === "all" || v.level === level) &&
     (!filter ||
-      `${v.label ?? ""} ${v.second} ${time(v.second)}`.toLowerCase().includes(filter.toLowerCase()))
+      `${v.label ?? ""} ${v.second} ${time(v.second)}`.toLowerCase().includes(
+        filter.toLowerCase(),
+      ))
   );
   const anchors = views.filter((v) => v.label);
   const sourceVisible = matched && view;
   const comparing = presentation === "compare" && sourceVisible;
-  const still = (presentation === "cycles" || comparing) && sourceVisible && view.render;
+  const still = (presentation === "cycles" || comparing) && sourceVisible &&
+    view.render;
   const focusName = pick
     ? readable(pick.object.id)
     : matched && view
@@ -359,8 +573,48 @@ export function ReviewApp() {
           </div>
         </div>
         <div className="sr-header-actions">
-          <span className="sr-badge">{bundle?.revision ?? "V11"} · reviewed baseline</span>
-          <button onClick={exportFeedback} disabled={!ready}>Export feedback ↗</button>
+          {revisions.length > 1
+            ? (
+              <select
+                aria-label="Scene revision"
+                value={bundle?.revision ?? "V11"}
+                onChange={(event) => {
+                  const selected = revisions.find((r) =>
+                    r.revision === event.target.value
+                  );
+                  if (selected) {
+                    api("open", {
+                      bundleDir: selected.directory,
+                      expectedRevision: bundle?.revision,
+                    }).catch((e) => setError(String(e)));
+                  }
+                }}
+              >
+                {revisions.map((r) => (
+                  <option key={r.revision} value={r.revision}>
+                    {r.revision}
+                  </option>
+                ))}
+              </select>
+            )
+            : (
+              <span className="sr-badge">
+                {bundle?.revision ?? "V11"} · reviewed baseline
+              </span>
+            )}
+          {inDesktop
+            ? (
+              <button className="sr-agent-button" onClick={() => openAgent()}>
+                <span className={`sr-dot ${agentReady ? "is-ready" : ""}`} />
+                {" "}
+                Talk with agent
+              </button>
+            )
+            : (
+              <button onClick={exportFeedback} disabled={!ready}>
+                Export feedback ↗
+              </button>
+            )}
         </div>
       </header>
       <div className="sr-mobile-bar">
@@ -389,7 +643,11 @@ export function ReviewApp() {
           <div className="sr-section-title">
             THE BUILDING <span>01</span>
           </div>
-          <button className="sr-building" disabled={!ready} onClick={() => overview("all")}>
+          <button
+            className="sr-building"
+            disabled={!ready}
+            onClick={() => overview("all")}
+          >
             <span>⌂</span>
             <div>
               <strong>Whole building</strong>
@@ -398,7 +656,11 @@ export function ReviewApp() {
             <span>↗</span>
           </button>
           <div className="sr-segment">
-            <button data-active={level === "all"} onClick={() => overview("all")} disabled={!ready}>
+            <button
+              data-active={level === "all"}
+              onClick={() => overview("all")}
+              disabled={!ready}
+            >
               All
             </button>
             <button
@@ -450,7 +712,8 @@ export function ReviewApp() {
                 <div>
                   <strong>{v.label ?? `Recording ${time(v.second)}`}</strong>
                   <small>
-                    {time(v.second)} · {v.level === "ground" ? "Ground" : "Upper"}
+                    {time(v.second)} ·{" "}
+                    {v.level === "ground" ? "Ground" : "Upper"}
                     {v.render ? " · ◈" : ""}
                   </small>
                 </div>
@@ -458,7 +721,8 @@ export function ReviewApp() {
             ))}
           </div>
           <div className="sr-left-footer">
-            Metres · original project coordinates<br />360 source poses · 76 Cycles views
+            Metres · original project coordinates<br />360 source poses · 76
+            Cycles views
           </div>
         </aside>
         <main className="sr-main">
@@ -542,12 +806,16 @@ export function ReviewApp() {
                   <span className="sr-image-label left">
                     {view.render ? "BLENDER / CYCLES" : "INTERACTIVE PREVIEW"}
                   </span>
-                  <span className="sr-image-label right">RECORDING · {time(view.second)}</span>
+                  <span className="sr-image-label right">
+                    RECORDING · {time(view.second)}
+                  </span>
                 </>
               )}
               {!comparing && ready && (
                 <span className="sr-image-label left">
-                  {presentation === "cycles" ? "BLENDER / CYCLES" : "LIVE PBR PREVIEW"}
+                  {presentation === "cycles"
+                    ? "BLENDER / CYCLES"
+                    : "LIVE PBR PREVIEW"}
                   {matched && view ? ` · ${time(view.second)}` : ""}
                 </span>
               )}
@@ -568,7 +836,9 @@ export function ReviewApp() {
                 {strokes.map((s, i) => (
                   <polyline
                     key={i}
-                    points={s.points.map((p) => `${p[0] * 1000},${p[1] * 562.5}`).join(" ")}
+                    points={s.points.map((p) =>
+                      `${p[0] * 1000},${p[1] * 562.5}`
+                    ).join(" ")}
                     fill="none"
                     stroke="var(--primary)"
                     strokeWidth="3"
@@ -582,7 +852,9 @@ export function ReviewApp() {
                   <div className="sr-spinner" />
                   <strong>Bringing the office into view</strong>
                   <span>{loading}</span>
-                  <small>Whole building · original geometry · recorded textures</small>
+                  <small>
+                    Whole building · original geometry · recorded textures
+                  </small>
                 </div>
               )}
             </div>
@@ -612,7 +884,9 @@ export function ReviewApp() {
             </span>
             <button
               onClick={() => {
-                viewer.current?.cut(viewer.current.clip.constant < 90 ? 100 : 6.2);
+                viewer.current?.cut(
+                  viewer.current.clip.constant < 90 ? 100 : 6.2,
+                );
               }}
               disabled={!ready}
             >
@@ -654,10 +928,17 @@ export function ReviewApp() {
           aria-label="Review and evidence"
         >
           <div className="sr-tabs">
-            <button data-active={panel === "notes"} onClick={() => setPanel("notes")}>
-              Review <span>{notes.filter((n) => n.status === "open").length}</span>
+            <button
+              data-active={panel === "notes"}
+              onClick={() => setPanel("notes")}
+            >
+              {inDesktop ? "Shared views" : "Review"}{" "}
+              <span>{notes.filter((n) => n.status === "open").length}</span>
             </button>
-            <button data-active={panel === "source"} onClick={() => setPanel("source")}>
+            <button
+              data-active={panel === "source"}
+              onClick={() => setPanel("source")}
+            >
               Evidence & scene
             </button>
           </div>
@@ -665,15 +946,25 @@ export function ReviewApp() {
             ? (
               <>
                 <div className="sr-review-body">
-                  <div className="sr-section-title">WHAT SHOULD CHANGE?</div>
+                  <div className="sr-section-title">
+                    {inDesktop ? "POINT IT OUT" : "WHAT SHOULD CHANGE?"}
+                  </div>
+                  {inDesktop && (
+                    <p className="sr-helper">
+                      Talk naturally in Desktop's chat. Share a view when you
+                      want to point something out; it keeps your selection,
+                      drawing and photo together.
+                    </p>
+                  )}
                   <h2>{focusName}</h2>
                   {pick
                     ? (
                       <div className="sr-selection">
-                        <span>Selected in Blender</span>
+                        <span>Selected object</span>
                         <code>{pick.object.id}</code>
                         <small>
-                          {pick.point.map((n) => n.toFixed(2)).join(", ")} m · project XYZ
+                          {pick.point.map((n) => n.toFixed(2)).join(", ")}{" "}
+                          m · project XYZ
                         </small>
                         <button
                           onClick={() => {
@@ -688,15 +979,18 @@ export function ReviewApp() {
                     )
                     : (
                       <p className="sr-helper">
-                        Point at an object in the walkthrough, or leave a note about this view.
+                        Point at an object in the walkthrough, or leave a note
+                        about this view.
                       </p>
                     )}
                   <textarea
                     aria-label="Describe the change"
-                    placeholder="What looks wrong? What should be different?"
+                    placeholder={inDesktop
+                      ? "Add a message with this view…"
+                      : "What looks wrong? What should be different?"}
                     value={text}
                     onChange={(e) => setText(e.target.value)}
-                    rows={4}
+                    rows={inDesktop ? 2 : 4}
                   />
                   <div className="sr-note-tools">
                     <button
@@ -707,7 +1001,9 @@ export function ReviewApp() {
                       ✎ {drawing ? "Finish drawing" : "Draw on view"}
                     </button>
                     {strokes.length > 0 && (
-                      <button onClick={() => setStrokes([])}>Clear marks</button>
+                      <button onClick={() => setStrokes([])}>
+                        Clear marks
+                      </button>
                     )}
                     <label className="sr-upload" tabIndex={0}>
                       ＋ Photo<input
@@ -722,7 +1018,8 @@ export function ReviewApp() {
                             return;
                           }
                           const reader = new FileReader();
-                          reader.onload = () => setAttachment(reader.result as string);
+                          reader.onload = () =>
+                            setAttachment(reader.result as string);
                           reader.readAsDataURL(f);
                           e.target.value = "";
                         }}
@@ -732,28 +1029,44 @@ export function ReviewApp() {
                   {attachment && (
                     <div className="sr-attachment">
                       <img src={attachment} alt="Attached reference" />
-                      <button onClick={() => setAttachment(undefined)}>Remove photo</button>
+                      <button onClick={() => setAttachment(undefined)}>
+                        Remove photo
+                      </button>
                     </div>
                   )}
                   <button
                     className="sr-primary"
                     onClick={save}
-                    disabled={!text.trim() || saving || !ready}
+                    disabled={(!inDesktop && !text.trim()) || saving ||
+                      !ready ||
+                      (inDesktop && !agentReady)}
                   >
-                    {saving ? "Saving…" : "Save feedback"}
+                    {saving
+                      ? "Sharing…"
+                      : inDesktop
+                      ? "Share view with agent"
+                      : "Save feedback"}
                     <span>↗</span>
                   </button>
                   <p className="sr-fine">
-                    Saves the object, camera, drawing and recording reference for the agent. Blender
-                    changes are a separate, reviewable step.
+                    {inDesktop
+                      ? (agentReady
+                        ? "The agent receives this exact view, even if you move afterwards."
+                        : "Open Desktop's chat to connect a model.")
+                      : "Saves the object, camera, drawing and recording reference for the agent."}
                   </p>
-                  {notice && <p className="sr-notice" role="status">{notice}</p>}
+                  {notice && <p className="sr-notice" role="status">{notice}
+                  </p>}
                 </div>
                 <div className="sr-notes-heading">
-                  <strong>Saved feedback</strong>
+                  <strong>
+                    {inDesktop ? "Shared in conversation" : "Saved feedback"}
+                  </strong>
                   <button
                     onClick={() =>
-                      api<ReviewNote[]>("notes").then(setNotes).catch((e) => setError(e.message))}
+                      api<ReviewNote[]>("notes").then(setNotes).catch((e) =>
+                        setError(e.message)
+                      )}
                     aria-label="Refresh saved notes"
                   >
                     ↻
@@ -764,20 +1077,31 @@ export function ReviewApp() {
                     ? (
                       <div className="sr-empty">
                         <span>◎</span>
-                        <strong>A useful conversation starts here.</strong>
+                        <strong>
+                          {inDesktop
+                            ? "Point, share, keep talking."
+                            : "A useful conversation starts here."}
+                        </strong>
                         <p>
-                          Your notes stay attached to a place in the scene, even after you leave
-                          this page.
+                          Your notes stay attached to a place in the scene, even
+                          after you leave this page.
                         </p>
                       </div>
                     )
                     : [...notes].reverse().map((n) => (
                       <article
                         key={n.id}
-                        className={`sr-note ${n.status === "resolved" ? "is-resolved" : ""}`}
+                        className={`sr-note ${
+                          n.status === "resolved" ? "is-resolved" : ""
+                        }`}
                       >
-                        <button className="sr-note-camera" onClick={() => restore(n)}>
-                          {n.screenshot && <img src={n.screenshot} alt="Saved viewpoint" />}
+                        <button
+                          className="sr-note-camera"
+                          onClick={() => restore(n)}
+                        >
+                          {n.screenshot && (
+                            <img src={n.screenshot} alt="Saved viewpoint" />
+                          )}
                           <span>
                             {n.objectId
                               ? readable(n.objectId)
@@ -786,15 +1110,23 @@ export function ReviewApp() {
                               : "Saved viewpoint"} ↗
                           </span>
                         </button>
-                        <p>{n.text}</p>
+                        <p>
+                          {n.number && <strong>View {n.number} ·</strong>}
+                          {n.text}
+                        </p>
                         {n.attachment && (
-                          <a href={n.attachment} target="_blank" rel="noreferrer">
+                          <a
+                            href={n.attachment}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
                             Reference photo ↗
                           </a>
                         )}
                         <div>
                           <small>
-                            {n.status === "resolved" ? "Resolved" : "Open"} ·{" "}
+                            {n.status === "resolved" ? "Resolved" : "Open"} ·
+                            {" "}
                             {new Date(n.createdAt).toLocaleTimeString([], {
                               hour: "2-digit",
                               minute: "2-digit",
@@ -816,8 +1148,8 @@ export function ReviewApp() {
                   One building.<br />The same coordinates.
                 </h2>
                 <p>
-                  The saved V11 Blender model is the authoring baseline. The walkthrough keeps its
-                  geometry and scale.
+                  The saved V11 Blender model is the authoring baseline. The
+                  walkthrough keeps its geometry and scale.
                 </p>
                 <dl>
                   <dt>Source objects</dt>
@@ -840,28 +1172,33 @@ export function ReviewApp() {
                       alt="Undistorted RGB source"
                     />
                     <p className="sr-fine">
-                      Original RGB, undistorted with the recorded camera calibration. Camera
-                      comparisons use the recorded pose and asymmetric intrinsics.
+                      Original RGB, undistorted with the recorded camera
+                      calibration. Camera comparisons use the recorded pose and
+                      asymmetric intrinsics.
                     </p>
                   </>
                 )}
                 <h3>Preview fidelity</h3>
                 <p>
-                  Recorded image textures and material values are retained. Live lighting is an
-                  approximation; procedural bump, soft shadows and indirect Cycles lighting are not
-                  baked yet.
+                  Recorded image textures and material values are retained. Live
+                  lighting is an approximation; procedural bump, soft shadows
+                  and indirect Cycles lighting are not baked yet.
                 </p>
                 <p>
-                  “Blender still” shows the existing rendered result at 76 source positions. It is a
-                  still image, not a live path-traced camera.
+                  “Blender still” shows the existing rendered result at 76
+                  source positions. It is a still image, not a live path-traced
+                  camera.
                 </p>
                 <h3>Simulation comes next</h3>
                 <p>
-                  This review does not certify collisions, doors or stair traversal. Native MuJoCo
-                  export and robot launch remain a separate handoff.
+                  This review does not certify collisions, doors or stair
+                  traversal. Native MuJoCo export and robot launch remain a
+                  separate handoff.
                 </p>
                 <details>
-                  <summary>Export approximations ({bundle?.warnings.length ?? 0})</summary>
+                  <summary>
+                    Export approximations ({bundle?.warnings.length ?? 0})
+                  </summary>
                   <ul>{bundle?.warnings.map((w) => <li key={w}>{w}</li>)}</ul>
                 </details>
                 <button onClick={exportFeedback}>Download agent context</button>
@@ -873,7 +1210,9 @@ export function ReviewApp() {
         <div className="sr-error" role="alert">
           <strong>Something needs attention</strong>
           <span>{error}</span>
-          <button onClick={() => setError("")} aria-label="Dismiss error">×</button>
+          <button onClick={() => setError("")} aria-label="Dismiss error">
+            ×
+          </button>
         </div>
       )}
     </div>

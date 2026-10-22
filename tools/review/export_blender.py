@@ -18,6 +18,7 @@ from mathutils import Vector
 
 p = argparse.ArgumentParser()
 p.add_argument('--out', required=True)
+p.add_argument('--revision', default='V11', help='Unique name for a derived scene revision')
 a = p.parse_args(sys.argv[sys.argv.index('--') + 1:])
 out = Path(a.out)
 out.mkdir(parents=True, exist_ok=True)
@@ -143,7 +144,7 @@ bpy.ops.export_scene.gltf(filepath=str(out/'scene.glb'), export_format='GLB', ex
     use_active_scene=True,
     export_extras=True, export_cameras=False, export_lights=False, export_animations=False,
     export_apply=False, export_texcoords=True, export_normals=True, export_materials='EXPORT')
-manifest = {'format':'scene-review.bundle.v1', 'id':'sf555-v11', 'title':'SF555 / Office', 'revision':'V11',
+manifest = {'format':'scene-review.bundle.v1', 'id':'sf555-v11', 'title':'SF555 / Office', 'revision':a.revision,
     'units':'metres', 'up':'Z', 'source_blend':str(source), 'source_sha256':hashlib.sha256(source.read_bytes()).hexdigest(),
     'geometry':'scene.glb', 'objects':records, 'materials':materials, 'images':images,
     'limitations':['Interactive PBR preview; Cycles illumination and procedural bump are not baked.',

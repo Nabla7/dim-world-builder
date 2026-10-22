@@ -1,0 +1,71 @@
+{
+  "date": "2026-10-22",
+  "status": "local prototype, actual Desktop/dimcode conversation verified",
+  "branch": "pim/feat/scene-review",
+  "base_commit": "24d4c59",
+  "desktop": {
+    "version": "0.2.217",
+    "binary_sha256": "3002e32e7b17f0421201fdfa0f3fa18218b681361229d0e6a01d8f1ad5ea5bc5",
+    "profile": "/Users/pimvandenbosch/.dimos-scene-review",
+    "url": "http://127.0.0.1:5555/?app=dim-world-builder#/?workspace=review",
+    "installation": "official release, checksum verified, isolated profile, app symlink to local checkout"
+  },
+  "dimcode": {
+    "release_tag": "desktop-agent-v0.1.5",
+    "reported_version": "0.1.0-next.7",
+    "release_archive_sha256": "d229036e3a19619bffcbfcc5962451c03804d28a359432086d1df1fcdd5be141",
+    "model": "openai/gpt-6-astra",
+    "authentication": "existing configured DimOS key, held in native dimcode credential store"
+  },
+  "source": {
+    "file": "sf555_office_v11.blend",
+    "sha256_after": "8e9e5d720f74e0c14a758378d362b660c5cb1ecf8771528051defc09ec3b2158",
+    "changed": false,
+    "objects": 12008,
+    "image_maps": 84,
+    "recorded_views": 360
+  },
+  "live_agent_trial": {
+    "runner": "tools/review/verify_desktop.mjs (explicit RUN_LIVE_AGENT=1)",
+    "selected_object": "Island_front_panel",
+    "shared_view_number": 1,
+    "shared_recording_second": 580,
+    "request": "Inspect the selected object and recording; describe them, then show Reception at second 124 without editing geometry.",
+    "observed": [
+      "Native chat identified the wood panel, countertop, stools and kitchen reference.",
+      "Saved view retained selection and camera after live camera changed.",
+      "Browser moved to recording second 124 and acknowledged the command.",
+      "Persisted dimcode session ended with assistant stopReason=stop and confirmation of Reception at 124 seconds."
+    ],
+    "uncaught_browser_errors": [],
+    "local_artifacts": [".data/desktop/agent-check.json", ".data/desktop/agent-check.png"]
+  },
+  "revision_trial": {
+    "runner": "node tools/review/verify_handoff.mjs /path/to/scene-review-v11",
+    "isolation": "temporary app data and derived manifest; unchanged original geometry",
+    "observed": [
+      "Renderer loaded a new named revision and preserved the exact camera.",
+      "Active revision survived page reload.",
+      "Revision picker restored the original export.",
+      "Browser acknowledged completed loads; no uncaught page errors."
+    ],
+    "local_artifact": ".data/desktop/handoff-check.json",
+    "actual_blender_authoring_exercised": false
+  },
+  "checks": {
+    "deno task check": "passed",
+    "deno task test": "35 passed",
+    "deno test -A backend/review_test.ts": "passed, including concurrent notes, stale revisions, persistence, browser acknowledgement and old-still handling",
+    "nix build .#dimosApp": "passed",
+    "dimos-desktop app check . --run": "passed, including declared routes and Unix-socket startup"
+  },
+  "boundaries": [
+    "No Desktop core, DimOS runtime or sim2 changes.",
+    "No second agent/chat harness; current Codex conversation is not migrated.",
+    "Model receives shared context and images; raw capture and bundle are not uploaded by this integration.",
+    "Browser appearance remains the existing approximate preview.",
+    "Publication checks identity/frame/manifest; it does not validate actual geometry accuracy or collisions.",
+    "No verified autonomous Blender edit cycle, MuJoCo export, controller launch or robot actuation.",
+    "Implementation is local and not pushed or released."
+  ]
+}

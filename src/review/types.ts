@@ -49,7 +49,11 @@ export interface Bundle {
   images: Record<string, { file: string; source: string; size: number[] }>;
   warnings: string[];
   limitations: string[];
-  evidence: { calibration: { width: number; height: number; k: number[] }; views: SourceView[] };
+  evidence: {
+    calibration: { width: number; height: number; k: number[] };
+    views: SourceView[];
+    render_source_sha256?: string;
+  };
 }
 export interface CameraState {
   position: Vec3;
@@ -72,12 +76,26 @@ export interface Stroke {
 }
 export interface ReviewNote extends Focus {
   id: string;
+  number?: number;
   text: string;
   createdAt: string;
   status: "open" | "resolved";
   strokes: Stroke[];
   screenshot?: string;
   attachment?: string;
+}
+export interface ViewCommand {
+  id: string;
+  reload?: boolean;
+  sourceSecond?: number;
+  objectId?: string;
+  noteId?: string;
+  level?: "all" | "ground" | "upper";
+  applied?: boolean;
+}
+export interface ReviewRevision {
+  revision: string;
+  directory: string;
 }
 export interface Stats {
   fps: number;
