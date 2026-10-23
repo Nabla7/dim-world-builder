@@ -31,14 +31,42 @@ already using its default port, stop that instance before starting this profile.
 
 Start with a named view, **Walk**, select an object, draw/attach a photograph,
 then **Share view with agent**. The standalone setup below supports review and
-saved feedback without Desktop chat. This is a prototype for reviewing a Blender
-reconstruction with an agent; it is not yet a complete drag-and-drop interior
-design editor or an automatic, verified Blender editing workflow.
+saved feedback without Desktop chat. Pim reported successful agent-driven Blender
+edits on 2026-10-23. The live workspace now contains the cart-clearance and
+reception-mug revisions. The interface supports design through conversation and
+spatial feedback; installation on a new computer still needs assistance.
 
 To author changes, also obtain the source `.blend` and its textures (or a packed
 copy). Set `source_blend` in the transferred bundle's `scene.json` to that file's
 absolute local path. Preserve its `source_sha256`; moving a file does not change
 its content hash. The raw MCAP is not needed for walkthrough or review.
+
+## What the office ZIP contains
+
+The app and the office project are separate. Installing the GitHub app supplies
+the viewer and agent integration. The ZIP transfers the private office project;
+it does not install the application or connect to Pim's live session.
+
+The current `sf555-office-v13-project.zip` contains:
+
+- `source/`: the editable V13 Blender file, with 84 image textures packed inside.
+- `browser/`: the same revision exported for the walkthrough, plus recorded photos.
+- `configure.py`: a one-time helper that links the browser project to the Blender
+  file at its new location after extraction. Run it from the extracted project
+  with `python3 configure.py`; set `DIM_SCENE_REVIEW_BUNDLE` to the printed path.
+- `START-HERE.txt`: the plain-language handoff and assisted setup instructions.
+
+The browser uses the prepared export while the agent edits Blender and publishes
+new exports. Both representations belong to the same office project. Sending
+only the `.blend` omits the prepared browser version and recording references.
+Blender must be installed where authoring runs; the designer need not operate its
+interface. Desktop/agent setup and company model access are separate from the ZIP.
+
+This is an independent project copy, with no automatic synchronization to Pim's
+Mac. Existing chat, saved feedback and previous revision history are not included.
+The older `sf555-scene-review-handoff.zip` contains V11, not the current V13.
+In the V13 package, old Cycles comparisons are disabled because they predate the
+edits. Recorded photos remain available. The experimental lighting bake is omitted.
 
 ## Desktop conversation — 2026-10-22
 
@@ -101,10 +129,13 @@ The app stores its active directory/history in `dataDir/review-revisions.json`;
 notes stay associated with their original revision. An old saved view requires
 opening its revision before restoration.
 
-This is a verified publication/reload/rollback handoff, not a verified autonomous
-Blender authoring job. It does not validate visual accuracy, imported geometry
-integrity or MuJoCo collisions. A full actual Blender edit-and-review cycle,
-job progress/cancellation and variant acceptance remain to be exercised.
+The original automated checks below covered publication/reload/rollback. On
+2026-10-23 Pim confirmed that the actual Blender editing workflow worked well;
+inspection of the live Desktop also found `V12-cart-clearance` and
+`V13-reception-mug` exports, with V13 active. This supersedes the earlier blanket
+statement that the authoring loop was unverified. It does not establish physical
+collision accuracy or successful installation on the colleague's computer.
+Dedicated authoring-job progress/cancellation and variant acceptance remain unfinished.
 
 ## Run locally
 
