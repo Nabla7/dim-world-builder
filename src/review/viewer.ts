@@ -84,6 +84,7 @@ export class ReviewViewer {
     this.highlight = new THREE.Box3Helper(new THREE.Box3(), 0xf9bc53);
     this.highlight.visible = false;
     (this.highlight.material as THREE.LineBasicMaterial).depthTest = false;
+    (this.highlight.material as THREE.LineBasicMaterial).toneMapped = false;
     this.highlight.renderOrder = 100;
     this.scene.add(this.highlight);
     this.observer = new ResizeObserver(() => this.resize());
@@ -151,6 +152,14 @@ export class ReviewViewer {
         if (!["position", "normal", "uv", "uv1"].includes(key)) g.deleteAttribute(key);
       }
       if (!g.getAttribute("normal")) g.computeVertexNormals();
+      const record = this.records.get(id)!;
+      const textureNormals = g.getAttribute("normal").clone();
+      if (record.normal_to_object) {
+        textureNormals.applyNormalMatrix(
+          new THREE.Matrix3().fromArray(record.normal_to_object.flat()).transpose(),
+        );
+      }
+      g.setAttribute("reviewObjectNormal", textureNormals);
       if (!g.getAttribute("uv")) {
         g.setAttribute(
           "uv",
@@ -165,7 +174,6 @@ export class ReviewViewer {
         g.setAttribute("uv1", g.getAttribute("uv").clone());
       }
       // Keep batches bounded spatially for frustum culling; retain triangle->source IDs.
-      const record = this.records.get(id)!;
       const cell = `${Math.floor((record.min[0] + record.max[0]) / 12)},${
         Math.floor((record.min[1] + record.max[1]) / 12)
       },${Math.floor(record.min[2] / 4)}`;

@@ -4,6 +4,7 @@ export interface ObjectRecord {
   collection: string;
   min: Vec3;
   max: Vec3;
+  normal_to_object?: number[][];
 }
 export type ColorExpr =
   | { kind: "constant"; value: number | number[] }
@@ -12,6 +13,8 @@ export type ColorExpr =
     image: string;
     alpha: boolean;
     extension: string;
+    projection?: string;
+    projection_blend?: number;
     coordinates: { kind: "uv" } | { kind: "world"; matrix: number[][] };
   }
   | { kind: "mix"; factor: ColorExpr; a: ColorExpr; b: ColorExpr };

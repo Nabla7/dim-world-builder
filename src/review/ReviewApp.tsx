@@ -27,6 +27,16 @@ async function api<T>(path: string, body?: unknown): Promise<T> {
   if (!response.ok) throw new Error(data.error ?? `HTTP ${response.status}`);
   return data as T;
 }
+async function acknowledgeView(id: string) {
+  try {
+    await api("updates", { id });
+  } catch (error) {
+    // A newer agent command can arrive while this view is loading. The server
+    // correctly refuses to acknowledge that newer command with our older ID.
+    if (error instanceof Error && error.message === "View command was superseded.") return;
+    throw error;
+  }
+}
 const file = (path: string) => `files/review/${path}`;
 const time = (second: number) =>
   `${Math.floor(second / 60)}:${String(second % 60).padStart(2, "0")}`;
@@ -240,7 +250,7 @@ export function ReviewApp() {
         resumeView.current = null;
       } else v.source(initial);
       if (reloadCommand.current) {
-        api("updates", { id: reloadCommand.current }).catch((e) =>
+        acknowledgeView(reloadCommand.current).catch((e) =>
           setError(String(e))
         );
         reloadCommand.current = null;
@@ -439,7 +449,7 @@ export function ReviewApp() {
         const next = await api<Bundle>("bundle");
         if (next.revision === bundle.revision) {
           resumeView.current = null;
-          await api("updates", { id: command.id });
+          await acknowledgeView(command.id);
           return;
         }
         reloadCommand.current = command.id;
@@ -486,7 +496,7 @@ export function ReviewApp() {
           syncFocus();
         }
       }
-      await api("updates", { id: command.id });
+      await acknowledgeView(command.id);
       setNotice("The agent updated this view.");
     };
     apply().catch((e) => setError(String(e)));

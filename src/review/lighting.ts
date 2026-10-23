@@ -2,6 +2,30 @@ import * as THREE from "three";
 import { EXRLoader } from "three/examples/jsm/loaders/EXRLoader.js";
 import type { Bundle } from "./types.ts";
 
+/** Three positive HDR channels need no alpha. Packed float halves GPU storage. */
+function compactRadiance(texture: THREE.DataTexture) {
+  const source = texture.image.data;
+  if (!(source instanceof Uint16Array)) throw new Error("Expected half-float lighting pixels");
+  const packed = new Uint32Array(source.length / 4);
+  for (let i = 0, j = 0; i < source.length; i += 4, j++) {
+    const r = source[i], g = source[i + 1], b = source[i + 2];
+    if ((r & 0x7c00) === 0x7c00 || (g & 0x7c00) === 0x7c00 || (b & 0x7c00) === 0x7c00) {
+      throw new Error("Nonfinite lighting pixel");
+    }
+    // Half and R11G11B10 share a five-bit exponent. Drop sign and round each
+    // mantissa to nearest-even (6/6/5 bits), preserving the linear HDR range.
+    const red = r & 0x8000 ? 0 : Math.min(0x7bf, (r + 7 + ((r >> 4) & 1)) >> 4);
+    const green = g & 0x8000 ? 0 : Math.min(0x7bf, (g + 7 + ((g >> 4) & 1)) >> 4);
+    const blue = b & 0x8000 ? 0 : Math.min(0x3df, (b + 15 + ((b >> 5) & 1)) >> 5);
+    packed[j] = red | (green << 11) | (blue << 22);
+  }
+  texture.image.data = packed;
+  texture.format = THREE.RGBFormat;
+  texture.type = THREE.UnsignedInt101111Type;
+  texture.internalFormat = "R11F_G11F_B10F";
+  texture.needsUpdate = true;
+}
+
 /** Static Cycles illumination stays linear; Blender's display transform is applied once. */
 export async function reviewLighting(bundle: Bundle, renderer: THREE.WebGLRenderer) {
   const lighting = bundle.lighting;
@@ -16,6 +40,7 @@ export async function reviewLighting(bundle: Bundle, renderer: THREE.WebGLRender
     const loaded = await Promise.all(
       lighting.atlases.slice(i, i + 3).map(async (record) => {
         const texture = await loader.loadAsync(`files/review/${record.file}`);
+        if (renderer.extensions.has("EXT_color_buffer_float")) compactRadiance(texture);
         texture.channel = 1;
         // EXRLoader returns bottom-up pixels; glTF stores V in the opposite convention.
         texture.repeat.y = -1;

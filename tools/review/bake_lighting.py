@@ -27,10 +27,11 @@ import numpy as np
 
 
 UV_NAME = "ReviewLightUV"
-PIPELINE = "fraction-atlas-oidn-v2"
+PIPELINE = "height-grouped-geometric-normal-guided-oidn-v5"
 
 
-def denoise(rgb: np.ndarray) -> np.ndarray:
+def denoise(rgb: np.ndarray, normal: np.ndarray | None = None,
+            coverage: np.ndarray | None = None) -> np.ndarray:
     """Use Blender's bundled OpenImageDenoise on linear diffuse radiance."""
     library = Path(bpy.app.binary_path).parents[1] / "Resources/lib/libOpenImageDenoise.dylib"
     lib = ctypes.CDLL(str(library))
@@ -53,11 +54,17 @@ def denoise(rgb: np.ndarray) -> np.ndarray:
     source = np.ascontiguousarray(rgb, dtype=np.float32)
     result = np.empty_like(source)
     height, width, _ = source.shape
+    inputs = [(b"color", source), (b"output", result)]
+    if normal is not None and coverage is not None:
+        inputs.extend([(b"normal", np.ascontiguousarray(normal, dtype=np.float32)),
+                       (b"albedo", np.ascontiguousarray(np.repeat(coverage[..., None], 3, axis=2), dtype=np.float32))])
     try:
-        for name, array in [(b"color", source), (b"output", result)]:
+        for name, array in inputs:
             lib.oidnSetSharedFilterImage(filter_, name, array.ctypes.data, 3,
                                         width, height, 0, 12, width * 12)
         lib.oidnSetFilterBool(filter_, b"hdr", True)
+        if normal is not None:
+            lib.oidnSetFilterBool(filter_, b"cleanAux", True)
         lib.oidnCommitFilter(filter_)
         lib.oidnExecuteFilter(filter_)
         message = ctypes.c_char_p()
@@ -85,7 +92,7 @@ def material_needs_diffuse(material) -> bool:
 
 
 def receiver_material(material, image):
-    """Keep procedural generated/object coordinates after joining receivers."""
+    """Bake low-frequency lighting without aliasing procedural micro-bump into it."""
     copy = material.copy()
     tree = copy.node_tree
     generated = tree.nodes.new("ShaderNodeAttribute")
@@ -93,6 +100,13 @@ def receiver_material(material, image):
     object_co = tree.nodes.new("ShaderNodeAttribute")
     object_co.attribute_name = "review_object_co"
     for node in list(tree.nodes):
+        # Joined receiver coordinates change bump derivatives. Even with the
+        # original position attributes, baking high-frequency bump into a small
+        # irradiance chart creates blotches. Keep the evaluated surface normals;
+        # source color textures remain a separate, full-resolution browser layer.
+        if node.type.startswith("BSDF_") and "Normal" in node.inputs:
+            for link in list(node.inputs["Normal"].links):
+                tree.links.remove(link)
         if node.type == "TEX_NOISE" and not node.inputs["Vector"].is_linked:
             tree.links.new(generated.outputs["Vector"], node.inputs["Vector"])
         if node.type == "TEX_COORD":
@@ -136,6 +150,7 @@ def main() -> None:
     parser.add_argument("--samples", type=int, default=64)
     parser.add_argument("--density", type=float, default=56)
     parser.add_argument("--pilot", action="store_true")
+    parser.add_argument("--keep-raw", action="store_true", help="Retain diagnostic radiance/normal arrays")
     parser.add_argument("--revision", default="V11-Cycles-lighting")
     args = parser.parse_args(sys.argv[sys.argv.index("--") + 1:])
     out = args.out.resolve()
@@ -159,6 +174,7 @@ def main() -> None:
     scene.render.bake.margin = 8
     scene.render.bake.margin_type = "EXTEND"
     scene.render.bake.use_selected_to_active = False
+    scene.tool_settings.use_uv_select_sync = True
     start = time.monotonic()
     collection = bpy.data.collections.new("Review evaluated geometry")
     scene.collection.children.link(collection)
@@ -172,7 +188,6 @@ def main() -> None:
             bpy.data.meshes.remove(mesh)
             continue
         obj = bpy.data.objects.new(f"ReviewReceiver_{index}", mesh)
-        collection.objects.link(obj)
         obj.matrix_world = original.matrix_world.copy()
         obj["review_id"] = original.name
         obj["source_collection"] = original.users_collection[0].name if original.users_collection else ""
@@ -194,11 +209,16 @@ def main() -> None:
         corners = [obj.matrix_world @ Vector(c) for c in evaluated.bound_box]
         minimum = np.min([tuple(v) for v in corners], axis=0)
         maximum = np.max([tuple(v) for v in corners], axis=0)
-        # Actual transformed area, without changing the mesh used by export.
-        world_mesh = mesh.copy()
-        world_mesh.transform(obj.matrix_world)
-        area = sum(p.area for p in world_mesh.polygons)
-        bpy.data.meshes.remove(world_mesh)
+        # Measure transformed triangles without creating/removing another Blender
+        # datablock for every object (that repeatedly invalidates the scene graph).
+        mesh.calc_loop_triangles()
+        triangles = np.empty(len(mesh.loop_triangles) * 3, np.int32)
+        mesh.loop_triangles.foreach_get("vertices", triangles)
+        triangles = triangles.reshape(-1, 3)
+        linear = np.array(obj.matrix_world, dtype=np.float64)[:3, :3]
+        a = (points[triangles[:, 1]] - points[triangles[:, 0]]) @ linear.T
+        b = (points[triangles[:, 2]] - points[triangles[:, 0]]) @ linear.T
+        area = float(np.linalg.norm(np.cross(a, b), axis=1).sum() / 2)
         center = (minimum + maximum) / 2
         eligible = any(material_needs_diffuse(m) for m in mesh.materials)
         pilot = center[0] < 5.2 and 13.7 < center[1] < 17.6 and 4.8 < center[2] < 6.6
@@ -208,14 +228,20 @@ def main() -> None:
         copies.append(obj)
         if index % 2000 == 0:
             report("prepare", objects=index, total=len(originals))
+    # Linking each copy during evaluation invalidates the dependency graph for
+    # every subsequent source. Link only after all originals have been read.
+    for obj in copies:
+        collection.objects.link(obj)
     for original in originals:
         original.hide_render = True
     groups = defaultdict(list)
     for index, row in enumerate(rows):
         if not row["eligible"] or (args.pilot and not row["pilot"]):
             continue
-        cell = tuple(math.floor(v / s) for v, s in zip(row["center"], [6, 6, 4]))
-        key = ("large", index) if row["area"] > 130 else ("cell", *cell)
+        # An atlas need not stop at every horizontal grid cell. Those boundaries
+        # created many nearly empty maps and repeated full-scene bake setup.
+        # Keep height bands; area/face budgets below bound each receiver batch.
+        key = ("large", index) if row["area"] > 130 else ("level", math.floor(row["center"][2] / 4))
         groups[str(key)].append(index)
     batches = []
     for key in sorted(groups):
@@ -231,28 +257,42 @@ def main() -> None:
         if batch:
             batches.append(batch)
     lighting = {"kind": "cycles-diffuse", "source_sha256": source_sha,
+                "normal_basis": "evaluated surface normals; procedural micro-bump excluded",
                 "samples": args.samples, "density": args.density, "pilot": args.pilot,
                 "atlases": [], "objects": {}, "display": make_display_lut(scene, out),
                 "exclusions": [r["id"] for r in rows if not r["eligible"]]}
+    def atlas_size(indices):
+        area = sum(rows[i]["area"] for i in indices)
+        faces = sum(rows[i]["faces"] for i in indices)
+        requested = max(args.density * math.sqrt(max(area, .1) / .6), 8 * math.sqrt(faces))
+        return min(4096, max(256, 2 ** math.ceil(math.log2(requested))))
+    texture_pixels = sum(atlas_size(indices) ** 2 for indices in batches)
     report("plan", objects=len(copies), receivers=sum(len(b) for b in batches),
-           batches=len(batches), area=sum(rows[i]["area"] for b in batches for i in b))
+           batches=len(batches), area=sum(rows[i]["area"] for b in batches for i in b),
+           lightmap_gpu_mib=round(texture_pixels * 8 * 4 / 3 / 2**20))
     for tile, indices in enumerate(batches):
         tick = time.monotonic()
         area = sum(rows[i]["area"] for i in indices)
         # Dense props need enough room for chart padding as well as surface area.
-        faces = sum(rows[i]["faces"] for i in indices)
-        requested = max(args.density * math.sqrt(max(area, .1) / .6), 8 * math.sqrt(faces))
-        resolution = min(4096, max(256, 2 ** math.ceil(math.log2(requested))))
+        resolution = atlas_size(indices)
         name = f"atlas_{tile:03d}"
         cache = out / f"lighting/{name}_uv.npz"
         exr = out / f"lighting/{name}.exr"
         signature = hashlib.sha256(json.dumps([PIPELINE, source_sha, args.samples, args.density, indices]).encode()).hexdigest()
         metadata_path = out / f"lighting/{name}.json"
         resumed = metadata_path.exists() and cache.exists() and exr.exists() and json.loads(metadata_path.read_text()).get("signature") == signature
+        cached_uv = {}
         if resumed:
             with np.load(cache) as data:
-                for index in indices:
-                    copies[index].data.uv_layers[UV_NAME].data.foreach_set("uv", data[str(index)].ravel())
+                cached_uv = {index: data[str(index)] for index in indices}
+            resumed = all(uv.shape == (len(copies[index].data.loops), 2)
+                          and np.isfinite(uv).all() and uv.min() >= -1e-6 and uv.max() <= 1 + 1e-6
+                          for index, uv in cached_uv.items())
+            if not resumed:
+                report("reject-cache", tile=tile, reason="UV coordinates must stay in one texture tile")
+        if resumed:
+            for index, uv in cached_uv.items():
+                copies[index].data.uv_layers[UV_NAME].data.foreach_set("uv", uv.ravel())
             meta = json.loads(metadata_path.read_text())
             report("resume", tile=tile)
         else:
@@ -277,15 +317,28 @@ def main() -> None:
             bpy.ops.object.mode_set(mode="EDIT")
             bpy.ops.mesh.select_all(action="SELECT")
             bpy.ops.uv.smart_project(angle_limit=math.radians(66), island_margin=0, area_weight=0, correct_aspect=True, scale_to_bounds=True)
-            bpy.ops.uv.pack_islands(rotate=True, scale=True, margin_method="FRACTION",
-                                    margin=18 / resolution, shape_method="AABB")
-            bpy.ops.object.mode_set(mode="OBJECT")
+            uv = np.empty(len(mesh.loops) * 2, np.float32)
+            for padding in [18, 10, 6, 4]:
+                bpy.ops.uv.pack_islands(udim_source="ACTIVE_UDIM", rotate=True, scale=True,
+                                        pin=False, margin_method="FRACTION",
+                                        margin=padding / resolution, shape_method="AABB")
+                bpy.ops.object.mode_set(mode="OBJECT")
+                mesh.uv_layers[UV_NAME].data.foreach_get("uv", uv)
+                if np.isfinite(uv).all() and uv.min() >= -1e-6 and uv.max() <= 1 + 1e-6:
+                    break
+                report("repack", tile=tile, padding=padding, uv_min=float(uv.min()), uv_max=float(uv.max()))
+                bpy.ops.object.mode_set(mode="EDIT")
+            else:
+                raise ValueError(f"{name}: could not fit UV charts in a single lightmap")
+            scene.render.bake.margin = max(1, padding // 2 - 1)
             uv = np.empty(len(mesh.loops) * 2, np.float32)
             ids, loops = np.empty(len(mesh.loops), np.int32), np.empty(len(mesh.loops), np.int32)
             mesh.uv_layers[UV_NAME].data.foreach_get("uv", uv)
             mesh.attributes["review_object"].data.foreach_get("value", ids)
             mesh.attributes["review_loop"].data.foreach_get("value", loops)
             uv = uv.reshape(-1, 2)
+            if not np.isfinite(uv).all() or uv.min() < -1e-6 or uv.max() > 1 + 1e-6:
+                raise ValueError(f"{name}: pack every UV island inside the single lightmap tile")
             saved_uv = {}
             for index in indices:
                 mask = ids == index
@@ -309,8 +362,17 @@ def main() -> None:
             rgb = rgba[:, :, :3]
             if not np.isfinite(rgb).all():
                 raise ValueError(f"Nonfinite lighting in {name}")
+            # Clean geometric normals and UV coverage prevent the denoiser from
+            # interpreting sparse atlas charts as photographic surface texture.
+            report("normal-guide", tile=tile)
+            scene.render.bake.normal_space = "OBJECT"
+            bpy.ops.object.bake(type="NORMAL", uv_layer=UV_NAME)
+            normal = np.empty_like(rgba)
+            image.pixels.foreach_get(normal.ravel())
+            if args.keep_raw:
+                np.savez_compressed(out / f"lighting/{name}_raw.npz", radiance=rgba, normal=normal)
             report("denoise", tile=tile)
-            rgba[:, :, :3] = denoise(rgb)
+            rgba[:, :, :3] = denoise(rgb, normal[:, :, :3] * 2 - 1, normal[:, :, 3])
             image.pixels.foreach_set(pixels)
             settings = scene.render.image_settings
             old_settings = (settings.file_format, settings.color_mode, settings.color_depth, settings.exr_codec)
@@ -320,7 +382,9 @@ def main() -> None:
             settings.file_format, settings.color_mode, settings.color_depth, settings.exr_codec = old_settings
             meta = {"signature": signature, "file": f"lighting/{name}.exr", "size": resolution,
                     "objects": len(indices), "area": area, "seconds": round(time.monotonic() - tick, 2),
-                    "max": float(rgb.max()), "mean": float(rgb.mean()), "denoiser": "OpenImageDenoise RT"}
+                    "padding_pixels": padding,
+                    "max": float(rgb.max()), "mean": float(rgb.mean()),
+                    "denoiser": "OpenImageDenoise RT with clean normal and coverage guides"}
             metadata_path.write_text(json.dumps(meta, indent=2))
             bpy.data.objects.remove(receiver, do_unlink=True)
             bpy.data.meshes.remove(mesh)

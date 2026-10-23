@@ -86,7 +86,8 @@ def color(s):
             image.save()
             images[key] = {'file': f'textures/{key}.png', 'source': image.name, 'size': list(image.size)}
         return {'kind': 'image', 'image': key, 'alpha': l.from_socket.name == 'Alpha',
-                'coordinates': coordinates(n.inputs['Vector']), 'extension': n.extension}
+                'coordinates': coordinates(n.inputs['Vector']), 'extension': n.extension,
+                'projection': n.projection, 'projection_blend': n.projection_blend}
     if n.type == 'MIX_RGB' and n.blend_type == 'MIX':
         return {'kind': 'mix', 'factor': color(n.inputs[0]), 'a': color(n.inputs[1]), 'b': color(n.inputs[2])}
     raise ValueError(f'unsupported color node {n.type}')
@@ -137,6 +138,7 @@ for i, obj in enumerate(objects):
     copy['source_collection'] = obj.get('source_collection', obj.users_collection[0].name if obj.users_collection else '')
     bounds = [obj.matrix_world @ Vector(corner) for corner in evaluated.bound_box]
     records.append({'id':copy['review_id'], 'collection':copy['source_collection'],
+                    'normal_to_object':[list(row) for row in obj.matrix_world.to_3x3().transposed()],
                     'min':[min(v[j] for v in bounds) for j in range(3)],
                     'max':[max(v[j] for v in bounds) for j in range(3)]})
     if i % 2000 == 0: print('PREPARE', i, len(objects), flush=True)

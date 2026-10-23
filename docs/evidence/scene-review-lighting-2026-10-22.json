@@ -1,0 +1,122 @@
+{
+  "date": "2026-10-22",
+  "status": "experimental; full bake completed; visual acceptance failed; not deployed as default",
+  "revision": "V11-Cycles-lighting",
+  "geometry": {
+    "source_sha256": "8e9e5d720f74e0c14a758378d362b660c5cb1ecf8771528051defc09ec3b2158",
+    "source_objects": 12008,
+    "triangles": 1781784,
+    "max_triangle_vertex_delta_metres": 1.091603204300684e-06,
+    "baked_objects": 11827,
+    "atlases": 32,
+    "checks": [
+      "source identity/frame",
+      "all object IDs",
+      "every ordered triangle vertex",
+      "material assignments",
+      "finite second UV coordinates"
+    ],
+    "limitation": "This establishes visual export geometry retention, not collision or source reconstruction accuracy."
+  },
+  "lighting": {
+    "atlas_count": 32,
+    "diffuse_receivers": 11827,
+    "exclusions": 181,
+    "samples": 64,
+    "estimated_mipmapped_packed_texture_mib": 1136.6666666666667,
+    "atlas_bake_seconds_sum_excluding_failed_attempts_and_export": 1225.32
+  },
+  "environment": {
+    "blender": "5.1.1",
+    "device": "Apple M4 Max",
+    "browser": "Chrome with Metal",
+    "viewport": [
+      1600,
+      1000
+    ],
+    "canvas": [
+      1024,
+      576
+    ]
+  },
+  "browser": {
+    "load_seconds": 42.04,
+    "views": [
+      {
+        "source_second": 580,
+        "fps": 59.30025695660147,
+        "draws": 82,
+        "triangles": 196676
+      },
+      {
+        "source_second": 124,
+        "fps": 58.760160589153635,
+        "draws": 91,
+        "triangles": 193788
+      },
+      {
+        "source_second": 268,
+        "fps": 58.71415989274937,
+        "draws": 80,
+        "triangles": 122502
+      },
+      {
+        "source_second": 380,
+        "fps": 58.96805896805897,
+        "draws": 463,
+        "triangles": 760426
+      },
+      {
+        "source_second": 614,
+        "fps": 59.1074771014057,
+        "draws": 562,
+        "triangles": 1085704
+      },
+      {
+        "source_second": 708,
+        "fps": 58.61092117923136,
+        "draws": 299,
+        "triangles": 634506
+      }
+    ],
+    "interaction_checks": [
+      "Full baseline loads with source camera 580",
+      "Recorded optical pose and asymmetric intrinsics agree with browser projection",
+      "Picking retains calibrated camera and real source object ID",
+      "Comparison swipe shows source RGB and matching Cycles still",
+      "Saved feedback carries camera, point, selected object, drawing and attached photo",
+      "Agent feedback exports as a downloadable JSON record",
+      "Saved note restores the exact recorded viewpoint and drawing",
+      "Feedback survives page reload",
+      "Resolve/reopen workflow updates durable note status",
+      "Keyboard navigation moves the camera and exits calibrated comparison",
+      "Navigation across six areas retains the whole-building model",
+      "Whole-building and both level cutaways are available",
+      "Narrow-screen layout keeps feedback and scene reachable",
+      "Original World Builder remains available"
+    ],
+    "uncaught_page_errors": [],
+    "cutaway": {
+      "view": "building",
+      "status": "Free camera \u00b7 traversal is not physics-tested\n60 fps \u00b7 1,132 draws \u00b7 1.89M triangles"
+    }
+  },
+  "known_visual_issues": [
+    "Mottled upholstery and cabinet faces remain visible.",
+    "Lounge chairs render excessively dark compared with source Cycles stills.",
+    "Glass and view-dependent reflections remain approximate; procedural micro-bump is not reproduced."
+  ],
+  "verified_build_checks": [
+    "TypeScript checks",
+    "Nix app build",
+    "Desktop app check --run",
+    "All triangle positions/material assignments/secondary UV coordinates",
+    "Original source SHA-256 unchanged"
+  ],
+  "limits": [
+    "Short local FPS samples, not a device guarantee.",
+    "No geometry/layout changes; this does not establish reconstruction or collision accuracy.",
+    "Native Desktop continues using original V11; this trial was tested in an isolated browser backend.",
+    "This trial does not establish a Blender authoring round-trip or native MuJoCo conversion."
+  ]
+}

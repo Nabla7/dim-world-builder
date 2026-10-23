@@ -156,7 +156,7 @@ also contains unfinished V12 edits):
 
 ```sh
 /Applications/Blender.app/Contents/MacOS/Blender \
-  --background /path/to/sf555_office_v11.blend --disable-autoexec \
+  --background /path/to/sf555_office_v11.blend --disable-autoexec --python-exit-code 1 \
   --python tools/review/export_blender.py -- --out /path/to/scene-review-v11
 /path/to/dimos/.venv/bin/python tools/review/prepare_evidence.py \
   /path/to/sf-555-office /path/to/scene-review-v11
@@ -169,7 +169,7 @@ preserves triangle-to-source-object ranges for picking. The scene is never
 recentered, rescaled or reduced to generic room primitives.
 
 The material sidecar preserves the existing image textures, affine world-space
-mapping, UV-mapped labels and alpha-over color mixes. Unsupported color nodes
+and Blender box-projection mapping, UV-mapped labels and alpha-over color mixes. Unsupported color nodes
 are listed in `scene.json.warnings`; procedural bump and Cycles lighting are
 not baked. Browser lighting and transparent glass remain approximate. Original
 RGB stays RGB: PIL decodes/saves, and OpenCV only undistorts channels using the
@@ -205,15 +205,18 @@ It bakes direct/indirect Cycles illumination into a second UV set, retains the
 original photographic color textures, and samples Blender's display transform.
 The default V11 bundle continues using the original browser lighting.
 
-**Status at publication:** two kitchen pilots ran, but the latest still has
-unacceptable mottling on some surfaces. No whole-building bake has been accepted
-or deployed. Do not present these pilot images as finished Cycles fidelity.
+**Status after the full-building trial:** 32 atlases now cover 11,827 diffuse
+receivers. Geometry and browser interaction checks pass, but visual review still
+shows mottled chair upholstery/cabinet faces and excessively dark lounge chairs.
+This is **not visually accepted or deployed as the default**. The working V11
+bundle remains available for the office-design handoff. Do not present the bake
+as finished Cycles fidelity.
 The baker currently targets Blender on Apple Silicon: Metal and Blender's bundled
 OpenImageDenoise dylib. Other platforms are unverified.
 
 ```sh
 /Applications/Blender.app/Contents/MacOS/Blender \
-  --background /path/to/sf555_office_v11.blend --disable-autoexec \
+  --background /path/to/sf555_office_v11.blend --disable-autoexec --python-exit-code 1 \
   --python tools/review/bake_lighting.py -- \
   --out /path/to/new-lighting-pilot --baseline /path/to/scene-review-v11 --pilot
 node tools/review/verify_baked_geometry.mjs \
@@ -222,15 +225,28 @@ node tools/review/verify_baked_geometry.mjs \
 
 Omit `--pilot` only after checking visual quality and resource use. Keep the
 baseline and source immutable; the exporter writes a separate bundle. Completed
-atlas/UV caches allow retrying the same bake. Static lighting needs rebaking after
+atlas/UV caches allow retrying the same bake. Packing retries smaller margins
+and rejects cached UVs outside a single texture tile. Denoising uses geometric
+normal and coverage guides; photographic color maps stay separate. Linear EXRs
+use half-float ZIP storage, and supported browsers use packed R11G11B10 lighting
+textures to halve GPU texture storage. Static lighting needs rebaking after
 changes to geometry or lights. Glass and view-dependent reflections remain
 approximate; movable objects need a different lighting treatment.
 
-The first pilot's actual exported geometry retained all 12,008 object IDs and
-1,781,784 triangles, with maximum vertex displacement of `1.1e-6` metres.
+The full-building export retained all 12,008 object IDs and 1,781,784 triangles,
+with maximum vertex displacement of `1.1e-6` metres. The source SHA-256 is unchanged.
 This checks export geometry, not reconstruction accuracy, lighting quality or
 physical collision behavior. `verify_baked_geometry.mjs` repeats this check and
-validates the secondary UV coordinates for a later bake.
+validates the secondary UV coordinates. The trial loaded in 42.04 seconds and
+ran at 58.6–59.3 FPS across six recorded viewpoints on this M4 Max with Chrome/Metal
+at 1600×1000 (1024×576 canvas). Whole-building cutaway reported 60 FPS in a short
+sample. Estimated mipmapped packed-lighting storage is 1,136.7 MiB, excluding
+geometry and color textures; this is not measured resident memory. Picking,
+drawing, comparison, attached photos, saved feedback/reload, navigation and both
+floor cutaways passed against this bundle. Those functional checks do not
+override the failed visual acceptance.
+
+[Full-building trial evidence](evidence/scene-review-lighting-2026-10-22.json).
 
 ### Installed Desktop results — 2026-10-22
 
