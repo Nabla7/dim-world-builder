@@ -16,14 +16,18 @@ master, browser export, feedback, revisions, renders and Desktop agent state.
    holds the shared history, Preview/High quality choice, cancellation and image
    downloads. The camera is captured when the button is clicked; moving afterward
    does not alter the job. Turn off building cutaways before rendering.
-4. To ask the agent to edit the scene, connect your own supported provider account
-   and model through Desktop's agent settings, then use **Talk with agent** or
-   **Share view with agent**. Render jobs themselves use no LLM credits.
+4. Use **Talk with agent** or **Share view with agent** to ask for scene changes.
+   An operator must first configure an explicitly authorized provider account
+   and model through the chat's settings. When this is already configured,
+   visitors can start chatting immediately. Render jobs use no LLM credits.
 
 Provider credentials are shared by this Desktop installation, not separately
 billed per visitor. Everyone using its agent uses the configured account until
 it is removed or changed. Do not copy another installation's credential store.
 No provider credentials or private office assets belong in the app repository.
+The Anvil pilot currently uses an owner-authorized shared OpenAI account with
+`openai/gpt-6-astra`; the owner can switch accounts later in chat settings.
+The key is stored by dimcode in its private `auth.json` with mode `0600`.
 
 ## Operator setup
 

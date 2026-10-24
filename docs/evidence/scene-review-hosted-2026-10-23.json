@@ -68,7 +68,7 @@
     "desktop_socket_start_check": "passed"
   },
   "limits": [
-    "Model account must be supplied by the editor; no paid hosted agent editing turn was performed.",
+    "Shared owner account explicitly authorized; hosted scene-context turn verified, hosted Blender editing not exercised in this check.",
     "One shared editor/account, no simultaneous multiplayer or per-visitor billing.",
     "No office geometry changes or MuJoCo collision validation.",
     "Rendering full building views; browser cutaways are rejected.",
@@ -100,5 +100,28 @@
     },
     "service_active_and_enabled": true,
     "retained_render_jobs": 3
+  },
+  "agent_activation": {
+    "date": "2026-10-23",
+    "account": "explicitly authorized shared owner account",
+    "model": "openai/gpt-6-astra",
+    "credential_store": "dimcode auth.json",
+    "credential_file_mode": "0600",
+    "credential_file_owner": "dedicated service account",
+    "readiness": {
+      "running": true,
+      "hasKey": true,
+      "ready": true
+    },
+    "browser_turn": "completed",
+    "used_live_desktop_context_and_scene_endpoint": true,
+    "identified_revision": "V13-reception-mug",
+    "identified_blender_source": true,
+    "identified_view": {
+      "label": "Kitchen island",
+      "recording_second": 580
+    },
+    "browser_page_errors": [],
+    "scope": "read-only scene-context check; no new Blender edit or simulation check"
   }
 }
