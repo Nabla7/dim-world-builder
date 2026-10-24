@@ -8,8 +8,8 @@ master, browser export, feedback, revisions, renders and Desktop agent state.
 ## Using it
 
 1. Open the supplied Desktop link and enter the workspace password supplied by
-   the operator. The current Anvil link still requires Tailscale; public HTTPS
-   hosting is pending after Funnel was rejected by the tailnet's Starter plan.
+   the operator. The Anvil pilot is accessible over public HTTPS; visitors do
+   not need Tailscale, Blender, or a local app installation.
 2. Explore the office, select objects, and attach comments or reference photos.
    **Save feedback** works before a model is connected. Once the agent is ready,
    **Share view with agent** also sends that saved context into its conversation.
@@ -42,20 +42,69 @@ shell port 13555, and bind address `0.0.0.0`. The former passwordless Tailscale
 Serve loopback forwards have been removed. Anonymous scene and agent requests
 return 401; `/api/auth/local-token` returns 403 for non-loopback callers.
 
-Public hosting is not yet active. Tailscale Funnel was rejected on the current
-Starter plan. A Cloudflare Quick Tunnel is being considered for a temporary
-link; its hostname changes when the process is recreated and has no uptime
-guarantee. A stable named tunnel requires a Cloudflare account and domain. See
-[Quick Tunnel limitations](https://developers.cloudflare.com/tunnel/get-started/quick-tunnels/).
+The owner accepted a temporary Cloudflare Quick Tunnel after Tailscale Funnel
+was rejected on the current Starter plan. The public route is now active and
+tested. The URL lasts while that tunnel process runs: recreating it, including
+after a host reboot, produces a different hostname. Automatic service restart
+restores access under a new address, not the old link. There is no uptime
+guarantee or fixed expiry date. No Cloudflare account or domain was needed.
+See [Quick Tunnel limitations](https://developers.cloudflare.com/tunnel/get-started/quick-tunnels/).
 
-When adding a public tunnel, preserve Desktop's remote authentication. Desktop
-bypasses authentication for loopback peers, so forwarding straight to
-`127.0.0.1` would bypass its password even when one is configured. A forwarding
-path to the host's non-loopback address was checked to retain authentication.
-Public exposure must first verify anonymous rejection for the scene, agent,
-WebSocket and shell routes, then authenticated browser operation. Desktop's
-separate shell origin also needs correct routing; do not collapse it into the
-main origin as a shortcut. No public-route acceptance has been claimed yet.
+### Temporary public route
+
+Cloudflared forwards to Caddy on `127.0.0.1:5560`. Caddy sends main-origin
+requests to Desktop port 5555 and public HTTPS port 8443 requests to Desktop's
+separate shell port 13555. Both use the same public hostname, preserving the
+8000 port offset and one native Desktop password login. Public port 8443 is
+handled at Cloudflare's edge; no additional host listener is installed there.
+
+Both Caddy upstreams must use the host's **non-loopback address**. Desktop
+bypasses authentication for loopback peers, so proxying directly to
+`127.0.0.1:5555` would expose the workspace without its password. The Caddy
+configuration adds `Secure` to the native HttpOnly session cookie and marks
+responses `private, no-store`. The separate shell origin remains intact.
+
+Deployment templates are in [`deploy/public`](../deploy/public). Install the
+Caddyfile at `/etc/sf555-public/Caddyfile`, and both service units in
+`/etc/systemd/system`. The pilot uses root-owned, executable binaries
+`/opt/sf555-public/bin/caddy` (**2.11.7**) and
+`/opt/sf555-public/bin/cloudflared` (**2026.10.3**), downloaded from their
+official releases and checked against release SHA-256 digests. The units run
+as the dedicated `sf555` account, depend on `sf555-office.service`, and are
+enabled at boot. Each proxy/tunnel service is capped at 256 MiB RAM.
+
+Set these non-secret values in `/etc/sf555-public/office.env`, substituting the
+host's actual non-loopback address:
+
+```sh
+SF555_DESKTOP_ADDRESS=100.x.y.z
+SF555_MAIN_PORT=5555
+SF555_SHELL_PORT=13555
+```
+
+After installing the files and validating the Caddy configuration:
+
+```sh
+sudo systemctl daemon-reload
+sudo systemctl enable --now sf555-public-proxy.service sf555-public-tunnel.service
+sudo systemctl status sf555-public-proxy.service sf555-public-tunnel.service
+sudo journalctl -u sf555-public-tunnel.service -n 60 --no-pager
+```
+
+Cloudflared prints the current `https://….trycloudflare.com` address in its
+startup journal. Append `/?app=dim-world-builder#/?workspace=review` to open the
+office. Share the password separately; neither it nor the provider key belongs
+in deployment templates. Stop `sf555-public-tunnel.service` to close public
+access without stopping the office or robot services. Avoid restarting it
+merely to check status, since a restart changes the shared link.
+
+Public-route acceptance passed in a fresh browser: password login, complete
+office loading, saved Cycles images, a live scene-context agent turn, and the
+separate shell WebSocket. Anonymous scene, agent, MCP and shell requests return
+401 on both origins; the local-token route returns 403. Private mesh and image
+URLs remain inaccessible anonymously after an authenticated browser loads them.
+No new Blender edit or GPU render was requested for this routing check; the
+render acceptance below records the earlier hosted checks.
 
 Install the app with its full URL (the tested Desktop version does not normalize
 the shorthand `github.com/...`):

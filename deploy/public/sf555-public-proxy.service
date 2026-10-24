@@ -1,0 +1,24 @@
+[Unit]
+Description=SF555 public origin routing
+After=sf555-office.service network-online.target
+Wants=network-online.target
+Requires=sf555-office.service
+
+[Service]
+Type=simple
+User=sf555
+Group=sf555
+EnvironmentFile=/etc/sf555-public/office.env
+ExecStart=/opt/sf555-public/bin/caddy run --config /etc/sf555-public/Caddyfile --adapter caddyfile
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+ProtectHome=true
+ProtectSystem=strict
+PrivateTmp=true
+UMask=0077
+MemoryMax=256M
+TasksMax=128
+
+[Install]
+WantedBy=multi-user.target

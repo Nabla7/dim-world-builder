@@ -126,7 +126,7 @@
   },
   "public_access_request": {
     "date": "2026-10-23",
-    "status": "pending",
+    "status": "fulfilled",
     "workspace_password_restored": true,
     "passwordless_forwards_removed": true,
     "desktop_bind": "0.0.0.0",
@@ -139,9 +139,58 @@
     "anonymous_agent_ws_status": 401,
     "non_loopback_local_token_status": 403,
     "funnel_result": "rejected: unavailable on Starter plan",
-    "public_tunnel_enabled": false,
-    "temporary_cloudflare_link_created": false,
+    "public_tunnel_enabled": true,
+    "temporary_cloudflare_link_created": true,
     "service_active": true,
     "agent_ready_after_restart": true
+  },
+  "public_tunnel_acceptance": {
+    "date_utc": "2026-10-24",
+    "date_local": "2026-10-23",
+    "status": "verified prototype",
+    "owner_accepted_temporary_url": true,
+    "provider": "Cloudflare Quick Tunnel",
+    "cloudflared_version": "2026.10.3",
+    "caddy_version": "2.11.7",
+    "release_digests_verified": true,
+    "route": "Cloudflare -> loopback Caddy -> non-loopback Desktop",
+    "public_https_ports": [
+      443,
+      8443
+    ],
+    "desktop_ports": [
+      5555,
+      13555
+    ],
+    "native_workspace_password_required": true,
+    "services_active_and_enabled": [
+      "sf555-office",
+      "sf555-public-proxy",
+      "sf555-public-tunnel"
+    ],
+    "caddy_config_validation": "passed",
+    "anonymous_scene_agent_websocket_shell_and_mcp_status_both_origins": 401,
+    "anonymous_local_token_status_both_origins": 403,
+    "incorrect_password_status": 401,
+    "fresh_browser": {
+      "native_login": "passed",
+      "viewer_ready": true,
+      "saved_cycles_images_loaded": true,
+      "session_cookie_secure_and_httponly": true,
+      "mesh_and_render_urls_remain_private_after_authenticated_load": true,
+      "separate_shell_websocket": "opened; no command run",
+      "shell_port_offset": 8000,
+      "scene_context_agent_turn": "completed",
+      "identified_revision": "V13-reception-mug",
+      "identified_view": "Kitchen island, upper level, recording second 580",
+      "page_errors": []
+    },
+    "new_blender_edit_or_render": false,
+    "url_lifetime": "Tunnel process lifetime; new hostname after process recreation or host reboot.",
+    "limits": [
+      "No uptime guarantee.",
+      "One shared editor/account.",
+      "Public-route checks do not add a hosted Blender editing or simulation acceptance."
+    ]
   }
 }

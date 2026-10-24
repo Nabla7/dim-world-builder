@@ -1,0 +1,26 @@
+{
+	admin off
+	auto_https off
+	persist_config off
+}
+
+http://:5560 {
+	bind 127.0.0.1
+	header Cache-Control "private, no-store"
+	header X-Robots-Tag "noindex, nofollow, noarchive"
+
+	# Desktop keeps its shell on a separate origin. The public ports are
+	# 443 and 8443; the configured backend port offset must remain 8000.
+	@shell expression `{http.request.hostport}.endsWith(":8443")`
+	handle @shell {
+		reverse_proxy {$SF555_DESKTOP_ADDRESS}:{$SF555_SHELL_PORT} {
+			header_down Set-Cookie "(.*)" "$1; Secure"
+		}
+	}
+	handle {
+		# A non-loopback destination is required: Desktop trusts loopback peers.
+		reverse_proxy {$SF555_DESKTOP_ADDRESS}:{$SF555_MAIN_PORT} {
+			header_down Set-Cookie "(.*)" "$1; Secure"
+		}
+	}
+}

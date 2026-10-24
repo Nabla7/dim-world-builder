@@ -1,0 +1,23 @@
+[Unit]
+Description=SF555 temporary public HTTPS tunnel
+After=sf555-public-proxy.service network-online.target
+Wants=network-online.target
+Requires=sf555-public-proxy.service
+
+[Service]
+Type=simple
+User=sf555
+Group=sf555
+ExecStart=/opt/sf555-public/bin/cloudflared tunnel --no-autoupdate --protocol http2 --url http://127.0.0.1:5560 --metrics 127.0.0.1:5562
+Restart=on-failure
+RestartSec=10
+NoNewPrivileges=true
+ProtectHome=true
+ProtectSystem=strict
+PrivateTmp=true
+UMask=0077
+MemoryMax=256M
+TasksMax=128
+
+[Install]
+WantedBy=multi-user.target
