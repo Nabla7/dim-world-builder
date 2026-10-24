@@ -7,8 +7,9 @@ master, browser export, feedback, revisions, renders and Desktop agent state.
 
 ## Using it
 
-1. Connect to the team's Tailscale network and open the supplied Desktop link.
-   No separate workspace password is needed.
+1. Open the supplied Desktop link and enter the workspace password supplied by
+   the operator. The current Anvil link still requires Tailscale; public HTTPS
+   hosting is pending after Funnel was rejected by the tailnet's Starter plan.
 2. Explore the office, select objects, and attach comments or reference photos.
    **Save feedback** works before a model is connected. Once the agent is ready,
    **Share view with agent** also sends that saved context into its conversation.
@@ -34,24 +35,27 @@ The key is stored by dimcode in its private `auth.json` with mode `0600`.
 The exercised combination is Desktop **v0.2.217**, dimcode release
 **desktop-agent-v0.1.5**, and Blender **5.1.1** on Ubuntu with NVIDIA/OptiX.
 Use a dedicated OS account and home directory so the agent has no access to
-the workstation operator's model credentials or robot worktrees. Tailscale is
-the access gate for the shared workspace; Desktop needs no second login.
+the workstation operator's model credentials or robot worktrees.
 
-Set `desktop.host: 127.0.0.1`, `desktop.password_hash: ""`, and
-`desktop.os_login_secret: ""` in this installation's config. Restart Desktop,
-then publish its main port and separate shell port only through Tailscale:
+The Anvil pilot now has a native Desktop password again. Its main port is 5555,
+shell port 13555, and bind address `0.0.0.0`. The former passwordless Tailscale
+Serve loopback forwards have been removed. Anonymous scene and agent requests
+return 401; `/api/auth/local-token` returns 403 for non-loopback callers.
 
-```sh
-sudo tailscale serve --bg --tcp=5555 tcp://127.0.0.1:5555
-sudo tailscale serve --bg --tcp=5556 tcp://127.0.0.1:5556
-tailscale serve status
-```
+Public hosting is not yet active. Tailscale Funnel was rejected on the current
+Starter plan. A Cloudflare Quick Tunnel is being considered for a temporary
+link; its hostname changes when the process is recreated and has no uptime
+guarantee. A stable named tunnel requires a Cloudflare account and domain. See
+[Quick Tunnel limitations](https://developers.cloudflare.com/tunnel/get-started/quick-tunnels/).
 
-These ports are the pilot's configured Desktop and shell ports. Adjust both
-for a different deployment. TCP forwarding preserves browser Host/Origin and
-WebSocket traffic. Keep Desktop bound to loopback and do not enable public
-Funnel access. The persistent forwards resume after reboot. See
-[Tailscale Serve](https://tailscale.com/docs/reference/tailscale-cli/serve).
+When adding a public tunnel, preserve Desktop's remote authentication. Desktop
+bypasses authentication for loopback peers, so forwarding straight to
+`127.0.0.1` would bypass its password even when one is configured. A forwarding
+path to the host's non-loopback address was checked to retain authentication.
+Public exposure must first verify anonymous rejection for the scene, agent,
+WebSocket and shell routes, then authenticated browser operation. Desktop's
+separate shell origin also needs correct routing; do not collapse it into the
+main origin as a shortcut. No public-route acceptance has been claimed yet.
 
 Install the app with its full URL (the tested Desktop version does not normalize
 the shorthand `github.com/...`):
@@ -108,8 +112,8 @@ The UI retains older renders under their original revision names; it does not
 present them as renders of a newer scene. Browser lighting remains an
 approximation and the experimental baked-lighting bundle is not required.
 
-Validation should include a fresh browser walkthrough over Tailscale without
-login cookies, verification that LAN listeners are absent, a calibrated
+Validation should include anonymous rejection and an authenticated fresh-browser
+walkthrough through the actual published route, a calibrated
 camera render, a free-camera render, cancellation, retained results after a
 service restart, and confirmation that no model account was inherited. A
 rendering check does not establish agent editing with an unconfigured account

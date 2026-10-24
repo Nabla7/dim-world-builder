@@ -123,5 +123,25 @@
     },
     "browser_page_errors": [],
     "scope": "read-only scene-context check; no new Blender edit or simulation check"
+  },
+  "public_access_request": {
+    "date": "2026-10-23",
+    "status": "pending",
+    "workspace_password_restored": true,
+    "passwordless_forwards_removed": true,
+    "desktop_bind": "0.0.0.0",
+    "desktop_ports": [
+      5555,
+      13555
+    ],
+    "anonymous_scene_api_status": 401,
+    "anonymous_agent_api_status": 401,
+    "anonymous_agent_ws_status": 401,
+    "non_loopback_local_token_status": 403,
+    "funnel_result": "rejected: unavailable on Starter plan",
+    "public_tunnel_enabled": false,
+    "temporary_cloudflare_link_created": false,
+    "service_active": true,
+    "agent_ready_after_restart": true
   }
 }
