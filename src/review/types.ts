@@ -117,6 +117,20 @@ export interface ReviewRevision {
   revision: string;
   directory: string;
 }
+export interface ReviewRender {
+  id: string;
+  sceneId: string;
+  revision: string;
+  sourceSha256: string;
+  focus: Focus;
+  quality: "draft" | "final";
+  state: "running" | "done" | "failed" | "cancelled";
+  createdAt: string;
+  finishedAt?: string;
+  elapsedSeconds?: number;
+  image?: string;
+  error?: string;
+}
 export interface Stats {
   fps: number;
   calls: number;

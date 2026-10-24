@@ -49,6 +49,36 @@ provides:
             get:
                 summary: Faithful review bundle, source objects and calibrated viewpoints
                 x-when: you need source object IDs, material mappings or recorded cameras
+        /api/review/renders:
+            get:
+                summary: Saved Blender renders and current rendering status
+                description: Returns available, busy and jobs. Each job preserves its camera, scene revision and source hash. No model account is needed to render.
+                x-when: you need to inspect the real Blender appearance or check a render job
+            post:
+                summary: Render a view from the immutable Blender source
+                description: Body contains focus (the complete current or saved Focus record) and quality (draft or final). Renders the full building; turn off cutaways first. Starts one GPU job and returns its ID; poll GET for completion. Does not edit or save the Blender source.
+                x-when: the user asks for a Blender render of a particular view
+                requestBody:
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                required: [focus, quality]
+                                properties:
+                                    focus: { type: object, description: Review camera and revision from current context or a saved view }
+                                    quality: { type: string, enum: [draft, final], description: Preview or high quality }
+        /api/review/renders/cancel:
+            post:
+                summary: Cancel the active Blender render
+                x-when: the user wants to stop a running render
+                requestBody:
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                required: [id]
+                                properties:
+                                    id: { type: string, description: Render job ID }
         /api/review/context:
             get:
                 summary: Active review context and saved feedback

@@ -66,13 +66,22 @@ Deno.test("review notes preserve calibrated context, serialize concurrent writes
     };
     assert((await call("/api/review/focus", focus)).ok, "valid focus");
     for (
-      const bad of [{ ...focus, revision: "V12" }, {
-        ...focus,
-        objectId: "fake",
-      }, {
-        ...focus,
-        sourceSecond: 999,
-      }, { ...focus, point: [1, null, 2] }]
+      const bad of [
+        { ...focus, revision: "V12" },
+        {
+          ...focus,
+          objectId: "fake",
+        },
+        {
+          ...focus,
+          sourceSecond: 999,
+        },
+        { ...focus, point: [1, null, 2] },
+        {
+          ...focus,
+          camera: { ...focus.camera, quaternion: [0, 0, 0, 0] },
+        },
+      ]
     ) {
       assert(
         (await call("/api/review/notes", { ...bad, text: "bad" })).status ===

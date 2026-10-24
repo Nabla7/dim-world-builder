@@ -1,0 +1,79 @@
+{
+  "date": "2026-10-23",
+  "status": "prototype",
+  "platform": {
+    "os": "Ubuntu 24.04.4 LTS",
+    "gpu": "NVIDIA GeForce RTX 5060 Ti (16 GB)",
+    "system_memory_gib": 15,
+    "desktop": "0.2.217",
+    "dimcode_release": "desktop-agent-v0.1.5",
+    "blender": "5.1.1"
+  },
+  "project": {
+    "revision": "V13-reception-mug",
+    "source_sha256": "5fbd704eaea9cd9d35dc04e5400e76b716905bb49ac7245bc42693670fd90716",
+    "source_objects": 12010,
+    "recorded_views": 360
+  },
+  "checks": {
+    "unauthenticated_scene_api_status": 401,
+    "authenticated_scene_api_status": 200,
+    "browser_page_errors": [],
+    "agent_gateway_running": true,
+    "agent_has_key_at_setup": false,
+    "agent_model_at_setup": "",
+    "calibrated_projection_max_coefficient_error": 9.006924095444901e-08,
+    "free_camera_projection_matches": true,
+    "render_cancel_releases_slot": true,
+    "restart_persistence": "passed",
+    "source_hash_unchanged_after_rendering": true,
+    "feedback_without_model_key": "passed",
+    "note_restart_persistence": "passed",
+    "render_gallery_image_loading": "passed",
+    "provider_settings_ui": "all four provider keys unset",
+    "baseline_read_only_and_revisions_writable": "passed in service mount namespace",
+    "existing_robot_processes_retained": true
+  },
+  "renders": [
+    {
+      "kind": "recorded camera",
+      "width": 1280,
+      "height": 720,
+      "samples": 32,
+      "device": "OPTIX",
+      "job_seconds": 13.9
+    },
+    {
+      "kind": "free camera",
+      "width": 1920,
+      "height": 1080,
+      "samples": 128,
+      "device": "OPTIX",
+      "job_seconds": 28.5
+    }
+  ],
+  "resource_limits": {
+    "memory_max_gib": 10,
+    "cpu_cores": 4,
+    "blender_threads": 4,
+    "concurrent_renders": 1,
+    "timeout_minutes": 15,
+    "baseline_read_only": true
+  },
+  "observed_service_peak_memory_bytes": 4706783232,
+  "validation": {
+    "vitest": 35,
+    "deno_backend_tests": 2,
+    "type_check": "passed",
+    "desktop_manifest_check": "passed",
+    "linux_nix_build": "passed",
+    "desktop_socket_start_check": "passed"
+  },
+  "limits": [
+    "Model account must be supplied by the editor; no paid hosted agent editing turn was performed.",
+    "One shared editor/account, no simultaneous multiplayer or per-visitor billing.",
+    "No office geometry changes or MuJoCo collision validation.",
+    "Rendering full building views; browser cutaways are rejected.",
+    "GPU time is shared with other workstation software; the render queue does not reserve the GPU."
+  ]
+}

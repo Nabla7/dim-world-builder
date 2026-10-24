@@ -18,7 +18,7 @@ do not silently substitute the latest Desktop release for the tested one.
 ```sh
 # Use a separate profile so this prototype does not replace an existing app.
 export DIMOS_HOME="$HOME/.dimos-scene-review"
-dimos-desktop install github.com/Nabla7/dim-world-builder --ref pim/feat/scene-review
+dimos-desktop install https://github.com/Nabla7/dim-world-builder.git --ref pim/feat/scene-review
 export DIM_SCENE_REVIEW_BUNDLE="/absolute/path/to/scene-review-v11"
 dimos-desktop serve --no-service
 ```
@@ -42,6 +42,11 @@ absolute local path. Preserve its `source_sha256`; moving a file does not change
 its content hash. The raw MCAP is not needed for walkthrough or review.
 
 ## What the office ZIP contains
+
+For a shared installation where colleagues use the host's Blender through their
+browsers, see [Hosted Scene Review](HOSTED_REVIEW.md). Viewing, feedback and the
+render control work without a model account. Agent editing uses the account
+configured in that host's separate Desktop installation.
 
 The app and the office project are separate. Installing the GitHub app supplies
 the viewer and agent integration. The ZIP transfers the private office project;

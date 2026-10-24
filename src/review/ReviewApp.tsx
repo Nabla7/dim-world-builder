@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, PointerEvent } from "react";
 import { ReviewViewer } from "./viewer.ts";
+import { RenderControls } from "./RenderControls.tsx";
 import type { Pick } from "./viewer.ts";
 import type {
   Bundle,
@@ -33,7 +34,9 @@ async function acknowledgeView(id: string) {
   } catch (error) {
     // A newer agent command can arrive while this view is loading. The server
     // correctly refuses to acknowledge that newer command with our older ID.
-    if (error instanceof Error && error.message === "View command was superseded.") return;
+    if (
+      error instanceof Error && error.message === "View command was superseded."
+    ) return;
     throw error;
   }
 }
@@ -136,9 +139,7 @@ export function ReviewApp() {
   useEffect(() => {
     if (!inDesktop) return;
     const check = () =>
-      fetch("../../api/agent").then((r) => r.json()).then((s) =>
-        setAgentReady(s.ready === true)
-      )
+      fetch("../../api/agent").then((r) => r.json()).then((s) => setAgentReady(s.ready === true))
         .catch(() => setAgentReady(false));
     check();
     const timer = setInterval(check, 5000);
@@ -152,13 +153,12 @@ export function ReviewApp() {
       ).then((r) => {
         if (!cancelled) {
           setRevisions((previous) =>
-            JSON.stringify(previous) === JSON.stringify(r.revisions)
-              ? previous
-              : r.revisions
+            JSON.stringify(previous) === JSON.stringify(r.revisions) ? previous : r.revisions
           );
         }
         if (
-          !cancelled && r.command && !r.command.applied && r.command.id !== appliedCommand.current
+          !cancelled && r.command && !r.command.applied &&
+          r.command.id !== appliedCommand.current
         ) {
           setCommand(r.command);
         }
@@ -238,21 +238,15 @@ export function ReviewApp() {
           resumed.sourceSecond !== null ? initial : null,
           resumed.cutHeight,
         );
-        const object = bundle.objects.find((o) =>
-          o.id === resumed.objectId
-        );
-        const selected = object && resumed.point
-          ? { object, point: resumed.point }
-          : null;
+        const object = bundle.objects.find((o) => o.id === resumed.objectId);
+        const selected = object && resumed.point ? { object, point: resumed.point } : null;
         setPick(selected);
         state.current.pick = selected;
         v.select(selected?.object.id ?? null);
         resumeView.current = null;
       } else v.source(initial);
       if (reloadCommand.current) {
-        acknowledgeView(reloadCommand.current).catch((e) =>
-          setError(String(e))
-        );
+        acknowledgeView(reloadCommand.current).catch((e) => setError(String(e)));
         reloadCommand.current = null;
       }
       syncFocus();
@@ -369,7 +363,8 @@ export function ReviewApp() {
   }, [attachment, strokes, presentation, wipe]);
   const save = async () => {
     const focus = currentFocus();
-    if (!focus || (!inDesktop && !text.trim())) return;
+    const shareWithAgent = inDesktop && agentReady;
+    if (!focus || (!shareWithAgent && !text.trim())) return;
     setSaving(true);
     setError("");
     try {
@@ -387,11 +382,11 @@ export function ReviewApp() {
       setDrawing(false);
       setAttachment(undefined);
       setNotice(
-        inDesktop
+        shareWithAgent
           ? `View ${note.number} shared with the agent. Continue in Desktop's chat.`
           : "Saved with object, metric point, camera and evidence.",
       );
-      if (inDesktop) {
+      if (shareWithAgent) {
         openAgent(
           `About View ${note.number} in Scene Review: ${message}`,
           true,
@@ -409,8 +404,7 @@ export function ReviewApp() {
       setError(`Choose revision ${note.revision} to restore this shared view.`);
       return;
     }
-    const source =
-      bundle.evidence.views.find((s) => s.second === note.sourceSecond) ?? null;
+    const source = bundle.evidence.views.find((s) => s.second === note.sourceSecond) ?? null;
     const object = bundle.objects.find((o) => o.id === note.objectId);
     setView(source);
     state.current.view = source;
@@ -474,9 +468,7 @@ export function ReviewApp() {
       }
       if (command.level) overview(command.level);
       if (command.sourceSecond !== undefined) {
-        const source = bundle.evidence.views.find((v) =>
-          v.second === command.sourceSecond
-        );
+        const source = bundle.evidence.views.find((v) => v.second === command.sourceSecond);
         if (source) jump(source);
       }
       if (command.objectId) {
@@ -547,9 +539,7 @@ export function ReviewApp() {
     if (!drawingNow.current) return;
     const point = drawPoint(e);
     setStrokes((s) =>
-      s.map((stroke, i) =>
-        i === s.length - 1 ? { points: [...stroke.points, point] } : stroke
-      )
+      s.map((stroke, i) => i === s.length - 1 ? { points: [...stroke.points, point] } : stroke)
     );
   };
   const views = bundle?.evidence.views ?? [];
@@ -594,9 +584,7 @@ export function ReviewApp() {
                 aria-label="Scene revision"
                 value={bundle?.revision ?? "V11"}
                 onChange={(event) => {
-                  const selected = revisions.find((r) =>
-                    r.revision === event.target.value
-                  );
+                  const selected = revisions.find((r) => r.revision === event.target.value);
                   if (selected) {
                     api("open", {
                       bundleDir: selected.directory,
@@ -620,9 +608,7 @@ export function ReviewApp() {
           {inDesktop
             ? (
               <button className="sr-agent-button" onClick={() => openAgent()}>
-                <span className={`sr-dot ${agentReady ? "is-ready" : ""}`} />
-                {" "}
-                Talk with agent
+                <span className={`sr-dot ${agentReady ? "is-ready" : ""}`} /> Talk with agent
               </button>
             )
             : (
@@ -727,8 +713,7 @@ export function ReviewApp() {
                 <div>
                   <strong>{v.label ?? `Recording ${time(v.second)}`}</strong>
                   <small>
-                    {time(v.second)} ·{" "}
-                    {v.level === "ground" ? "Ground" : "Upper"}
+                    {time(v.second)} · {v.level === "ground" ? "Ground" : "Upper"}
                     {v.render ? " · ◈" : ""}
                   </small>
                 </div>
@@ -736,8 +721,8 @@ export function ReviewApp() {
             ))}
           </div>
           <div className="sr-left-footer">
-            Metres · original project coordinates<br />360 source poses · 76
-            Cycles views
+            Metres · original project coordinates<br />
+            {views.length} source poses · {views.filter((v) => v.render).length} saved Cycles views
           </div>
         </aside>
         <main className="sr-main">
@@ -775,6 +760,7 @@ export function ReviewApp() {
                 Blender still
               </button>
             </div>
+            <RenderControls getFocus={() => focusRef.current()} ready={ready} />
             <button
               className="sr-icon-button"
               aria-label="Return to this recorded camera"
@@ -853,9 +839,7 @@ export function ReviewApp() {
                 {strokes.map((s, i) => (
                   <polyline
                     key={i}
-                    points={s.points.map((p) =>
-                      `${p[0] * 1000},${p[1] * 562.5}`
-                    ).join(" ")}
+                    points={s.points.map((p) => `${p[0] * 1000},${p[1] * 562.5}`).join(" ")}
                     fill="none"
                     stroke="var(--primary)"
                     strokeWidth="3"
@@ -968,9 +952,8 @@ export function ReviewApp() {
                   </div>
                   {inDesktop && (
                     <p className="sr-helper">
-                      Talk naturally in Desktop's chat. Share a view when you
-                      want to point something out; it keeps your selection,
-                      drawing and photo together.
+                      Talk naturally in Desktop's chat. Share a view when you want to point
+                      something out; it keeps your selection, drawing and photo together.
                     </p>
                   )}
                   <h2>{focusName}</h2>
@@ -980,8 +963,7 @@ export function ReviewApp() {
                         <span>Selected object</span>
                         <code>{pick.object.id}</code>
                         <small>
-                          {pick.point.map((n) => n.toFixed(2)).join(", ")}{" "}
-                          m · project XYZ
+                          {pick.point.map((n) => n.toFixed(2)).join(", ")} m · project XYZ
                         </small>
                         <button
                           onClick={() => {
@@ -996,8 +978,7 @@ export function ReviewApp() {
                     )
                     : (
                       <p className="sr-helper">
-                        Point at an object in the walkthrough, or leave a note
-                        about this view.
+                        Point at an object in the walkthrough, or leave a note about this view.
                       </p>
                     )}
                   <textarea
@@ -1035,8 +1016,7 @@ export function ReviewApp() {
                             return;
                           }
                           const reader = new FileReader();
-                          reader.onload = () =>
-                            setAttachment(reader.result as string);
+                          reader.onload = () => setAttachment(reader.result as string);
                           reader.readAsDataURL(f);
                           e.target.value = "";
                         }}
@@ -1054,13 +1034,11 @@ export function ReviewApp() {
                   <button
                     className="sr-primary"
                     onClick={save}
-                    disabled={(!inDesktop && !text.trim()) || saving ||
-                      !ready ||
-                      (inDesktop && !agentReady)}
+                    disabled={(!(inDesktop && agentReady) && !text.trim()) || saving || !ready}
                   >
                     {saving
-                      ? "Sharing…"
-                      : inDesktop
+                      ? "Saving…"
+                      : inDesktop && agentReady
                       ? "Share view with agent"
                       : "Save feedback"}
                     <span>↗</span>
@@ -1069,21 +1047,18 @@ export function ReviewApp() {
                     {inDesktop
                       ? (agentReady
                         ? "The agent receives this exact view, even if you move afterwards."
-                        : "Open Desktop's chat to connect a model.")
+                        : "Save feedback without a model. Open chat and connect your own account for agent edits.")
                       : "Saves the object, camera, drawing and recording reference for the agent."}
                   </p>
-                  {notice && <p className="sr-notice" role="status">{notice}
-                  </p>}
+                  {notice && <p className="sr-notice" role="status">{notice}</p>}
                 </div>
                 <div className="sr-notes-heading">
                   <strong>
-                    {inDesktop ? "Shared in conversation" : "Saved feedback"}
+                    Saved views
                   </strong>
                   <button
                     onClick={() =>
-                      api<ReviewNote[]>("notes").then(setNotes).catch((e) =>
-                        setError(e.message)
-                      )}
+                      api<ReviewNote[]>("notes").then(setNotes).catch((e) => setError(e.message))}
                     aria-label="Refresh saved notes"
                   >
                     ↻
@@ -1100,25 +1075,21 @@ export function ReviewApp() {
                             : "A useful conversation starts here."}
                         </strong>
                         <p>
-                          Your notes stay attached to a place in the scene, even
-                          after you leave this page.
+                          Your notes stay attached to a place in the scene, even after you leave
+                          this page.
                         </p>
                       </div>
                     )
                     : [...notes].reverse().map((n) => (
                       <article
                         key={n.id}
-                        className={`sr-note ${
-                          n.status === "resolved" ? "is-resolved" : ""
-                        }`}
+                        className={`sr-note ${n.status === "resolved" ? "is-resolved" : ""}`}
                       >
                         <button
                           className="sr-note-camera"
                           onClick={() => restore(n)}
                         >
-                          {n.screenshot && (
-                            <img src={n.screenshot} alt="Saved viewpoint" />
-                          )}
+                          {n.screenshot && <img src={n.screenshot} alt="Saved viewpoint" />}
                           <span>
                             {n.objectId
                               ? readable(n.objectId)
@@ -1142,8 +1113,7 @@ export function ReviewApp() {
                         )}
                         <div>
                           <small>
-                            {n.status === "resolved" ? "Resolved" : "Open"} ·
-                            {" "}
+                            {n.status === "resolved" ? "Resolved" : "Open"} ·{" "}
                             {new Date(n.createdAt).toLocaleTimeString([], {
                               hour: "2-digit",
                               minute: "2-digit",
@@ -1165,8 +1135,9 @@ export function ReviewApp() {
                   One building.<br />The same coordinates.
                 </h2>
                 <p>
-                  The saved V11 Blender model is the authoring baseline. The
-                  walkthrough keeps its geometry and scale.
+                  The saved {bundle?.revision}{" "}
+                  Blender model is the authoring baseline. The walkthrough keeps its geometry and
+                  scale.
                 </p>
                 <dl>
                   <dt>Source objects</dt>
@@ -1189,9 +1160,8 @@ export function ReviewApp() {
                       alt="Undistorted RGB source"
                     />
                     <p className="sr-fine">
-                      Original RGB, undistorted with the recorded camera
-                      calibration. Camera comparisons use the recorded pose and
-                      asymmetric intrinsics.
+                      Original RGB, undistorted with the recorded camera calibration. Camera
+                      comparisons use the recorded pose and asymmetric intrinsics.
                     </p>
                   </>
                 )}
@@ -1202,15 +1172,14 @@ export function ReviewApp() {
                     : "Recorded image textures and material values are retained. Live lighting is an approximation; procedural bump, soft shadows and indirect Cycles lighting are not baked yet."}
                 </p>
                 <p>
-                  “Blender still” shows the existing rendered result at 76
-                  source positions. It is a still image, not a live path-traced
-                  camera.
+                  “Render this view” creates a Blender image of your current camera. Saved renders
+                  retain their scene version. “Blender still” shows an existing render at a recorded
+                  camera when one is available for this revision.
                 </p>
                 <h3>Simulation comes next</h3>
                 <p>
-                  This review does not certify collisions, doors or stair
-                  traversal. Native MuJoCo export and robot launch remain a
-                  separate handoff.
+                  This review does not certify collisions, doors or stair traversal. Native MuJoCo
+                  export and robot launch remain a separate handoff.
                 </p>
                 <details>
                   <summary>

@@ -6,6 +6,7 @@ import type {
   ReviewRevision,
   ViewCommand,
 } from "../src/review/types.ts";
+import { reviewRenders } from "./review_renders.ts";
 
 const json = (value: unknown, status = 200) =>
   new Response(JSON.stringify(value), {
@@ -16,6 +17,7 @@ const json = (value: unknown, status = 200) =>
     },
   });
 export function reviewRoutes(bundleDir: string | undefined, dataDir: string) {
+  const renders = reviewRenders(`${dataDir}/review-renders`);
   let bundle: Bundle | undefined;
   let revisions: ReviewRevision[] = [];
   let initialize: Promise<void> | undefined;
@@ -127,6 +129,7 @@ export function reviewRoutes(bundleDir: string | undefined, dataDir: string) {
       !v || v.revision !== b.revision || !v.camera ||
       !finite(v.camera.position, 3) ||
       !finite(v.camera.quaternion, 4) ||
+      Math.hypot(...v.camera.quaternion) < 1e-8 ||
       !finite(v.camera.target, 3) || !Number.isFinite(v.camera.fov) ||
       v.camera.fov <= 0 ||
       v.camera.fov >= 179 ||
@@ -188,6 +191,28 @@ export function reviewRoutes(bundleDir: string | undefined, dataDir: string) {
       return null;
     }
     try {
+      if (path === "/api/review/renders" && req.method === "GET") {
+        return json(await renders.list((await load()).id));
+      }
+      if (path === "/api/review/renders" && req.method === "POST") {
+        const raw = await req.json();
+        const camera = await validFocus(raw.focus);
+        return json(
+          await renders.start(await load(), camera, raw.quality),
+          202,
+        );
+      }
+      if (path === "/api/review/renders/cancel" && req.method === "POST") {
+        const raw = await req.json();
+        return json(await renders.cancel(raw.id));
+      }
+      if (path.startsWith("/files/review-renders/") && req.method === "GET") {
+        const name = path.slice("/files/review-renders/".length);
+        if (!/^[a-f0-9-]{36}\/image\.(png|json)$/.test(name)) {
+          return json({ error: "Invalid render image" }, 400);
+        }
+        return await file(renders.directory, name);
+      }
       if (path === "/api/review/bundle" && req.method === "GET") {
         return json(await load());
       }
