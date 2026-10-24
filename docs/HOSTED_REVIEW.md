@@ -7,16 +7,16 @@ master, browser export, feedback, revisions, renders and Desktop agent state.
 
 ## Using it
 
-1. Connect to the host's private network and open the supplied Desktop link.
-2. Enter the workspace login. This is separate from model-provider credentials.
-3. Explore the office, select objects, and attach comments or reference photos.
+1. Connect to the team's Tailscale network and open the supplied Desktop link.
+   No separate workspace password is needed.
+2. Explore the office, select objects, and attach comments or reference photos.
    **Save feedback** works before a model is connected. Once the agent is ready,
    **Share view with agent** also sends that saved context into its conversation.
-4. Choose **Render this view** for an actual Blender Cycles image. **Renders**
+3. Choose **Render this view** for an actual Blender Cycles image. **Renders**
    holds the shared history, Preview/High quality choice, cancellation and image
    downloads. The camera is captured when the button is clicked; moving afterward
    does not alter the job. Turn off building cutaways before rendering.
-5. To ask the agent to edit the scene, connect your own supported provider account
+4. To ask the agent to edit the scene, connect your own supported provider account
    and model through Desktop's agent settings, then use **Talk with agent** or
    **Share view with agent**. Render jobs themselves use no LLM credits.
 
@@ -30,9 +30,24 @@ No provider credentials or private office assets belong in the app repository.
 The exercised combination is Desktop **v0.2.217**, dimcode release
 **desktop-agent-v0.1.5**, and Blender **5.1.1** on Ubuntu with NVIDIA/OptiX.
 Use a dedicated OS account and home directory so the agent has no access to
-the workstation operator's model credentials or robot worktrees. Set up a
-separate Desktop login and restrict access to the intended private network.
-Do not expose an unauthenticated reverse proxy to Desktop's loopback listener.
+the workstation operator's model credentials or robot worktrees. Tailscale is
+the access gate for the shared workspace; Desktop needs no second login.
+
+Set `desktop.host: 127.0.0.1`, `desktop.password_hash: ""`, and
+`desktop.os_login_secret: ""` in this installation's config. Restart Desktop,
+then publish its main port and separate shell port only through Tailscale:
+
+```sh
+sudo tailscale serve --bg --tcp=5555 tcp://127.0.0.1:5555
+sudo tailscale serve --bg --tcp=5556 tcp://127.0.0.1:5556
+tailscale serve status
+```
+
+These ports are the pilot's configured Desktop and shell ports. Adjust both
+for a different deployment. TCP forwarding preserves browser Host/Origin and
+WebSocket traffic. Keep Desktop bound to loopback and do not enable public
+Funnel access. The persistent forwards resume after reboot. See
+[Tailscale Serve](https://tailscale.com/docs/reference/tailscale-cli/serve).
 
 Install the app with its full URL (the tested Desktop version does not normalize
 the shorthand `github.com/...`):
@@ -89,7 +104,8 @@ The UI retains older renders under their original revision names; it does not
 present them as renders of a newer scene. Browser lighting remains an
 approximation and the experimental baked-lighting bundle is not required.
 
-Validation should include an authenticated browser walkthrough, a calibrated
+Validation should include a fresh browser walkthrough over Tailscale without
+login cookies, verification that LAN listeners are absent, a calibrated
 camera render, a free-camera render, cancellation, retained results after a
 service restart, and confirmation that no model account was inherited. A
 rendering check does not establish agent editing with an unconfigured account

@@ -16,8 +16,6 @@
     "recorded_views": 360
   },
   "checks": {
-    "unauthenticated_scene_api_status": 401,
-    "authenticated_scene_api_status": 200,
     "browser_page_errors": [],
     "agent_gateway_running": true,
     "agent_has_key_at_setup": false,
@@ -75,5 +73,32 @@
     "No office geometry changes or MuJoCo collision validation.",
     "Rendering full building views; browser cutaways are rejected.",
     "GPU time is shared with other workstation software; the render queue does not reserve the GPU."
-  ]
+  ],
+  "initial_authentication_checks": {
+    "unauthenticated_scene_api_status": 401,
+    "authenticated_scene_api_status": 200
+  },
+  "access_update": {
+    "date": "2026-10-23",
+    "requested_behavior": "Tailscale access without a separate workspace password",
+    "desktop_bind": "127.0.0.1",
+    "tailscale_serve_tcp_ports": [
+      5555,
+      5556
+    ],
+    "tailscale_serve_persistent": true,
+    "public_funnel": false,
+    "password_set": false,
+    "lan_connections": "refused on both ports",
+    "browser": {
+      "passed": true,
+      "login_request_sent": false,
+      "session_cookie": false,
+      "viewer_ready": true,
+      "render_gallery_loaded": true,
+      "page_errors": []
+    },
+    "service_active_and_enabled": true,
+    "retained_render_jobs": 3
+  }
 }
